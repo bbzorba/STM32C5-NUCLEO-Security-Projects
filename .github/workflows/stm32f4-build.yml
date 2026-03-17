@@ -1,0 +1,73 @@
+name: STM32 Build, Flash & Verify
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  FLASH_TOOL: openocd
+  BAUD_RATE: 115200
+
+jobs:
+  build:
+    runs-on: [self-hosted, windows]
+    outputs:
+      project_dir: ${{ steps.get-project.outputs.project_dir }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read PROJECT_DIR from Makefile
+        id: get-project
+        run: |
+          for /f "tokens=*" %%a in ('make -s print-PROJECT_DIR') do (
+            echo PROJECT_DIR=%%a>> %GITHUB_ENV%
+            echo project_dir=%%a>> %GITHUB_OUTPUT%
+          )
+        shell: cmd
+
+      - name: Build with Makefile
+        run: |
+          make clean
+          make build
+        shell: cmd
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stm32_bin
+          path: ${{ env.PROJECT_DIR }}/main.bin
+
+  flash:
+    runs-on: [self-hosted, windows]
+    needs: build
+    env:
+      PROJECT_DIR: ${{ needs.build.outputs.project_dir }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: stm32_bin
+          path: ${{ env.PROJECT_DIR }}
+
+      - name: Flash to Hardware
+        run: |
+          make flash FLASH_TOOL=${{ env.FLASH_TOOL }}
+        shell: cmd
+
+  verify:
+    runs-on: [self-hosted, windows]
+    needs: flash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify UART Output
+        run: |
+          make monitor BAUD=${{ env.BAUD_RATE }} MONITOR_SECONDS=10
+        shell: cmd
