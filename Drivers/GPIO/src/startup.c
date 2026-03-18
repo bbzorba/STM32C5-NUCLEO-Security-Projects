@@ -12,6 +12,13 @@ typedef void (*isr_handler_t)(void);
 #define STM32_IRQ_TABLE_SIZE 64U
 #endif
 
+uint32_t SystemCoreClock = 16000000UL; // Default HSI frequency
+
+void SystemInit(void) {
+    // Default: HSI 16MHz, no PLL
+    SystemCoreClock = 16000000UL;
+}
+
 __attribute__((section(".isr_vector")))
 isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
     [0]  = (isr_handler_t)&_estack,

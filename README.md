@@ -1,102 +1,122 @@
-# STM32F407G-DISC1 Bare-Metal Projects (VS Code)
+# STM32C5 NUCLEO-C562RE Bare-Metal Projects (VS Code)
 
-This project provides a minimal bare-metal template for the STM32F407G-DISC1 (STM32F4-DISCO) board, using arm-none-eabi-gcc, OpenOCD, and VS Code with Cortex-Debug. It is designed for register-level development (no HAL, no CubeMX) and supports reliable build, flash, and debug workflows.
+This repository provides register-level bare-metal driver and project templates targeting the **STM32C5 NUCLEO-C562RE** development board (Cortex-M33, `target/stm32u5x.cfg`). The GPIO and UART drivers are hand-coded against the STM32C5-compatible register map — no HAL, no CubeMX, no vendor device headers beyond CMSIS core (used only for NVIC interrupt control).
+
+## Board & Hardware
+
+| Item | Value |
+|---|---|
+| MCU | STM32C562RE (Cortex-M33, `cortex-m33` toolchain flag) |
+| NUCLEO type | NUCLEO-C562RE |
+| Flash base | `0x08000000` |
+| RAM base | `0x20000000` |
+| RCC base | `0x46020C00` |
+| GPIO base | `0x42020000` (AHB2) |
+
+### Onboard User LEDs (NUCLEO-C562RE)
+
+| LED | Pin | Colour |
+|---|---|---|
+| LD1 | PB0 | Green |
+| LD2 | PB7 | Blue |
+| LD3 | PB14 | Red |
 
 ## Folder Structure
+
 ```
-STM32_Project/
-├── linker.ld                # Linker script for STM32F407
-├── main.bin                 # Compiled binary (output)
-├── main.elf                 # Compiled ELF (output)
-├── main.hex                 # Compiled HEX (output)
-├── main.map                 # Linker map (output)
-├── Makefile                 # Build, flash, and debug automation
-├── .vscode/
-│   ├── launch.json          # VS Code debug configuration (Cortex-Debug)
-│   ├── openocd.cfg          # OpenOCD configuration (optional)
-│   └── tasks.json           # VS Code build/flash tasks (optional)
-├── inc/
-│   ├── core_cm4.h           # CMSIS core header
-│   ├── stm32f407xx.h        # STM32F407 device header
-│   ├── stm32f4xx.h          # STM32F4 family header
-│   └── system_stm32f4xx.h   # System header
-├── src/
-│   ├── main.c               # Main application (LED blink, etc.)
-│   ├── startup.c            # Startup code, vector table
-│   └── system_stm32f4xx.c   # SystemInit stub
+STM32C5-NUCLEO-Projects/
+├── Makefile                  # Build, flash, debug automation (all projects)
+├── Drivers/
+│   ├── CMSIS/                # CMSIS core headers (core_cm4.h — used for NVIC only)
+│   ├── GPIO/                 # Register-level GPIO driver (STM32C5 port)
+│   │   ├── inc/gpio.h        # RCC_TypeDef, GPIO_ManualTypeDef, pin macros
+│   │   └── src/              # gpio.c, main.c, startup.c, system_stm32f4xx.c
+│   └── UART/                 # Register-level UART driver (STM32C5 port, USART v2)
+│       ├── inc/uart.h        # USART_ManualType (ISR/RDR/TDR), IRQn_Type
+│       └── src/              # uart.c, main.c, startup.c, system_stm32f4xx.c
+└── Projects/                 # Application-level projects (use the Drivers above)
 ```
+
+## Architecture
+
+Drivers follow **object-oriented C** style — each peripheral has a handle struct and a constructor:
+
+```c
+/* GPIO example */
+GPIO_InitTypeDef led_init = { .Mode = GPIO_MODE_OUTPUT_PP, .Pull = GPIO_NOPULL,
+                               .Speed = GPIO_SPEED_MEDIUM, .Pin = GPIO_PIN_7 };
+GPIO_HandleTypeDef ld1;
+GPIO_constructor(&ld1, GPIO_C, &led_init);   // enable clock + configure PC7
+GPIO_TogglePin(&ld1, GPIO_PIN_7);            // toggle LD1 green
+
+/* UART example */
+USART_HandleType uart2;
+USART_constructor(&uart2, USART_2, RX_AND_TX, __115200);
+USART_WriteString(&uart2, "Hello\n");
+```
+
+CMSIS (`core_cm4.h`) is used **only** for `NVIC_SetPriority()` / `NVIC_EnableIRQ()`. All peripheral register access uses hand-defined structs (`RCC_TypeDef`, `GPIO_ManualTypeDef`, `USART_ManualType`) mapped directly to hardware addresses.
 
 ## Prerequisites
-- **VS Code** (latest recommended)
-- **Cortex-Debug extension** (for debugging)
-- **arm-none-eabi-gcc toolchain** (compiler, linker, objcopy, size)
-- **OpenOCD** (for flashing/debugging)
-- **ST-Link USB drivers** (for STM32F4-DISCO)
 
-## Installation & Setup
-1. **Install VS Code**
-   - Download and install from [https://code.visualstudio.com/](https://code.visualstudio.com/)
+- **VS Code** (latest)
+- **Cortex-Debug extension** (`marus25.cortex-debug`)
+- **arm-none-eabi-gcc** toolchain (GCC 12+ recommended, add to PATH)
+  - Linux: `sudo apt install gcc-arm-none-eabi`
+  - Windows: download from [Arm Developer](https://developer.arm.com/downloads/-/gnu-rm)
+- **OpenOCD** with STM32C5 target support (add to PATH)
+- **ST-Link USB drivers** ([STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html))
 
-2. **Install Cortex-Debug Extension**
-   - In VS Code, go to Extensions (`Ctrl+Shift+X`)
-   - Search for `Cortex-Debug` and install
+## Building
 
-3. **Install arm-none-eabi-gcc Toolchain**
-   - Download from [Arm Developer](https://developer.arm.com/downloads/-/gnu-rm)
-   - Download via the terminal (if using linux PC) using this command:
-         sudo apt install gcc-arm-none-eabi 
-   - Add toolchain binaries to your system PATH
+```sh
+# Build the GPIO driver demo (NUCLEO LED blink)
+make build PROJECT_DIR=Drivers/GPIO
 
-4. **Install OpenOCD**
-   - Download from [https://openocd.org/](https://openocd.org/)
-   - Add OpenOCD to your system PATH
+# Build the UART driver demo
+make build PROJECT_DIR=Drivers/UART
+```
 
-5. **Install ST-Link USB Drivers**
-   - Download from STMicroelectronics [STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html)
+Output files (`main.elf`, `main.bin`, `main.hex`, `main.map`) are generated inside the selected `PROJECT_DIR`.
 
-6. **Clone or Copy Project Folder**
-   - Place the project folder anywhere on your system
+## Flashing
 
-## Building the Project
-- Open a terminal in the project folder where the Makefile is
-- Run:
-  ```
-  make
-  ```
-- Output files (`main.elf`, `main.bin`, `main.hex`, `main.map`) will be generated in the project root
+Connect the NUCLEO board via USB (ST-Link), then:
 
-## Flashing the Board
-- Connect the STM32F4-DISCO board via USB (ST-Link)
-- Run:
-  ```
-  make flash
-  ```
-- This uses OpenOCD to program the board with `main.elf`
+```sh
+make flash PROJECT_DIR=Drivers/GPIO
+make flash PROJECT_DIR=Drivers/UART
+```
 
 ## Debugging in VS Code
-1. **Configure Debugger**
-   - Ensure `.vscode/launch.json` is present and set for Cortex-Debug with OpenOCD and ST-Link
-   - Example config is provided in the project
 
-2. **Start Debugging**
-   - Press `F5` or click `Run and Debug` in VS Code
-   - Set breakpoints, watch variables, step through code
+1. Ensure `.vscode/launch.json` targets Cortex-Debug with OpenOCD and ST-Link
+2. Press `F5` or open **Run and Debug**
+3. Set breakpoints and step through code normally
 
-## Customization
-- Edit source files in `src/` and headers in `inc/` as needed for your application
-- The project is generic for STM32F407G-DISC1, but can be adapted for other STM32F4 devices by updating headers and linker script
+## Key Register Addresses (STM32C5)
+
+| Peripheral | Base Address | Bus |
+|---|---|---|
+| RCC | `0x46020C00` | — |
+| GPIOA | `0x42020000` | AHB2 |
+| GPIOB | `0x42020400` | AHB2 |
+| GPIOC | `0x42020800` | AHB2 |
+| GPIOG | `0x42021800` | AHB2 |
+| USART1 | `0x40013800` | APB2 |
+| USART2 | `0x40004400` | APB1 |
 
 ## Troubleshooting
-- **Missing separator error in Makefile:** Ensure all command lines are indented with tabs, not spaces
-- **Toolchain not found:** Add arm-none-eabi-gcc and OpenOCD to your system PATH
-- **Debugging issues:** Confirm ST-Link drivers are installed and board is connected
-- **Breakpoints not working:** Ensure debug info (`-g` flag) is enabled in Makefile and startup code is correct
+
+- **Missing separator in Makefile** — ensure command lines use tabs, not spaces
+- **Toolchain not found** — add `arm-none-eabi-gcc` and `openocd` to system PATH
+- **Wrong LED pins** — check your board's user manual and update `Drivers/GPIO/src/main.c`
+- **OpenOCD target not found** — ensure your OpenOCD installation includes `target/stm32c5x.cfg`
 
 ## References
+
 - [Cortex-Debug Extension](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
 - [OpenOCD Documentation](http://openocd.org/doc/html/index.html)
-- [STM32F407G-DISC1 User Manual](https://www.st.com/resource/en/user_manual/dm00039084.pdf)
 - [Arm GNU Toolchain](https://developer.arm.com/downloads/-/gnu-rm)
+- [CMSIS Documentation](https://arm-software.github.io/CMSIS_5/Core/html/index.html)
 
----
-This template is intended for register-level STM32F4-DISCO development in VS Code. For CubeMX/HAL projects, use STM32CubeIDE or adapt the build system accordingly.

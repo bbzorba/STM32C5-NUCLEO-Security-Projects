@@ -78,23 +78,12 @@ typedef enum IRQn
 #define USART_6_BASE 0x40011400U
 #endif
 
-/* RCC APB clock register offsets for USART peripherals (RCC_BASE comes from gpio.h). */
-#ifndef RCC_APB1ENR1_OFFSET
-#define RCC_APB1ENR1_OFFSET 0x58U
-#endif
-#ifndef RCC_APB2ENR_OFFSET
-#define RCC_APB2ENR_OFFSET 0x60U
-#endif
-
-#define RCC_APB1ENR1_REG  (*((__IO uint32_t *)(RCC_BASE + RCC_APB1ENR1_OFFSET)))
-#define RCC_APB2ENR_REG   (*((__IO uint32_t *)(RCC_BASE + RCC_APB2ENR_OFFSET)))
-
-// USART clock enable bits
+// USART clock enable bits (RCC_TypeDef from gpio.h — access via RCC->APB1ENR / RCC->APB2ENR)
 #define RCC_APB2ENR_USART_1EN  ((uint32_t)(1UL << 14))
-#define RCC_APB1ENR1_USART_2EN ((uint32_t)(1UL << 17))
-#define RCC_APB1ENR1_USART_3EN ((uint32_t)(1UL << 18))
-#define RCC_APB1ENR1_UART_4EN  ((uint32_t)(1UL << 19))
-#define RCC_APB1ENR1_UART_5EN  ((uint32_t)(1UL << 20))
+#define RCC_APB1ENR_USART_2EN  ((uint32_t)(1UL << 17))
+#define RCC_APB1ENR_USART_3EN  ((uint32_t)(1UL << 18))
+#define RCC_APB1ENR_UART_4EN   ((uint32_t)(1UL << 19))
+#define RCC_APB1ENR_UART_5EN   ((uint32_t)(1UL << 20))
 #define RCC_APB2ENR_USART_6EN  ((uint32_t)(1UL <<  5))
 
 // Default peripheral clocks (Hz) used for baud calculation when system clock

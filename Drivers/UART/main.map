@@ -283,7 +283,7 @@ LOAD f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/a
  .isr_vector    0x08000000      0x240 Drivers/UART/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000240      0xaf8
+.text           0x08000240      0xaac
  *(.text*)
  .text.uart_rx_cb
                 0x08000240       0x2c Drivers/UART/src/main.o
@@ -300,79 +300,79 @@ LOAD f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/a
                 0x08000334       0x10 Drivers/UART/src/system_stm32f4xx.o
                 0x08000334                SystemInit
  .text.USART_Init
-                0x08000344      0x728 Drivers/UART/src/uart.o
+                0x08000344      0x6dc Drivers/UART/src/uart.o
                 0x08000344                USART_Init
  .text.USART_constructor
-                0x08000a6c        0xc Drivers/UART/src/uart.o
-                0x08000a6c                USART_constructor
+                0x08000a20        0xc Drivers/UART/src/uart.o
+                0x08000a20                USART_constructor
  .text.USART_EnableRXInterrupt
-                0x08000a78       0x10 Drivers/UART/src/uart.o
-                0x08000a78                USART_EnableRXInterrupt
+                0x08000a2c       0x10 Drivers/UART/src/uart.o
+                0x08000a2c                USART_EnableRXInterrupt
  .text.USART1_IRQHandler
-                0x08000a88       0x2c Drivers/UART/src/uart.o
-                0x08000a88                USART1_IRQHandler
+                0x08000a3c       0x2c Drivers/UART/src/uart.o
+                0x08000a3c                USART1_IRQHandler
  .text.USART2_IRQHandler
-                0x08000ab4       0x2c Drivers/UART/src/uart.o
-                0x08000ab4                USART2_IRQHandler
+                0x08000a68       0x2c Drivers/UART/src/uart.o
+                0x08000a68                USART2_IRQHandler
  .text.USART3_IRQHandler
-                0x08000ae0       0x2c Drivers/UART/src/uart.o
-                0x08000ae0                USART3_IRQHandler
+                0x08000a94       0x2c Drivers/UART/src/uart.o
+                0x08000a94                USART3_IRQHandler
  .text.UART4_IRQHandler
-                0x08000b0c       0x2c Drivers/UART/src/uart.o
-                0x08000b0c                UART4_IRQHandler
+                0x08000ac0       0x2c Drivers/UART/src/uart.o
+                0x08000ac0                UART4_IRQHandler
  .text.UART5_IRQHandler
-                0x08000b38       0x2c Drivers/UART/src/uart.o
-                0x08000b38                UART5_IRQHandler
+                0x08000aec       0x2c Drivers/UART/src/uart.o
+                0x08000aec                UART5_IRQHandler
  .text.USART6_IRQHandler
-                0x08000b64       0x2c Drivers/UART/src/uart.o
-                0x08000b64                USART6_IRQHandler
+                0x08000b18       0x2c Drivers/UART/src/uart.o
+                0x08000b18                USART6_IRQHandler
  .text.USART_WriteChar
-                0x08000b90       0x10 Drivers/UART/src/uart.o
-                0x08000b90                USART_WriteChar
+                0x08000b44       0x10 Drivers/UART/src/uart.o
+                0x08000b44                USART_WriteChar
  .text.USART_WriteString
-                0x08000ba0       0x30 Drivers/UART/src/uart.o
-                0x08000ba0                USART_WriteString
+                0x08000b54       0x30 Drivers/UART/src/uart.o
+                0x08000b54                USART_WriteString
  .text.USART_ReadString
-                0x08000bd0       0x60 Drivers/UART/src/uart.o
-                0x08000bd0                USART_ReadString
+                0x08000b84       0x60 Drivers/UART/src/uart.o
+                0x08000b84                USART_ReadString
  *(.rodata*)
  .rodata.main.str1.4
-                0x08000c30       0xfd Drivers/UART/src/main.o
+                0x08000be4       0xfd Drivers/UART/src/main.o
                                 0x101 (size before relaxing)
  *(.glue_7)
- .glue_7        0x08000d2d        0x0 linker stubs
+ .glue_7        0x08000ce1        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000d2d        0x0 linker stubs
+ .glue_7t       0x08000ce1        0x0 linker stubs
  *(.init)
- *fill*         0x08000d2d        0x3 
- .init          0x08000d30        0x4 f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d30                _init
+ *fill*         0x08000ce1        0x3 
+ .init          0x08000ce4        0x4 f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000ce4                _init
  *(.fini)
- .fini          0x08000d34        0x4 f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d34                _fini
+ .fini          0x08000ce8        0x4 f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000ce8                _fini
 
-.vfp11_veneer   0x08000d38        0x0
- .vfp11_veneer  0x08000d38        0x0 linker stubs
+.vfp11_veneer   0x08000cec        0x0
+ .vfp11_veneer  0x08000cec        0x0 linker stubs
 
-.v4_bx          0x08000d38        0x0
- .v4_bx         0x08000d38        0x0 linker stubs
+.v4_bx          0x08000cec        0x0
+ .v4_bx         0x08000cec        0x0 linker stubs
 
-.iplt           0x08000d38        0x0
- .iplt          0x08000d38        0x0 Drivers/UART/src/main.o
+.iplt           0x08000cec        0x0
+ .iplt          0x08000cec        0x0 Drivers/UART/src/main.o
 
-.rel.dyn        0x08000d38        0x0
- .rel.iplt      0x08000d38        0x0 Drivers/UART/src/main.o
+.rel.dyn        0x08000cec        0x0
+ .rel.iplt      0x08000cec        0x0 Drivers/UART/src/main.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000d38        0x0
-                0x08000d38                __exidx_start = .
+.ARM.exidx      0x08000cec        0x0
+                0x08000cec                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000d38                __exidx_end = .
-                0x08000d38                __etext = .
+                0x08000cec                __exidx_end = .
+                0x08000cec                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000d38
+.data           0x20000000        0x4 load address 0x08000cec
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
@@ -380,10 +380,10 @@ LOAD f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/a
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000d3c
+.igot.plt       0x20000004        0x0 load address 0x08000cf0
  .igot.plt      0x20000004        0x0 Drivers/UART/src/main.o
 
-.bss            0x20000004       0x64 load address 0x08000d3c
+.bss            0x20000004       0x64 load address 0x08000cf0
                 0x20000004                __bss_start__ = .
  *(.bss*)
  .bss.buffer    0x20000004       0x40 Drivers/UART/src/main.o
@@ -406,7 +406,7 @@ LOAD f:/program_files_x86/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/a
                 0x20000068                end = .
                 0x20000068                __end__ = .
 
-.stack          0x20000068      0x400 load address 0x08000da0
+.stack          0x20000068      0x400 load address 0x08000d54
                 0x20000068                . = ALIGN (0x8)
                 0x20000068                _stack = .
                 0x20000468                . = (. + 0x400)
@@ -434,21 +434,21 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/UART/src/system_stm32f4xx.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x173d
+.debug_info     0x00000000     0x15c7
  .debug_info    0x00000000      0x4f9 Drivers/UART/src/main.o
  .debug_info    0x000004f9      0x18d Drivers/UART/src/startup.o
  .debug_info    0x00000686       0xa8 Drivers/UART/src/system_stm32f4xx.o
- .debug_info    0x0000072e     0x100f Drivers/UART/src/uart.o
+ .debug_info    0x0000072e      0xe99 Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0x72e
+.debug_abbrev   0x00000000      0x6de
  .debug_abbrev  0x00000000      0x1d0 Drivers/UART/src/main.o
  .debug_abbrev  0x000001d0       0xfc Drivers/UART/src/startup.o
  .debug_abbrev  0x000002cc       0x66 Drivers/UART/src/system_stm32f4xx.o
- .debug_abbrev  0x00000332      0x3fc Drivers/UART/src/uart.o
+ .debug_abbrev  0x00000332      0x3ac Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000      0xa0c
+.debug_loc      0x00000000      0x8a9
  .debug_loc     0x00000000       0x57 Drivers/UART/src/main.o
- .debug_loc     0x00000057      0x9b5 Drivers/UART/src/uart.o
+ .debug_loc     0x00000057      0x852 Drivers/UART/src/uart.o
 
 .debug_aranges  0x00000000      0x128
  .debug_aranges
@@ -460,27 +460,27 @@ LOAD linker stubs
  .debug_aranges
                 0x00000078       0xb0 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x340
+.debug_ranges   0x00000000      0x248
  .debug_ranges  0x00000000       0x40 Drivers/UART/src/main.o
  .debug_ranges  0x00000040       0x18 Drivers/UART/src/startup.o
  .debug_ranges  0x00000058       0x10 Drivers/UART/src/system_stm32f4xx.o
- .debug_ranges  0x00000068      0x2d8 Drivers/UART/src/uart.o
+ .debug_ranges  0x00000068      0x1e0 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x1789
+.debug_line     0x00000000     0x1648
  .debug_line    0x00000000      0x1f9 Drivers/UART/src/main.o
  .debug_line    0x000001f9      0x197 Drivers/UART/src/startup.o
  .debug_line    0x00000390      0x12c Drivers/UART/src/system_stm32f4xx.o
- .debug_line    0x000004bc     0x12cd Drivers/UART/src/uart.o
+ .debug_line    0x000004bc     0x118c Drivers/UART/src/uart.o
 
-.debug_str      0x00000000      0x765
+.debug_str      0x00000000      0x77f
  .debug_str     0x00000000      0x255 Drivers/UART/src/main.o
                                 0x297 (size before relaxing)
  .debug_str     0x00000255      0x1e0 Drivers/UART/src/startup.o
                                 0x293 (size before relaxing)
  .debug_str     0x00000435       0x34 Drivers/UART/src/system_stm32f4xx.o
                                 0x18b (size before relaxing)
- .debug_str     0x00000469      0x2fc Drivers/UART/src/uart.o
-                                0x647 (size before relaxing)
+ .debug_str     0x00000469      0x316 Drivers/UART/src/uart.o
+                                0x661 (size before relaxing)
 
 .debug_frame    0x00000000      0x268
  .debug_frame   0x00000000       0x5c Drivers/UART/src/main.o

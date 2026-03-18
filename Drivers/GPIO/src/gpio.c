@@ -114,13 +114,13 @@ void GPIO_ResetBit(GPIO_HandleTypeDef *GPIOx, uint32_t pin) {
 }
 
 void __RCC_GPIO_CLK_ENABLE(GPIO_HandleTypeDef *GPIOx) {
-    if      (GPIOx->regs == GPIO_A) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
-    else if (GPIOx->regs == GPIO_B) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
-    else if (GPIOx->regs == GPIO_C) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-    else if (GPIOx->regs == GPIO_D) RCC_AHB2ENR |= RCC_AHB2ENR_GPIODEN;
-    else if (GPIOx->regs == GPIO_E) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
-    else if (GPIOx->regs == GPIO_F) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOFEN;
-    else if (GPIOx->regs == GPIO_G) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOGEN;
-    else if (GPIOx->regs == GPIO_H) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOHEN;
-    else if (GPIOx->regs == GPIO_I) RCC_AHB2ENR |= RCC_AHB2ENR_GPIOIEN;
+    if      (GPIOx->regs == GPIO_A) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+    else if (GPIOx->regs == GPIO_B) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+    else if (GPIOx->regs == GPIO_C) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+    else if (GPIOx->regs == GPIO_D) RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+    else if (GPIOx->regs == GPIO_E) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
+    else if (GPIOx->regs == GPIO_F) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOFEN;
+    else if (GPIOx->regs == GPIO_G) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOGEN;
+    else if (GPIOx->regs == GPIO_H) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOHEN;
+    else if (GPIOx->regs == GPIO_I) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOIEN;
 }

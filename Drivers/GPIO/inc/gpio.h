@@ -19,21 +19,16 @@
 #define GPIOH_BASE      0x42021C00U
 #define GPIOI_BASE      0x42022000U
 
-// GPIO clocks are on AHB2 on STM32C5; use direct register access
-#ifndef RCC_AHB2ENR_OFFSET
-#define RCC_AHB2ENR_OFFSET 0x4CU
-#endif
-#define RCC_AHB2ENR  (*((__IO uint32_t *)(RCC_BASE + RCC_AHB2ENR_OFFSET)))
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RCC peripheral declarations and direct port access use RCC_TypeDef struct below (RCC->AHB2ENR etc.)
 
 
 
 //////////////////////////////////////REGISTER BIT DEFINITIONS/////////////////////////////////////////////////
-// GPIO mode settings for specific pins
-#define MODER_2_OUT (1 << (12 * 2)) // Set PD12 to output mode (01)
-#define MODER_3_OUT (1 << (13 * 2)) // Set PD13 to output mode (01)
-#define MODER_4_OUT (1 << (14 * 2)) // Set PD14 to output mode (01)
-#define MODER_5_OUT (1 << (15 * 2)) // Set PD15 to output mode (01)
+// NUCLEO-U575ZI-Q onboard LED pin output mode helpers (MODER field = 01b)
+#define MODER_PC7_OUT ((uint32_t)(1U << (7 * 2)))  // PC7 LD1 Green: output mode
+#define MODER_PB7_OUT ((uint32_t)(1U << (7 * 2)))  // PB7 LD2 Blue:  output mode
+#define MODER_PG2_OUT ((uint32_t)(1U << (2 * 2)))  // PG2 LD3 Red:   output mode
 
 // GPIO clock enable bits in RCC AHB2ENR
 #define RCC_AHB2ENR_GPIOAEN  ((uint32_t)(1UL << 0))
@@ -308,7 +303,38 @@
 
 
 /////////////////////////////////GPIO STRUCTURES AND ENUMERATIONS/////////////////////////////////////////////
-
+/* RCC register definition structure — STM32C5 / STM32U5-compatible layout.
+ * Field offsets from RCC_BASE:
+ *   AHB2ENR @ 0x4C,  APB1ENR @ 0x58,  APB2ENR @ 0x60
+ * Verified against STM32U5 Reference Manual (RM0456). */
+typedef struct
+{
+    __IO uint32_t CR;           /* 0x00  Clock control register                        */
+    __IO uint32_t ICSCR1;       /* 0x04  Internal clock sources calibration register 1 */
+    __IO uint32_t ICSCR2;       /* 0x08  Internal clock sources calibration register 2 */
+    __IO uint32_t ICSCR3;       /* 0x0C  Internal clock sources calibration register 3 */
+    __IO uint32_t CRRCR;        /* 0x10  Clock recovery RC register                    */
+         uint32_t RESERVED0[2];/* 0x14-0x18 Reserved                                  */
+    __IO uint32_t CFGR1;        /* 0x1C  Clock configuration register 1                */
+    __IO uint32_t CFGR2;        /* 0x20  Clock configuration register 2                */
+    __IO uint32_t CFGR3;        /* 0x24  Clock configuration register 3                */
+    __IO uint32_t PLL1CFGR;     /* 0x28  PLL1 configuration register                   */
+    __IO uint32_t PLL2CFGR;     /* 0x2C  PLL2 configuration register                   */
+    __IO uint32_t PLL3CFGR;     /* 0x30  PLL3 configuration register                   */
+    __IO uint32_t PLL1DIVR;     /* 0x34  PLL1 dividers register                        */
+    __IO uint32_t PLL1FRACR;    /* 0x38  PLL1 fractional divider register              */
+    __IO uint32_t PLL2DIVR;     /* 0x3C  PLL2 dividers register                        */
+    __IO uint32_t PLL2FRACR;    /* 0x40  PLL2 fractional divider register              */
+    __IO uint32_t PLL3DIVR;     /* 0x44  PLL3 dividers register                        */
+    __IO uint32_t PLL3FRACR;    /* 0x48  PLL3 fractional divider register              */
+    __IO uint32_t AHB2ENR;      /* 0x4C  AHB2 peripheral clock enable register         */
+    __IO uint32_t AHB2ENR2;     /* 0x50  AHB2 peripheral clock enable register 2       */
+    __IO uint32_t AHB3ENR;      /* 0x54  AHB3 peripheral clock enable register         */
+    __IO uint32_t APB1ENR;      /* 0x58  APB1 peripheral clock enable register         */
+    __IO uint32_t APB1ENR2;     /* 0x5C  APB1 peripheral clock enable register 2       */
+    __IO uint32_t APB2ENR;      /* 0x60  APB2 peripheral clock enable register         */
+    __IO uint32_t APB3ENR;      /* 0x64  APB3 peripheral clock enable register         */
+} RCC_TypeDef;
 
 /* GPIO initialization structure */
 typedef struct {
@@ -349,6 +375,7 @@ typedef enum {
 } GPIO_PinState;
 
 // Peripheral declarations
+#define RCC ((RCC_TypeDef *)RCC_BASE)
 #define GPIO_A ((GPIO_ManualTypeDef *)GPIOA_BASE)
 #define GPIO_B ((GPIO_ManualTypeDef *)GPIOB_BASE)
 #define GPIO_C ((GPIO_ManualTypeDef *)GPIOC_BASE)

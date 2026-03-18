@@ -3,8 +3,10 @@
 #DONE
 #PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Drivers/UART_cpp
-#PROJECT_DIR = Drivers/GPIO
+PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/GPIO_cpp
+
+#TBD
 #PROJECT_DIR = Drivers/PWM
 #PROJECT_DIR = Drivers/PWM_cpp
 #PROJECT_DIR = Drivers/SysTick
@@ -27,9 +29,7 @@
 #PROJECT_DIR = Projects/LIS302DL_Accelerometer_cpp
 #PROJECT_DIR = Projects/Button_LED_Blink_mutex_cpp
 #PROJECT_DIR = Projects/Button_LED_Blink_semaphore_cpp
-PROJECT_DIR = Drivers/bxCAN
-
-#TBD
+#PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/bxCAN_cpp
 #PROJECT_DIR = Projects/BME68x_Env_Sensor
 #PROJECT_DIR = Projects/MLX90614_Temp
@@ -52,6 +52,7 @@ STFLASH?=st-flash
 OPENOCD_SCRIPTS?=
 OPENOCD_IF?=interface/stlink.cfg
 OPENOCD_TARGET?=target/stm32f4x.cfg
+OPENOCD_EXTRA?=
 
 CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32F407xx -DUSE_HAL_DRIVER \
 	-IDrivers/compat_inc \
@@ -65,14 +66,18 @@ CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32F407xx -DUSE_HAL_DRIVER \
 ifeq ($(strip $(PROJECT_DIR)),Drivers/UART)
 MCU := cortex-m33
 CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_TARGET ?= target/stm32c5x.cfg
+OPENOCD_IF := interface/stlink-dap.cfg
+OPENOCD_TARGET := target/stm32u5x.cfg
+OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 endif
 
 # GPIO driver has a dedicated STM32C5 register-level port.
 ifeq ($(strip $(PROJECT_DIR)),Drivers/GPIO)
 MCU := cortex-m33
 CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_TARGET ?= target/stm32c5x.cfg
+OPENOCD_IF := interface/stlink-dap.cfg
+OPENOCD_TARGET := target/stm32u5x.cfg
+OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 endif
 
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small
@@ -240,7 +245,7 @@ flash: build
 ifeq ($(_FLASH_TOOL),cubeprog)
 	"$(CUBE_PROG)" -c port=SWD -halt -d $(TARGET).bin $(FLASH_ADDR) -rst
 else ifeq ($(_FLASH_TOOL),openocd)
-	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
+	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
 else ifeq ($(_FLASH_TOOL),stlink)
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 else
@@ -254,7 +259,7 @@ flash_cubeprog: build
 
 flash_openocd: FLASH_TOOL=openocd
 flash_openocd: build
-	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
+	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
 
 
 # Open a simple serial monitor with PowerShell
