@@ -1,4 +1,4 @@
-# Makefile for STM32F4 Discovery (STM32F407VG)
+# Makefile for STM32 NUCLEO C562RE development board
 
 #DONE
 #PROJECT_DIR = Drivers/UART
@@ -43,7 +43,7 @@ RM=del /Q /F
 
 # Flashing configuration
 FLASH_ADDR=0x08000000
-FLASH_TOOL?=openocd  # options: cubeprog | openocd | stlink
+FLASH_TOOL?=cubeprog  # options: cubeprog | openocd | stlink
 # Sanitize FLASH_TOOL in case of stray spaces from environment or edits
 _FLASH_TOOL:=$(strip $(FLASH_TOOL))
 CUBE_PROG?=C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe
