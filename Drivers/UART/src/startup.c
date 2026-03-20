@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "../inc/uart.h"
 
 extern int main(void);
 extern void SystemInit(void);
@@ -7,43 +6,55 @@ void Reset_Handler(void);
 void Default_Handler(void);
 extern uint32_t _estack;
 
-/* USART/UART IRQ handlers defined in uart.c — declared weak so the linker
-   falls back to Default_Handler if uart.c is not linked. */
-void USART1_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
-void USART2_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
-void USART3_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
-void UART4_IRQHandler(void)  __attribute__((weak, alias("Default_Handler")));
-void UART5_IRQHandler(void)  __attribute__((weak, alias("Default_Handler")));
-void USART6_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
+/* Linker-provided symbols for .data and .bss initialization */
+extern uint32_t __etext;        /* end of .text (LMA of .data in flash) */
+extern uint32_t __data_start__;  /* start of .data in RAM */
+extern uint32_t __data_end__;    /* end of .data in RAM */
+extern uint32_t __bss_start__;   /* start of .bss */
+extern uint32_t __bss_end__;     /* end of .bss */
 
 typedef void (*isr_handler_t)(void);
 
 #ifndef STM32_IRQ_TABLE_SIZE
-#define STM32_IRQ_TABLE_SIZE 128U
+#define STM32_IRQ_TABLE_SIZE 64U
 #endif
+
+uint32_t SystemCoreClock = 16000000UL; // Default HSI frequency
+
+void SystemInit(void) {
+    // Default: HSI, no PLL
+    SystemCoreClock = 16000000UL;
+}
 
 __attribute__((section(".isr_vector")))
 isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
-    [0] = (isr_handler_t)&_estack,
-    [1] = Reset_Handler,
-    [2] = Default_Handler,
-    [3] = Default_Handler,
-    [4] = Default_Handler,
-    [5] = Default_Handler,
-    [6] = Default_Handler,
+    [0]  = (isr_handler_t)&_estack,
+    [1]  = Reset_Handler,
+    [2]  = Default_Handler,
+    [3]  = Default_Handler,
+    [4]  = Default_Handler,
+    [5]  = Default_Handler,
+    [6]  = Default_Handler,
     [11] = Default_Handler,
     [12] = Default_Handler,
     [14] = Default_Handler,
     [15] = Default_Handler,
-    [16 + USART1_IRQn] = USART1_IRQHandler,
-    [16 + USART2_IRQn] = USART2_IRQHandler,
-    [16 + USART3_IRQn] = USART3_IRQHandler,
-    [16 + UART4_IRQn] = UART4_IRQHandler,
-    [16 + UART5_IRQn] = UART5_IRQHandler,
-    [16 + USART6_IRQn] = USART6_IRQHandler,
 };
 
 void Reset_Handler(void) {
+    /* Copy .data section from flash (LMA) to RAM (VMA) */
+    uint32_t *src = &__etext;
+    uint32_t *dst = &__data_start__;
+    while (dst < &__data_end__) {
+        *dst++ = *src++;
+    }
+
+    /* Zero-fill .bss section */
+    dst = &__bss_start__;
+    while (dst < &__bss_end__) {
+        *dst++ = 0;
+    }
+
     SystemInit();
     main();
     while (1);

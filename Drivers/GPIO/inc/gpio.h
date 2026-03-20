@@ -7,17 +7,15 @@
 ///////////////////////////////////////GPIO ADDRESS DEFINITIONS//////////////////////////////////////////////////
 #define __IO volatile
 
-// STM32C5 base addresses (override from build flags if your variant differs)
-#define RCC_BASE        0x46020C00U
+// STM32C562RE base addresses (verified against stm32c562xx.h CMSIS header)
+#define RCC_BASE        0x44020C00U
 #define GPIOA_BASE      0x42020000U
 #define GPIOB_BASE      0x42020400U
 #define GPIOC_BASE      0x42020800U
 #define GPIOD_BASE      0x42020C00U
 #define GPIOE_BASE      0x42021000U
-#define GPIOF_BASE      0x42021400U
-#define GPIOG_BASE      0x42021800U
 #define GPIOH_BASE      0x42021C00U
-#define GPIOI_BASE      0x42022000U
+/* Note: STM32C562RE has GPIOA-E and GPIOH only */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RCC peripheral declarations and direct port access use RCC_TypeDef struct below (RCC->AHB2ENR etc.)
@@ -25,10 +23,8 @@
 
 
 //////////////////////////////////////REGISTER BIT DEFINITIONS/////////////////////////////////////////////////
-// NUCLEO-U575ZI-Q onboard LED pin output mode helpers (MODER field = 01b)
-#define MODER_PC7_OUT ((uint32_t)(1U << (7 * 2)))  // PC7 LD1 Green: output mode
-#define MODER_PB7_OUT ((uint32_t)(1U << (7 * 2)))  // PB7 LD2 Blue:  output mode
-#define MODER_PG2_OUT ((uint32_t)(1U << (2 * 2)))  // PG2 LD3 Red:   output mode
+// NUCLEO-C562RE onboard user LED (LD1)
+#define LD1_PIN GPIO_PIN_5
 
 // GPIO clock enable bits in RCC AHB2ENR
 #define RCC_AHB2ENR_GPIOAEN  ((uint32_t)(1UL << 0))
@@ -303,37 +299,37 @@
 
 
 /////////////////////////////////GPIO STRUCTURES AND ENUMERATIONS/////////////////////////////////////////////
-/* RCC register definition structure — STM32C5 / STM32U5-compatible layout.
- * Field offsets from RCC_BASE:
- *   AHB2ENR @ 0x4C,  APB1ENR @ 0x58,  APB2ENR @ 0x60
- * Verified against STM32U5 Reference Manual (RM0456). */
+/* RCC register definition structure — STM32C562RE
+ * Field offsets from RCC_BASE (0x44020C00):
+ *   AHB2ENR @ 0x08C  (GPIOA..E, GPIOH clock enable)
+ * Verified against STM32C562RE CMSIS header (stm32c562xx.h, stm32c5xx-dfp). */
 typedef struct
 {
-    __IO uint32_t CR;           /* 0x00  Clock control register                        */
-    __IO uint32_t ICSCR1;       /* 0x04  Internal clock sources calibration register 1 */
-    __IO uint32_t ICSCR2;       /* 0x08  Internal clock sources calibration register 2 */
-    __IO uint32_t ICSCR3;       /* 0x0C  Internal clock sources calibration register 3 */
-    __IO uint32_t CRRCR;        /* 0x10  Clock recovery RC register                    */
-         uint32_t RESERVED0[2];/* 0x14-0x18 Reserved                                  */
-    __IO uint32_t CFGR1;        /* 0x1C  Clock configuration register 1                */
-    __IO uint32_t CFGR2;        /* 0x20  Clock configuration register 2                */
-    __IO uint32_t CFGR3;        /* 0x24  Clock configuration register 3                */
-    __IO uint32_t PLL1CFGR;     /* 0x28  PLL1 configuration register                   */
-    __IO uint32_t PLL2CFGR;     /* 0x2C  PLL2 configuration register                   */
-    __IO uint32_t PLL3CFGR;     /* 0x30  PLL3 configuration register                   */
-    __IO uint32_t PLL1DIVR;     /* 0x34  PLL1 dividers register                        */
-    __IO uint32_t PLL1FRACR;    /* 0x38  PLL1 fractional divider register              */
-    __IO uint32_t PLL2DIVR;     /* 0x3C  PLL2 dividers register                        */
-    __IO uint32_t PLL2FRACR;    /* 0x40  PLL2 fractional divider register              */
-    __IO uint32_t PLL3DIVR;     /* 0x44  PLL3 dividers register                        */
-    __IO uint32_t PLL3FRACR;    /* 0x48  PLL3 fractional divider register              */
-    __IO uint32_t AHB2ENR;      /* 0x4C  AHB2 peripheral clock enable register         */
-    __IO uint32_t AHB2ENR2;     /* 0x50  AHB2 peripheral clock enable register 2       */
-    __IO uint32_t AHB3ENR;      /* 0x54  AHB3 peripheral clock enable register         */
-    __IO uint32_t APB1ENR;      /* 0x58  APB1 peripheral clock enable register         */
-    __IO uint32_t APB1ENR2;     /* 0x5C  APB1 peripheral clock enable register 2       */
-    __IO uint32_t APB2ENR;      /* 0x60  APB2 peripheral clock enable register         */
-    __IO uint32_t APB3ENR;      /* 0x64  APB3 peripheral clock enable register         */
+    __IO uint32_t CR1;            /* 0x000  RCC clock control register 1                    */
+    __IO uint32_t CR2;            /* 0x004  RCC clock control register 2                    */
+         uint32_t RESERVED1[5];  /* 0x008–0x01B Reserved                                   */
+    __IO uint32_t CFGR1;          /* 0x01C  RCC clock configuration register 1              */
+    __IO uint32_t CFGR2;          /* 0x020  RCC clock configuration register 2              */
+         uint32_t RESERVED2[11]; /* 0x024–0x04F Reserved                                   */
+    __IO uint32_t CIER;           /* 0x050  RCC clock source interrupt enable register      */
+    __IO uint32_t CIFR;           /* 0x054  RCC clock source interrupt flag register        */
+    __IO uint32_t CICR;           /* 0x058  RCC clock source interrupt clear register       */
+         uint32_t RESERVED3;     /* 0x05C  Reserved                                        */
+    __IO uint32_t AHB1RSTR;       /* 0x060  RCC AHB1 peripheral reset register              */
+    __IO uint32_t AHB2RSTR;       /* 0x064  RCC AHB2 peripheral reset register              */
+         uint32_t RESERVED4[3];  /* 0x068–0x073 Reserved                                   */
+    __IO uint32_t APB1LRSTR;      /* 0x074  RCC APB1 peripheral low reset register          */
+    __IO uint32_t APB1HRSTR;      /* 0x078  RCC APB1 peripheral high reset register         */
+    __IO uint32_t APB2RSTR;       /* 0x07C  RCC APB2 peripheral reset register              */
+    __IO uint32_t APB3RSTR;       /* 0x080  RCC APB3 peripheral reset register              */
+         uint32_t RESERVED5;     /* 0x084  Reserved                                        */
+    __IO uint32_t AHB1ENR;        /* 0x088  RCC AHB1 peripheral clock enable register       */
+    __IO uint32_t AHB2ENR;        /* 0x08C  RCC AHB2 peripheral clock enable register       */
+         uint32_t RESERVED6[3];  /* 0x090–0x09B Reserved                                   */
+    __IO uint32_t APB1LENR;       /* 0x09C  RCC APB1 peripheral low clock enable register   */
+    __IO uint32_t APB1HENR;       /* 0x0A0  RCC APB1 peripheral high clock enable register  */
+    __IO uint32_t APB2ENR;        /* 0x0A4  RCC APB2 peripheral clock enable register       */
+    __IO uint32_t APB3ENR;        /* 0x0A8  RCC APB3 peripheral clock enable register       */
 } RCC_TypeDef;
 
 /* GPIO initialization structure */
@@ -381,10 +377,7 @@ typedef enum {
 #define GPIO_C ((GPIO_ManualTypeDef *)GPIOC_BASE)
 #define GPIO_D ((GPIO_ManualTypeDef *)GPIOD_BASE)
 #define GPIO_E ((GPIO_ManualTypeDef *)GPIOE_BASE)
-#define GPIO_F ((GPIO_ManualTypeDef *)GPIOF_BASE)
-#define GPIO_G ((GPIO_ManualTypeDef *)GPIOG_BASE)
 #define GPIO_H ((GPIO_ManualTypeDef *)GPIOH_BASE)
-#define GPIO_I ((GPIO_ManualTypeDef *)GPIOI_BASE)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

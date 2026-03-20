@@ -1,12 +1,12 @@
 # Makefile for STM32 NUCLEO C562RE development board
 
 #DONE
-#PROJECT_DIR = Drivers/UART
-#PROJECT_DIR = Drivers/UART_cpp
-PROJECT_DIR = Drivers/GPIO
-#PROJECT_DIR = Drivers/GPIO_cpp
+PROJECT_DIR = Drivers/UART
+#PROJECT_DIR = Drivers/GPIO
 
 #TBD
+#PROJECT_DIR = Drivers/UART_cpp
+#PROJECT_DIR = Drivers/GPIO_cpp
 #PROJECT_DIR = Drivers/PWM
 #PROJECT_DIR = Drivers/PWM_cpp
 #PROJECT_DIR = Drivers/SysTick

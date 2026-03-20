@@ -10,16 +10,14 @@ This repository provides register-level bare-metal driver and project templates 
 | NUCLEO type | NUCLEO-C562RE |
 | Flash base | `0x08000000` |
 | RAM base | `0x20000000` |
-| RCC base | `0x46020C00` |
+| RCC base | `0x44020C00` |
 | GPIO base | `0x42020000` (AHB2) |
 
 ### Onboard User LEDs (NUCLEO-C562RE)
 
-| LED | Pin | Colour |
-|---|---|---|
-| LD1 | PB0 | Green |
-| LD2 | PB7 | Blue |
-| LD3 | PB14 | Red |
+| LED | Pin | Colour | Notes |
+|---|---|---|---|
+| LD1 | PA5 | Green | Only user LED; Arduino D13 |
 
 ## Folder Structure
 

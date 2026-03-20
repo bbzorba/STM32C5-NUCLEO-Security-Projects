@@ -6,6 +6,8 @@ c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o) (_global_impure_ptr)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (__libc_init_array)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                              Drivers/GPIO/src/startup.o (memcpy)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (memset)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
@@ -83,13 +85,12 @@ Discarded input sections
  .debug_frame   0x00000000       0x2c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
  .ARM.attributes
                 0x00000000       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .text.memset   0x00000000       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .debug_frame   0x00000000       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .ARM.attributes
-                0x00000000       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
@@ -151,63 +152,68 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .isr_vector    0x08000000      0x140 Drivers/GPIO/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000140      0x2bc
+.text           0x08000140      0x2b8
  *(.text*)
  .text.GPIO_TogglePin
                 0x08000140        0xc Drivers/GPIO/src/gpio.o
                 0x08000140                GPIO_TogglePin
  .text.__RCC_GPIO_CLK_ENABLE
-                0x0800014c       0xd4 Drivers/GPIO/src/gpio.o
+                0x0800014c       0xb4 Drivers/GPIO/src/gpio.o
                 0x0800014c                __RCC_GPIO_CLK_ENABLE
  .text.GPIO_Init
-                0x08000220      0x114 Drivers/GPIO/src/gpio.o
-                0x08000220                GPIO_Init
+                0x08000200      0x114 Drivers/GPIO/src/gpio.o
+                0x08000200                GPIO_Init
  .text.GPIO_constructor
-                0x08000334        0x8 Drivers/GPIO/src/gpio.o
-                0x08000334                GPIO_constructor
+                0x08000314        0x8 Drivers/GPIO/src/gpio.o
+                0x08000314                GPIO_constructor
  .text.startup.main
-                0x0800033c       0x9c Drivers/GPIO/src/main.o
-                0x0800033c                main
+                0x0800031c       0x48 Drivers/GPIO/src/main.o
+                0x0800031c                main
  .text.Default_Handler
-                0x080003d8        0x4 Drivers/GPIO/src/startup.o
-                0x080003d8                Default_Handler
+                0x08000364        0x4 Drivers/GPIO/src/startup.o
+                0x08000364                Default_Handler
  .text.Reset_Handler
-                0x080003dc       0x18 Drivers/GPIO/src/startup.o
-                0x080003dc                Reset_Handler
+                0x08000368       0x5c Drivers/GPIO/src/startup.o
+                0x08000368                Reset_Handler
+ .text.memcpy   0x080003c4       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x080003c4                memcpy
+ .text.memset   0x080003de       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x080003de                memset
  *(.rodata*)
  *(.glue_7)
- .glue_7        0x080003f4        0x0 linker stubs
+ .glue_7        0x080003ee        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x080003f4        0x0 linker stubs
+ .glue_7t       0x080003ee        0x0 linker stubs
  *(.init)
- .init          0x080003f4        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x080003f4                _init
+ *fill*         0x080003ee        0x2 
+ .init          0x080003f0        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x080003f0                _init
  *(.fini)
- .fini          0x080003f8        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x080003f8                _fini
+ .fini          0x080003f4        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x080003f4                _fini
 
-.vfp11_veneer   0x080003fc        0x0
- .vfp11_veneer  0x080003fc        0x0 linker stubs
+.vfp11_veneer   0x080003f8        0x0
+ .vfp11_veneer  0x080003f8        0x0 linker stubs
 
-.v4_bx          0x080003fc        0x0
- .v4_bx         0x080003fc        0x0 linker stubs
+.v4_bx          0x080003f8        0x0
+ .v4_bx         0x080003f8        0x0 linker stubs
 
-.iplt           0x080003fc        0x0
- .iplt          0x080003fc        0x0 Drivers/GPIO/src/gpio.o
+.iplt           0x080003f8        0x0
+ .iplt          0x080003f8        0x0 Drivers/GPIO/src/gpio.o
 
-.rel.dyn        0x080003fc        0x0
- .rel.iplt      0x080003fc        0x0 Drivers/GPIO/src/gpio.o
+.rel.dyn        0x080003f8        0x0
+ .rel.iplt      0x080003f8        0x0 Drivers/GPIO/src/gpio.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x080003fc        0x0
-                0x080003fc                __exidx_start = .
+.ARM.exidx      0x080003f8        0x0
+                0x080003f8                __exidx_start = .
  *(.ARM.exidx*)
-                0x080003fc                __exidx_end = .
-                0x080003fc                __etext = .
+                0x080003f8                __exidx_end = .
+                0x080003f8                __etext = .
 
-.data           0x20000000        0x4 load address 0x080003fc
+.data           0x20000000        0x4 load address 0x080003f8
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
@@ -215,7 +221,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000400
+.igot.plt       0x20000004        0x0 load address 0x080003fc
  .igot.plt      0x20000004        0x0 Drivers/GPIO/src/gpio.o
 
 .bss            0x20000004        0x0
@@ -227,7 +233,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000004                end = .
                 0x20000004                __end__ = .
 
-.stack          0x20000004      0x404 load address 0x08000400
+.stack          0x20000004      0x404 load address 0x080003fc
                 0x20000008                . = ALIGN (0x8)
  *fill*         0x20000004        0x4 
                 0x20000008                _stack = .
@@ -246,6 +252,10 @@ LOAD linker stubs
                 0x00000056       0x34 Drivers/GPIO/src/main.o
  .ARM.attributes
                 0x0000008a       0x34 Drivers/GPIO/src/startup.o
+ .ARM.attributes
+                0x000000be       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .ARM.attributes
+                0x000000f0       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
 
 .comment        0x00000000       0x49
  .comment       0x00000000       0x49 Drivers/GPIO/src/gpio.o
@@ -253,19 +263,18 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/GPIO/src/main.o
  .comment       0x00000049       0x4a Drivers/GPIO/src/startup.o
 
-.debug_info     0x00000000      0xb8a
- .debug_info    0x00000000      0x657 Drivers/GPIO/src/gpio.o
- .debug_info    0x00000657      0x3f5 Drivers/GPIO/src/main.o
- .debug_info    0x00000a4c      0x13e Drivers/GPIO/src/startup.o
+.debug_info     0x00000000      0xb40
+ .debug_info    0x00000000      0x687 Drivers/GPIO/src/gpio.o
+ .debug_info    0x00000687      0x2eb Drivers/GPIO/src/main.o
+ .debug_info    0x00000972      0x1ce Drivers/GPIO/src/startup.o
 
-.debug_abbrev   0x00000000      0x436
- .debug_abbrev  0x00000000      0x18e Drivers/GPIO/src/gpio.o
- .debug_abbrev  0x0000018e      0x19c Drivers/GPIO/src/main.o
- .debug_abbrev  0x0000032a      0x10c Drivers/GPIO/src/startup.o
+.debug_abbrev   0x00000000      0x476
+ .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
+ .debug_abbrev  0x0000019f      0x190 Drivers/GPIO/src/main.o
+ .debug_abbrev  0x0000032f      0x147 Drivers/GPIO/src/startup.o
 
-.debug_loc      0x00000000      0x3a5
+.debug_loc      0x00000000      0x371
  .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
- .debug_loc     0x00000371       0x34 Drivers/GPIO/src/main.o
 
 .debug_aranges  0x00000000       0xc0
  .debug_aranges
@@ -275,25 +284,27 @@ LOAD linker stubs
  .debug_aranges
                 0x00000090       0x30 Drivers/GPIO/src/startup.o
 
-.debug_ranges   0x00000000      0x110
+.debug_ranges   0x00000000       0xc8
  .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000058       0x80 Drivers/GPIO/src/main.o
- .debug_ranges  0x000000d8       0x38 Drivers/GPIO/src/startup.o
+ .debug_ranges  0x00000058       0x50 Drivers/GPIO/src/main.o
+ .debug_ranges  0x000000a8       0x20 Drivers/GPIO/src/startup.o
 
-.debug_line     0x00000000      0x932
- .debug_line    0x00000000      0x4f7 Drivers/GPIO/src/gpio.o
- .debug_line    0x000004f7      0x29b Drivers/GPIO/src/main.o
- .debug_line    0x00000792      0x1a0 Drivers/GPIO/src/startup.o
+.debug_line     0x00000000      0x89b
+ .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
+ .debug_line    0x000004bf      0x216 Drivers/GPIO/src/main.o
+ .debug_line    0x000006d5      0x1c6 Drivers/GPIO/src/startup.o
 
-.debug_str      0x00000000      0x441
- .debug_str     0x00000000      0x37a Drivers/GPIO/src/gpio.o
-                                0x3d7 (size before relaxing)
- .debug_str     0x0000037a       0x50 Drivers/GPIO/src/main.o
-                                0x23c (size before relaxing)
- .debug_str     0x000003ca       0x77 Drivers/GPIO/src/startup.o
-                                0x1c8 (size before relaxing)
+.debug_str      0x00000000      0x4aa
+ .debug_str     0x00000000      0x394 Drivers/GPIO/src/gpio.o
+                                0x3f1 (size before relaxing)
+ .debug_str     0x00000394       0x3f Drivers/GPIO/src/main.o
+                                0x242 (size before relaxing)
+ .debug_str     0x000003d3       0xd7 Drivers/GPIO/src/startup.o
+                                0x24d (size before relaxing)
 
-.debug_frame    0x00000000      0x158
- .debug_frame   0x00000000       0xd0 Drivers/GPIO/src/gpio.o
- .debug_frame   0x000000d0       0x40 Drivers/GPIO/src/main.o
- .debug_frame   0x00000110       0x48 Drivers/GPIO/src/startup.o
+.debug_frame    0x00000000      0x1ac
+ .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
+ .debug_frame   0x000000dc       0x40 Drivers/GPIO/src/main.o
+ .debug_frame   0x0000011c       0x48 Drivers/GPIO/src/startup.o
+ .debug_frame   0x00000164       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x0000018c       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

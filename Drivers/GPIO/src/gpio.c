@@ -119,8 +119,10 @@ void __RCC_GPIO_CLK_ENABLE(GPIO_HandleTypeDef *GPIOx) {
     else if (GPIOx->regs == GPIO_C) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
     else if (GPIOx->regs == GPIO_D) RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
     else if (GPIOx->regs == GPIO_E) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
-    else if (GPIOx->regs == GPIO_F) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOFEN;
-    else if (GPIOx->regs == GPIO_G) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOGEN;
     else if (GPIOx->regs == GPIO_H) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOHEN;
-    else if (GPIOx->regs == GPIO_I) RCC->AHB2ENR |= RCC_AHB2ENR_GPIOIEN;
+
+    /* Read-back to ensure the clock enable has propagated through the bus
+     * before any GPIO register access (required per STM32 errata). */
+    __IO uint32_t tmpreg = RCC->AHB2ENR;
+    (void)tmpreg;
 }
