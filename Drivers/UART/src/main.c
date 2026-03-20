@@ -1,29 +1,57 @@
-#include "../inc/gpio.h"
+#include "../inc/uart.h"
 
-/*
- * NUCLEO-C562RE onboard user LED:
- *   LD1 Green = PA5 (the only user LED on this board)
- */
-#define DELAY_CYCLES 400000
+static char buffer[64];
 
-void delay_fn(volatile int count) {
-    for (volatile int i = 0; i < count; i++);
+// Global handle so the RX callback (called from IRQ context) can reach it
+static USART_HandleType usart;
+
+// RX interrupt callback — must be at file scope (not nested inside main).
+static void uart_rx_cb(char c) {
+    if (c == '\r' || c == '\n') {
+        // Enter pressed: move to next line (CR+LF)
+        USART_WriteChar(&usart, '\r');
+        USART_WriteChar(&usart, '\n');
+    } else {
+        USART_WriteChar(&usart, c);
+    }
 }
 
-int main(void) {
-    GPIO_InitTypeDef led_init;
-    led_init.Mode      = GPIO_MODE_OUTPUT_PP;
-    led_init.Pull      = GPIO_NOPULL;
-    led_init.Speed     = GPIO_SPEED_MEDIUM;
-    led_init.Alternate = 0;
+// Function prototypes
+void delay(volatile uint32_t count);
 
-    /* LD1 Green — PA5 (the only user LED on NUCLEO-C562RE) */
-    GPIO_HandleTypeDef ld1_green;
-    led_init.Pin = GPIO_PIN_5;
-    GPIO_constructor(&ld1_green, GPIO_A, &led_init);
+int main(void) {
+    // Initialize USART2 for RX and TX at 115200
+    USART_constructor(&usart, USART_2, RX_AND_TX, __115200);
+
+    // -------- Phase 1: Polling TX test --------
+    USART_WriteString(&usart, "=== Polling TX test ===\r\n");
+    USART_WriteString(&usart, "If you can read this, TX works!\r\n");
+
+    // -------- Phase 2: Polling RX test --------
+    USART_WriteString(&usart, "\r\n=== Polling RX test ===\r\n");
+    USART_WriteString(&usart, "Type something and press Enter:\r\n");
+
+    USART_ReadString(&usart, buffer, sizeof(buffer));
+
+    USART_WriteString(&usart, "You typed: ");
+    USART_WriteString(&usart, buffer);
+    USART_WriteString(&usart, "\r\n");
+    USART_WriteString(&usart, "Polling RX works!\r\n");
+
+    // -------- Phase 3: Interrupt-based RX echo --------
+    USART_WriteString(&usart, "\r\n=== Interrupt RX echo test ===\r\n");
+    USART_WriteString(&usart, "Type characters to see them echoed (interrupt-driven).\r\n");
+
+    USART_EnableRXInterrupt(&usart, uart_rx_cb);
 
     while (1) {
-        GPIO_TogglePin(&ld1_green, GPIO_PIN_5);
-        delay_fn(DELAY_CYCLES);
+        // main loop can do other work; RX is handled by interrupt callback
+        delay(1000000);
+    }
+}
+
+void delay(volatile uint32_t count) {
+    while(count--) {
+        __asm__("nop");
     }
 }

@@ -15,30 +15,45 @@ extern uint32_t __bss_end__;     /* end of .bss */
 
 typedef void (*isr_handler_t)(void);
 
+/* Need at least 56 entries for UART5_IRQn = 55 */
 #ifndef STM32_IRQ_TABLE_SIZE
 #define STM32_IRQ_TABLE_SIZE 64U
 #endif
 
-uint32_t SystemCoreClock = 16000000UL; // Default HSI frequency
+/* STM32C562RE boots from HSI = 48 MHz (144 MHz oscillator / 3) */
+uint32_t SystemCoreClock = 48000000UL;
 
 void SystemInit(void) {
-    // Default: HSI, no PLL
-    SystemCoreClock = 16000000UL;
+    SystemCoreClock = 48000000UL;
 }
+
+/* Weak aliases so that these handlers resolve to Default_Handler
+   unless overridden by strong definitions (e.g. in uart.c) */
+__attribute__((weak, alias("Default_Handler"))) void USART1_IRQHandler(void);
+__attribute__((weak, alias("Default_Handler"))) void USART2_IRQHandler(void);
+__attribute__((weak, alias("Default_Handler"))) void USART3_IRQHandler(void);
+__attribute__((weak, alias("Default_Handler"))) void UART4_IRQHandler(void);
+__attribute__((weak, alias("Default_Handler"))) void UART5_IRQHandler(void);
 
 __attribute__((section(".isr_vector")))
 isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
     [0]  = (isr_handler_t)&_estack,
     [1]  = Reset_Handler,
-    [2]  = Default_Handler,
-    [3]  = Default_Handler,
-    [4]  = Default_Handler,
-    [5]  = Default_Handler,
-    [6]  = Default_Handler,
-    [11] = Default_Handler,
-    [12] = Default_Handler,
-    [14] = Default_Handler,
-    [15] = Default_Handler,
+    [2]  = Default_Handler,   /* NMI */
+    [3]  = Default_Handler,   /* HardFault */
+    [4]  = Default_Handler,   /* MemManage */
+    [5]  = Default_Handler,   /* BusFault */
+    [6]  = Default_Handler,   /* UsageFault */
+    [11] = Default_Handler,   /* SVCall */
+    [12] = Default_Handler,   /* DebugMon */
+    [14] = Default_Handler,   /* PendSV */
+    [15] = Default_Handler,   /* SysTick */
+    /* STM32C562RE USART/UART IRQs */
+    [16 + 51] = USART1_IRQHandler,
+    [16 + 52] = USART2_IRQHandler,
+    [16 + 53] = USART3_IRQHandler,
+    [16 + 54] = UART4_IRQHandler,
+    [16 + 55] = UART5_IRQHandler,
 };
 
 void Reset_Handler(void) {
