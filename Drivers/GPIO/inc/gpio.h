@@ -192,6 +192,24 @@
 #define AFRH_PIN14_SET_AF8       ((uint32_t)0x08000000)        // set AF8 for PIN14 (bits 27:24)
 #define AFRH_PIN15_SET_AF8       ((uint32_t)0x80000000)        // set AF8 for PIN15 (bits 31:28)
 
+// GPIO AFR register Set bit definitions for AF9 (1001b) [FDCAN1]
+#define AFRL_PIN0_SET_AF9        ((uint32_t)0x00000009)        // set AF9 for PIN0 (bits 3:0)
+#define AFRL_PIN1_SET_AF9        ((uint32_t)0x00000090)        // set AF9 for PIN1 (bits 7:4)
+#define AFRL_PIN2_SET_AF9        ((uint32_t)0x00000900)        // set AF9 for PIN2 (bits 11:8)
+#define AFRL_PIN3_SET_AF9        ((uint32_t)0x00009000)        // set AF9 for PIN3 (bits 15:12)
+#define AFRL_PIN4_SET_AF9        ((uint32_t)0x00090000)        // set AF9 for PIN4 (bits 19:16)
+#define AFRL_PIN5_SET_AF9        ((uint32_t)0x00900000)        // set AF9 for PIN5 (bits 23:20)
+#define AFRL_PIN6_SET_AF9        ((uint32_t)0x09000000)        // set AF9 for PIN6 (bits 27:24)
+#define AFRL_PIN7_SET_AF9        ((uint32_t)0x90000000)        // set AF9 for PIN7 (bits 31:28)
+#define AFRH_PIN8_SET_AF9        ((uint32_t)0x00000009)        // set AF9 for PIN8 (bits 3:0)
+#define AFRH_PIN9_SET_AF9        ((uint32_t)0x00000090)        // set AF9 for PIN9 (bits 7:4)
+#define AFRH_PIN10_SET_AF9       ((uint32_t)0x00000900)        // set AF9 for PIN10 (bits 11:8)
+#define AFRH_PIN11_SET_AF9       ((uint32_t)0x00009000)        // set AF9 for PIN11 (bits 15:12)
+#define AFRH_PIN12_SET_AF9       ((uint32_t)0x00090000)        // set AF9 for PIN12 (bits 19:16)
+#define AFRH_PIN13_SET_AF9       ((uint32_t)0x00900000)        // set AF9 for PIN13 (bits 23:20)
+#define AFRH_PIN14_SET_AF9       ((uint32_t)0x09000000)        // set AF9 for PIN14 (bits 27:24)
+#define AFRH_PIN15_SET_AF9       ((uint32_t)0x90000000)        // set AF9 for PIN15 (bits 31:28)
+
 // OTYPER register bit definitions
 #define OTYPER_PIN0_OPEN_DRAIN ((uint32_t)0x00000001)        // set open-drain for PIN0
 #define OTYPER_PIN1_OPEN_DRAIN  ((uint32_t)0x00000002)        // set open-drain for PIN1
@@ -330,6 +348,8 @@ typedef struct
     __IO uint32_t APB1HENR;       /* 0x0A0  RCC APB1 peripheral high clock enable register  */
     __IO uint32_t APB2ENR;        /* 0x0A4  RCC APB2 peripheral clock enable register       */
     __IO uint32_t APB3ENR;        /* 0x0A8  RCC APB3 peripheral clock enable register       */
+         uint32_t RESERVED7[11]; /* 0x0AC–0x0D4 (includes LPENR registers, unused)         */
+    __IO uint32_t CCIPR1;         /* 0x0D8  RCC peripherals independent clock config reg 1  */
 } RCC_TypeDef;
 
 /* GPIO initialization structure */

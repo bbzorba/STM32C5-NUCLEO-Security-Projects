@@ -1,8 +1,9 @@
 # Makefile for STM32 NUCLEO C562RE development board
 
 #DONE
-PROJECT_DIR = Drivers/UART
+#PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Drivers/GPIO
+PROJECT_DIR = Drivers/bxCAN
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -10,13 +11,12 @@ PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Projects/Secure_Firmware_Update
 #PROJECT_DIR = Projects/TrustZone
 #PROJECT_DIR = Projects/Crypto
-#PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/bxCAN_cpp
 
 CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
-MCU=cortex-m4
+MCU := cortex-m33
 RM=del /Q /F
 
 # Flashing configuration
@@ -58,6 +58,15 @@ OPENOCD_TARGET := target/stm32u5x.cfg
 OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 endif
 
+# bxCAN (FDCAN) driver has a dedicated STM32C5 register-level port.
+ifeq ($(strip $(PROJECT_DIR)),Drivers/bxCAN)
+MCU := cortex-m33
+CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
+OPENOCD_IF := interface/stlink-dap.cfg
+OPENOCD_TARGET := target/stm32u5x.cfg
+OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
+endif
+
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small
 CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti -fno-use-cxa-atexit
 
@@ -72,6 +81,9 @@ LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--
 # project code can use the shared UART API without adding local stubs.
 ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink)
 DRIVERS := UART
+endif
+ifeq ($(strip $(PROJECT_DIR)),Drivers/bxCAN)
+DRIVERS := UART GPIO
 endif
 ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink_cpp)
 DRIVERS := UART_cpp GPIO_cpp
