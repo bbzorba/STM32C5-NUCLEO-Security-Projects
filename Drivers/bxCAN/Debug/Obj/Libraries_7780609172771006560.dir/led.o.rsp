@@ -1,0 +1,1 @@
+﻿F:\dev\STM32\STM32C5-NUCLEO-Projects\Projects\LED_Blink\src\led.c -o F:\dev\STM32\STM32C5-NUCLEO-Projects\Drivers\bxCAN\Debug\Obj\Libraries_7780609172771006560.dir --no_cse --no_unroll --no_inline --no_code_motion --no_tbaa --no_clustering --no_scheduling --debug --endian=little --cpu=Cortex-M3 --fpu=None --dlib_config D:\iar\ewarm-9.70.4\arm\inc\c\DLib_Config_Normal.h -Ol -e

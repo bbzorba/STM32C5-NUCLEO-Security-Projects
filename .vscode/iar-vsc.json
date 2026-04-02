@@ -1,0 +1,8 @@
+{
+  "configs": {
+    "${workspaceFolder}\\Drivers\\bxCAN\\project.ewp": "Debug"
+  },
+  "project": {
+    "path": "${workspaceFolder}\\Drivers\\bxCAN\\project.ewp"
+  }
+}

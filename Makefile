@@ -2,10 +2,11 @@
 
 #DONE
 #PROJECT_DIR = Drivers/UART
-#PROJECT_DIR = Drivers/GPIO
-PROJECT_DIR = Drivers/bxCAN
+PROJECT_DIR = Drivers/GPIO
+#PROJECT_DIR = Drivers/bxCAN
 
 #TBD
+#PROJECT_DIR = Projects/Button_LED_Blink_mutex
 #PROJECT_DIR = Projects/Memory_Protection
 #PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_Firmware_Update
@@ -457,35 +458,59 @@ CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
 
 # --------------------
-# IAR toolchain integration
-# - Use `make TOOLCHAIN=iar` to build using IAR's IarBuild.exe
-# - `make iar-build` will invoke IarBuild directly
-# - `make iar-debug` will build then open the project in IAR IDE (start C-SPY manually in the IDE)
-# You can override `IAR_PATH`, `IAR_CONFIG`, and `IAR_PROJECT` from environment or command line.
+# IAR toolchain integration (direct iccarm / ilinkarm / ielftool)
+# - Use `make iar-build` to compile+link using IAR ARM tools directly.
+#   No per-project .ewp file is needed; the Makefile drives source/include
+#   selection the same way it does for GCC.
+# - `make iar-open` / `make iar-debug` still open the IAR IDE if desired.
+# - Override IAR_ARM_PATH if your installation differs.
 # --------------------
 
-IAR_PATH ?= C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.50/common/bin
-IARBUILD := $(IAR_PATH)/IarBuild.exe
-IAREXE := $(IAR_PATH)/IarIde.exe
-IAR_CONFIG ?= Debug
-# Default guess: project file located next to PROJECT_DIR named project.ewp
-IAR_PROJECT ?= $(PROJECT_DIR)/project.ewp
+IAR_ARM_PATH ?= D:/iar/ewarm-9.70.4/arm/bin
+IAR_COMMON_PATH ?= D:/iar/ewarm-9.70.4/common/bin
+IAR_CC   := $(IAR_ARM_PATH)/iccarm.exe
+IAR_LINK := $(IAR_ARM_PATH)/ilinkarm.exe
+IAR_ELF  := $(IAR_ARM_PATH)/ielftool.exe
+IAREXE   := $(IAR_COMMON_PATH)/IarIdePm.exe
+IAR_ICF  ?= stm32c562re.icf
 
-.PHONY: iar-build iar-open iar-debug
+# Translate GCC-style CFLAGS into IAR equivalents
+IAR_CPU := Cortex-M33
+IAR_DEFINES := $(filter -D%,$(CFLAGS))
+IAR_DEFINES := $(IAR_DEFINES:-D%=%)
+IAR_INCLUDES := $(filter -I%,$(CFLAGS))
+IAR_INCLUDES := $(IAR_INCLUDES:-I%=%)
+
+IAR_CFLAGS := --cpu $(IAR_CPU) -e --debug \
+	$(foreach d,$(IAR_DEFINES),-D $(d)) \
+	$(foreach i,$(IAR_INCLUDES),-I $(i))
+
+IAR_OBJDIR := $(PROJECT_DIR)/iar_obj
+IAR_OBJ_C   := $(patsubst %.c,$(IAR_OBJDIR)/%.o,$(notdir $(SRC_C) $(EXTERNAL_SRC_C)))
+IAR_OBJ     := $(IAR_OBJ_C)
+IAR_ALL_SRC := $(SRC_C) $(EXTERNAL_SRC_C)
+
+.PHONY: iar-build iar-open iar-debug iar-clean
 iar-build:
-	@echo "Building with IAR: $(IAR_PROJECT) ($(IAR_CONFIG))"
-	@if not exist "$(IARBUILD)" (echo IAR build tool not found at "$(IARBUILD)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
-	@"$(IARBUILD)" -build $(IAR_CONFIG) "$(IAR_PROJECT)"
+	@echo "Building with IAR (direct): $(PROJECT_DIR)"
+	@mkdir -p "$(IAR_OBJDIR)" 2>/dev/null || true
+	$(foreach src,$(IAR_ALL_SRC),\
+		"$(IAR_CC)" $(IAR_CFLAGS) -o "$(IAR_OBJDIR)/$(notdir $(src:.c=.o))" "$(src)" && ) true
+	"$(IAR_LINK)" --config "$(IAR_ICF)" --entry Reset_Handler --map "$(TARGET)_iar.map" \
+		-o "$(TARGET)_iar.out" $(IAR_OBJDIR)/*.o
+	"$(IAR_ELF)" --bin "$(TARGET)_iar.out" "$(TARGET)_iar.bin"
+	@echo "IAR build complete: $(TARGET)_iar.out / $(TARGET)_iar.bin"
+
+iar-clean:
+	-rm -rf "$(IAR_OBJDIR)" "$(TARGET)_iar.out" "$(TARGET)_iar.bin" "$(TARGET)_iar.map" 2>/dev/null || true
 
 iar-open:
-	@echo "Opening project in IAR IDE: $(IAR_PROJECT)"
-	@if not exist "$(IAREXE)" (echo IAR IDE not found at "$(IAREXE)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
-	@"$(IAREXE)" "$(IAR_PROJECT)"
+	@echo "Opening IAR IDE..."
+	@"$(IAREXE)" &
 
 iar-debug: iar-build
 	@echo "Opening IAR IDE for debugging. Start C-SPY Debug in the IDE."
-	@if not exist "$(IAREXE)" (echo IAR IDE not found at "$(IAREXE)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
-	@"$(IAREXE)" "$(IAR_PROJECT)"
+	@"$(IAREXE)" &
 
 # If user uses TOOLCHAIN=iar, make the standard `build` depend on IAR build
 ifeq ($(strip $(TOOLCHAIN)),iar)
