@@ -455,3 +455,47 @@ SRC_CPP += $(filter-out $(SRC_CPP),$(SPI_SRC_CPP))
 SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
 CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
+
+# --------------------
+# IAR toolchain integration
+# - Use `make TOOLCHAIN=iar` to build using IAR's IarBuild.exe
+# - `make iar-build` will invoke IarBuild directly
+# - `make iar-debug` will build then open the project in IAR IDE (start C-SPY manually in the IDE)
+# You can override `IAR_PATH`, `IAR_CONFIG`, and `IAR_PROJECT` from environment or command line.
+# --------------------
+
+IAR_PATH ?= C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.50/common/bin
+IARBUILD := $(IAR_PATH)/IarBuild.exe
+IAREXE := $(IAR_PATH)/IarIde.exe
+IAR_CONFIG ?= Debug
+# Default guess: project file located next to PROJECT_DIR named project.ewp
+IAR_PROJECT ?= $(PROJECT_DIR)/project.ewp
+
+.PHONY: iar-build iar-open iar-debug
+iar-build:
+	@echo "Building with IAR: $(IAR_PROJECT) ($(IAR_CONFIG))"
+	@if not exist "$(IARBUILD)" (echo IAR build tool not found at "$(IARBUILD)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
+	@"$(IARBUILD)" -build $(IAR_CONFIG) "$(IAR_PROJECT)"
+
+iar-open:
+	@echo "Opening project in IAR IDE: $(IAR_PROJECT)"
+	@if not exist "$(IAREXE)" (echo IAR IDE not found at "$(IAREXE)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
+	@"$(IAREXE)" "$(IAR_PROJECT)"
+
+iar-debug: iar-build
+	@echo "Opening IAR IDE for debugging. Start C-SPY Debug in the IDE."
+	@if not exist "$(IAREXE)" (echo IAR IDE not found at "$(IAREXE)" & echo Install IAR Embedded Workbench or set IAR_PATH variable. & echo Downloads: https://www.iar.com/downloads/ & exit /b 1)
+	@"$(IAREXE)" "$(IAR_PROJECT)"
+
+# If user uses TOOLCHAIN=iar, make the standard `build` depend on IAR build
+ifeq ($(strip $(TOOLCHAIN)),iar)
+build: iar-build
+endif
+
+.PHONY: debug
+debug:
+ifeq ($(strip $(TOOLCHAIN)),iar)
+	$(MAKE) iar-debug
+else
+	@echo "Run your debugger (e.g., cortex-debug) or use IAR by invoking: make iar-debug"
+endif

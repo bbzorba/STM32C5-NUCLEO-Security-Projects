@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "IAR: Build Project",
+      "type": "shell",
+      "command": "make",
+      "args": ["PROJECT_DIR=${input:projectDir}", "TOOLCHAIN=iar", "build"],
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "IAR: Open Project in IAR IDE",
+      "type": "shell",
+      "command": "\"${input:iarPath}\"",
+      "args": ["${input:iarProject}"],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "projectDir",
+      "type": "promptString",
+      "description": "Relative path to project folder (e.g. Projects/LED_Blink or Drivers/bxCAN)",
+      "default": "$(PROJECT_DIR)"
+    },
+    {
+      "id": "iarPath",
+      "type": "promptString",
+      "description": "Full path to IarIde.exe or IarBuild.exe",
+      "default": "C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.50/common/bin/IarIde.exe"
+    },
+    {
+      "id": "iarProject",
+      "type": "promptString",
+      "description": "Full path to .ewp project file to open",
+      "default": "${workspaceFolder}/${input:projectDir}/project.ewp"
+    }
+  ]
+}
