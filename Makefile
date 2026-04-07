@@ -17,7 +17,21 @@ CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
 MCU := cortex-m33
-RM=del /Q /F
+# Platform-specific shell detection.
+# $(OS) is Windows_NT on *all* Windows machines, but the recipe shell may be
+# /bin/sh (MSYS2 / Git Bash make) or cmd.exe (native Windows make).  Detect the
+# actual shell so we pick the right builtins (rm vs del, cp vs copy, etc.).
+ifneq ($(findstring sh,$(notdir $(SHELL))),)
+# POSIX-like shell (sh / bash / zsh — MSYS2 / Git Bash / Linux / Mac)
+_POSIX_SH := 1
+RM       := rm -f
+DEVNULL  := /dev/null
+else
+# cmd.exe (native Windows make)
+_POSIX_SH := 0
+RM       := del /Q /F
+DEVNULL  := nul
+endif
 
 # Flashing configuration
 FLASH_ADDR=0x08000000
@@ -228,11 +242,16 @@ TARGET=$(PROJECT_DIR)/main
 .PHONY: help all build run clean flash flash_openocd flash_stlink flash_cubeprog
 
 all: build
+
 build: $(OBJ)
-	-$(RM) $(PROJECT_DIR)\src\*.o 2>nul || exit 0
 	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $(TARGET).elf $(LDFLAGS) $(EXTRA_LDFLAGS)
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
+ifeq ($(_POSIX_SH),1)
+	-$(RM) $(PROJECT_DIR)/src/*.o 2>/dev/null || true
+else
+	-$(RM) $(subst /,\,$(PROJECT_DIR))\src\*.o 2>nul || exit 0
+endif
 
 run: build
 
@@ -283,11 +302,16 @@ flash_stlink: build
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 
 clean:
+ifeq ($(_POSIX_SH),1)
+	-$(RM) $(OBJ) 2>/dev/null || true
+	-$(RM) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map 2>/dev/null || true
+else
 	-$(RM) $(subst /,\,$(OBJ)) 2>nul || exit 0
 	-$(RM) $(subst /,\,$(TARGET)).elf 2>nul || exit 0
 	-$(RM) $(subst /,\,$(TARGET)).hex 2>nul || exit 0
 	-$(RM) $(subst /,\,$(TARGET)).bin 2>nul || exit 0
 	-$(RM) $(subst /,\,$(TARGET)).map 2>nul || exit 0
+endif
 
 # Print any Makefile variable, e.g. make print-PROJECT_DIR
 .PHONY: print-%
@@ -494,9 +518,15 @@ iar-build:
 	@echo "----------------------------------------------------"
 	@echo "  IAR build: $(PROJECT_DIR) [iccarm V9.70, Cortex-M33]"
 	@echo "----------------------------------------------------"
+ifeq ($(_POSIX_SH),1)
+	@test -f "$(ICCARM)" || { echo "ERROR: iccarm not found at $(ICCARM)"; echo "Set IAR_ROOT, e.g.: make iar-build IAR_ROOT=C:/IAR/EWARM9"; exit 1; }
+	@test -f "$(IAR_ICF)" || { echo "ERROR: IAR linker config not found at $(IAR_ICF)"; exit 1; }
+	@mkdir -p "$(IAR_OUT)"
+else
 	@if not exist "$(ICCARM)" (echo ERROR: iccarm not found at $(ICCARM) & echo Set IAR_ROOT, e.g.: make iar-build IAR_ROOT=C:/IAR/EWARM9 & exit /b 1)
 	@if not exist "$(IAR_ICF)" (echo ERROR: IAR linker config not found at $(IAR_ICF) & exit /b 1)
 	@if not exist "$(IAR_OUT)" mkdir "$(IAR_OUT)"
+endif
 	python tools/iar_build.py \
 	  --iccarm "$(ICCARM)" \
 	  --ilinkarm "$(ILINKARM)" \
@@ -519,8 +549,8 @@ iar-debug:
 	@$(MAKE) iar-build DEBUG=1
 	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
-	@echo --- IAR build + flash complete: $(IAR_OUT)/main.out ---
-	@echo Press F5 in VS Code (select 'IAR C-SPY: ST-LINK') to start debugging.
+	@echo "--- IAR build + flash complete: $(IAR_OUT)/main.out ---"
+	@echo "Press F5 in VS Code [select IAR C-SPY: ST-LINK] to start debugging."
 
 # TOOLCHAIN=iar redirects the standard targets
 ifeq ($(strip $(TOOLCHAIN)),iar)
@@ -538,17 +568,24 @@ BUILD_OUT := build_out
 # debug-build: compile with debug flags, copy ELF to build_out/.
 # Does NOT flash — cortex-debug's GDB 'load' command flashes via OpenOCD
 # so that GDB's breakpoint table stays in sync with the target.
+
 debug-build:
 	@$(MAKE) clean
 	@$(MAKE) build DEBUG=1
+ifeq ($(_POSIX_SH),1)
+	@mkdir -p "$(BUILD_OUT)"
+	@cp -f "$(TARGET).elf" "$(BUILD_OUT)/main.elf"
+	@cp -f "$(TARGET).bin" "$(BUILD_OUT)/main.bin"
+else
 	@if not exist "$(BUILD_OUT)" mkdir "$(BUILD_OUT)"
 	@copy /Y "$(subst /,\,$(TARGET)).elf" "$(BUILD_OUT)\main.elf" >nul
 	@copy /Y "$(subst /,\,$(TARGET)).bin" "$(BUILD_OUT)\main.bin" >nul
+endif
 	@echo --- Debug build ready: $(BUILD_OUT)/main.elf ---
 
 # debug: standalone build + flash (without VS Code debugger)
 debug: debug-build
 	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
-	@echo --- GCC build + flash complete: $(BUILD_OUT)/main.elf ---
-	@echo Press F5 in VS Code (select 'Cortex Debug: ST-LINK') to start debugging.
+	@echo "--- GCC build + flash complete: $(BUILD_OUT)/main.elf ---"
+	@echo "Press F5 in VS Code [select Cortex Debug: ST-LINK] to start debugging."
