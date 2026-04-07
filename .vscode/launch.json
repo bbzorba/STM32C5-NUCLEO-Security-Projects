@@ -7,6 +7,8 @@
       "request": "launch",
       "target": "arm",
       "program": "${workspaceFolder}/iar_out/main.out",
+      "stopOnSymbol": "main",
+      "leaveTargetRunning": false,
       "workbenchPath": "D:/iar/ewarm-9.70.4",
       "driver": "ST-LINK",
       "driverOptions": [
@@ -22,11 +24,12 @@
         "--drv_debug_ap=1"
       ],
       "download": {
+        "flashLoader": "D:/iar/ewarm-9.70.4/arm/config/flashloader/ST/FlashSTM32C562xE.board",
         "deviceMacros": [
           "D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C5xx_DBG.dmac"
         ]
       },
-      "preLaunchTask": "IAR: Build + Flash"
+      "preLaunchTask": "IAR: Debug Build"
     },
     {
       "name": "Cortex Debug: ST-LINK",

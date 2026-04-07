@@ -11,6 +11,15 @@
       "problemMatcher": []
     },
     {
+      "label": "IAR: Debug Build",
+      "type": "shell",
+      "command": "make",
+      "args": ["iar-build", "DEBUG=1"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
       "label": "IAR: Build + Flash",
       "type": "shell",
       "command": "make",

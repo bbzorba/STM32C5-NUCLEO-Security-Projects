@@ -283,11 +283,11 @@ flash_stlink: build
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 
 clean:
-	-$(RM) $(OBJ) 2>nul || exit 0
-	-$(RM) $(TARGET).elf 2>nul || exit 0
-	-$(RM) $(TARGET).hex 2>nul || exit 0
-	-$(RM) $(TARGET).bin 2>nul || exit 0
-	-$(RM) $(TARGET).map 2>nul || exit 0
+	-$(RM) $(subst /,\,$(OBJ)) 2>nul || exit 0
+	-$(RM) $(subst /,\,$(TARGET)).elf 2>nul || exit 0
+	-$(RM) $(subst /,\,$(TARGET)).hex 2>nul || exit 0
+	-$(RM) $(subst /,\,$(TARGET)).bin 2>nul || exit 0
+	-$(RM) $(subst /,\,$(TARGET)).map 2>nul || exit 0
 
 # Print any Makefile variable, e.g. make print-PROJECT_DIR
 .PHONY: print-%

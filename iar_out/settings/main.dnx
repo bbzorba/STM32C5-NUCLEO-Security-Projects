@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 <settings>
     <StLinkDriver>
+        <stlinkserialNo>005000283235511738363730</stlinkserialNo>
+        <stlinkfoundProbes />
         <CpuHaltOnBreakpointSet>_ 0</CpuHaltOnBreakpointSet>
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
         <CStepIntDis>_ 0</CStepIntDis>
         <stlinkResetStyle>0</stlinkResetStyle>
         <stlinkResetStrategy>0</stlinkResetStrategy>
-        <stlinkserialNo>005000283235511738363730</stlinkserialNo>
-        <stlinkfoundProbes />
     </StLinkDriver>
     <PlDriver>
-        <MemConfigValue>D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C562RE.ddf</MemConfigValue>
         <FirstRun>0</FirstRun>
+        <MemConfigValue>D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C562RE.ddf</MemConfigValue>
     </PlDriver>
     <Trace1>
         <Enabled>0</Enabled>
