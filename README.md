@@ -99,7 +99,7 @@ The IAR build uses `iccarm`, `ilinkarm`, and `ielftool` directly from the Makefi
 1. Install IAR EWARM and note the installation path (default: `D:/iar/ewarm-9.70.4/`).
 2. If your path differs, override it on the command line or in the Makefile:
    ```sh
-   make iar-build PROJECT_DIR=Drivers/GPIO IAR_ARM_PATH=C:/path/to/iar/arm/bin
+   make iar-build PROJECT_DIR=Drivers/GPIO IAR_ROOT=C:/path/to/ewarm
    ```
 3. A shared IAR linker configuration file `stm32c562re.icf` in the repository root defines the memory layout (Flash 1024 KB @ `0x08000000`, RAM 128 KB @ `0x20000000`).
 
@@ -116,7 +116,7 @@ make iar-build PROJECT_DIR=Projects/LED_Blink
 make iar-clean PROJECT_DIR=Drivers/GPIO
 ```
 
-IAR output files (`main_iar.out`, `main_iar.bin`, `main_iar.map`) are generated inside the selected `PROJECT_DIR`. Object files go into `PROJECT_DIR/iar_obj/`.
+IAR output files are generated in `iar_out/` at the repository root (`main.out`, `main.bin`, `main.hex`, `main.map`).
 
 **How it works:**
 
@@ -130,17 +130,17 @@ Each project's `startup.c` uses `#ifdef __ICCARM__` guards to provide both IAR a
 | Target | Description |
 |---|---|
 | `iar-build` | Compile + link + generate `.bin` with IAR tools |
-| `iar-clean` | Remove IAR build artifacts (`iar_obj/`, `*_iar.*`) |
-| `iar-open` | Launch the IAR IDE |
-| `iar-debug` | Build with IAR then launch the IAR IDE |
+| `iar-clean` | Remove IAR build artifacts (`iar_out/`) |
+| `iar-flash` | Build with IAR and flash `iar_out/main.bin` |
+| `iar-debug` | Build with IAR in debug mode (`DEBUG=1`), flash, then attach with VS Code `cspy` launch |
 
 **Overridable variables:**
 
 | Variable | Default | Description |
 |---|---|---|
-| `IAR_ARM_PATH` | `D:/iar/ewarm-9.70.4/arm/bin` | Path to `iccarm`, `ilinkarm`, `ielftool` |
-| `IAR_COMMON_PATH` | `D:/iar/ewarm-9.70.4/common/bin` | Path to `IarIdePm.exe` |
+| `IAR_ROOT` | `D:/iar/ewarm-9.70.4` | Root path of EWARM installation |
 | `IAR_ICF` | `stm32c562re.icf` | IAR linker configuration file |
+| `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug`, `make iar-debug`) |
 
 ## Flashing
 
@@ -161,7 +161,7 @@ make flash PROJECT_DIR=Drivers/UART
 
 ### IAR C-SPY Debugger
 
-IAR ships its own debugger, **C-SPY**, which supports ST-Link out of the box. There are two ways to use it:
+IAR ships its own debugger, **C-SPY**, which supports ST-Link out of the box. There are two practical ways in this repository:
 
 #### Option A: From the command line (recommended for quick tests)
 
@@ -174,46 +174,42 @@ IAR ships its own debugger, **C-SPY**, which supports ST-Link out of the box. Th
    "D:/iar/ewarm-9.70.4/common/bin/cspybat.exe" ^
      --backend "D:/iar/ewarm-9.70.4/arm/bin/armproc.dll" ^
      "D:/iar/ewarm-9.70.4/arm/bin/armstlink2.dll" ^
-     Drivers/GPIO/main_iar.out ^
+   iar_out/main.out ^
      --plugin "D:/iar/ewarm-9.70.4/arm/bin/armbat.dll" ^
      --stlink_interface SWD
    ```
    This downloads the firmware, starts the CPU, and streams semihosting output (if any) to the terminal. Press `Ctrl+C` to stop.
 
-#### Option B: From the IAR IDE (full GUI debugging)
+#### Option B: VS Code with IAR C-SPY extension (recommended)
 
-1. Run:
+1. Build + flash debug firmware:
    ```sh
-   make iar-open
+   make iar-debug PROJECT_DIR=Drivers/GPIO
    ```
-   This launches the IAR IDE (`IarIdePm.exe`).
-2. In the IDE, go to **Project → Create New Project** or open an existing workspace.
-3. Since the Makefile drives compilation, you only need the IDE for debugging:
-   - Go to **Project → Options → Debugger → Setup** and choose **ST-LINK** as the driver.
-   - Under **Download**, point the **Download file** to your built `.out`, e.g. `Drivers/GPIO/main_iar.out`.
-   - Under **ST-LINK → Interface**, select **SWD**.
-4. Press `Ctrl+D` (or **Project → Download and Debug**) to start a debug session.
-5. Use the standard debug controls: **Step Over** (`F10`), **Step Into** (`F11`), **Step Out** (`Shift+F11`), **Run** (`F5`), **Break** (stop icon).
-6. Open **View → Watch** to inspect variables, **View → Register** for peripheral registers, and **View → Terminal I/O** for semihosting output.
+2. Start the VS Code debug config **IAR C-SPY: ST-LINK** (`F5`).
+3. Ensure `program` points to `iar_out/main.out` and `workbenchPath` points to your installed EWARM root.
+4. If step controls are disabled, press **Pause** first; step buttons activate only when target is halted.
+5. If breakpoints are skipped, confirm you built the same `PROJECT_DIR` you are editing and run `make iar-debug` again.
 
-#### Option C: VS Code with IAR extension
+#### Option C: GCC + Cortex-Debug in VS Code
 
-IAR provides a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=iarsystems.iar-build) that integrates C-SPY debugging directly into the VS Code debug panel.
+Use Cortex-Debug with OpenOCD for GCC-built firmware.
 
-1. Install the **IAR Build** extension from the VS Code marketplace.
-2. Add a debug configuration to `.vscode/launch.json`:
+1. Build + flash debug firmware:
+   ```sh
+   make debug PROJECT_DIR=Drivers/GPIO
+   ```
+2. Ensure `.vscode/launch.json` contains the Cortex configuration:
    ```jsonc
    {
-     "name": "IAR C-SPY (ST-Link)",
-     "type": "cspy",
+     "name": "Cortex Debug: ST-LINK",
+     "type": "cortex-debug",
      "request": "launch",
-     "program": "${workspaceFolder}/Drivers/GPIO/main_iar.out",
-     "driver": "stlink",
-     "driverOptions": ["--stlink_interface", "SWD"],
-     "workbenchPath": "D:/iar/ewarm-9.70.4"
+     "executable": "${workspaceFolder}/build_out/main.elf",
+     "runToEntryPoint": "main"
    }
    ```
-3. Select the **IAR C-SPY (ST-Link)** configuration in the Run and Debug panel and press `F5`.
+3. Select **Cortex Debug: ST-LINK** in Run and Debug and press `F5`.
 
 ## Key Register Addresses (STM32C5)
 
@@ -232,7 +228,11 @@ IAR provides a [VS Code extension](https://marketplace.visualstudio.com/items?it
 - **Missing separator in Makefile** — ensure command lines use tabs, not spaces
 - **Toolchain not found** — add `arm-none-eabi-gcc` and `openocd` to system PATH
 - **Wrong LED pins** — check your board's user manual and update `Drivers/GPIO/src/main.c`
-- **OpenOCD target not found** — ensure your OpenOCD installation includes `target/stm32c5x.cfg`
+- **OpenOCD target not found** — ensure your OpenOCD installation includes `target/stm32u5x.cfg` (used by this repo's STM32C5 setup)
+- **Breakpoints never hit** — most common causes:
+   - Built a different project than the file you are editing. Check `PROJECT_DIR` in `Makefile` or pass `PROJECT_DIR=...` on the command.
+   - Optimized build loaded. Use `make debug` or `make iar-debug` (both enforce debug-friendly options).
+   - Breakpoint is hollow/unverified. Start debug first, then check it turns solid red.
 
 ## References
 

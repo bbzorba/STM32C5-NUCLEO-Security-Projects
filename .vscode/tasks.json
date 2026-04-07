@@ -29,6 +29,15 @@
       "problemMatcher": []
     },
     {
+      "label": "GCC: Debug Build",
+      "type": "shell",
+      "command": "make",
+      "args": ["debug-build"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
       "label": "GCC: Build + Flash for Debug",
       "type": "shell",
       "command": "make",

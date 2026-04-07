@@ -40,6 +40,11 @@ CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32F407xx -DUSE_HAL_DRIVER \
 	-I$(PROJECT_DIR)/inc \
 	-ffunction-sections -fdata-sections
 
+# DEBUG=1 enables debugger-friendly codegen. This improves breakpoint reliability.
+ifeq ($(strip $(DEBUG)),1)
+CFLAGS := $(filter-out -O2,$(CFLAGS)) -Og -g3 -fno-inline
+endif
+
 # UART driver has a dedicated STM32C5 register-level port.
 ifeq ($(strip $(PROJECT_DIR)),Drivers/UART)
 MCU := cortex-m33
@@ -497,6 +502,7 @@ iar-build:
 	  --ilinkarm "$(ILINKARM)" \
 	  --ielftool "$(IELFTOOL)" \
 	  --icf "$(IAR_ICF)" \
+	  --opt-level $(if $(filter 1,$(DEBUG)),none,size) \
 	  --outdir "$(IAR_OUT)" \
 	  --inc "$(PROJECT_DIR)/inc" \
 	  $(foreach d,$(FILTERED_DRIVER_DIRS),--inc "$(d)/inc") \
@@ -509,7 +515,8 @@ iar-flash: iar-build
 iar-clean:
 	-python -c "import shutil,os; shutil.rmtree('$(IAR_OUT)', ignore_errors=True)"
 
-iar-debug: iar-build
+iar-debug:
+	@$(MAKE) iar-build DEBUG=1
 	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
 	@echo --- IAR build + flash complete: $(IAR_OUT)/main.out ---
@@ -526,11 +533,21 @@ endif
 # launch config always finds build_out/main.elf regardless of PROJECT_DIR.
 BUILD_OUT := build_out
 
-.PHONY: debug
-debug: build
+.PHONY: debug-build debug
+
+# debug-build: compile with debug flags, copy ELF to build_out/.
+# Does NOT flash — cortex-debug's GDB 'load' command flashes via OpenOCD
+# so that GDB's breakpoint table stays in sync with the target.
+debug-build:
+	@$(MAKE) clean
+	@$(MAKE) build DEBUG=1
 	@if not exist "$(BUILD_OUT)" mkdir "$(BUILD_OUT)"
 	@copy /Y "$(subst /,\,$(TARGET)).elf" "$(BUILD_OUT)\main.elf" >nul
 	@copy /Y "$(subst /,\,$(TARGET)).bin" "$(BUILD_OUT)\main.bin" >nul
+	@echo --- Debug build ready: $(BUILD_OUT)/main.elf ---
+
+# debug: standalone build + flash (without VS Code debugger)
+debug: debug-build
 	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
 	@echo --- GCC build + flash complete: $(BUILD_OUT)/main.elf ---

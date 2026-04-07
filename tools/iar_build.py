@@ -37,6 +37,7 @@ def main():
     ap.add_argument("--ielftool", required=True)
     ap.add_argument("--icf",      required=True)
     ap.add_argument("--outdir",   required=True)
+    ap.add_argument("--opt-level", choices=["size", "none"], default="size")
     ap.add_argument("--inc",      action="append", default=[])
     ap.add_argument("--define",   action="append", default=[])
     ap.add_argument("sources",    nargs="+")
@@ -45,13 +46,15 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
 
     # --- IAR C compiler flags ---
+    opt_flag = "-On" if args.opt_level == "size" else "-Onone"
+
     icc_base = [
         "--cpu=Cortex-M33",
         "--fpu=none",
         "--endian=little",
         "-e",                   # IAR language extensions (needed for #pragma weak etc.)
         "--dlib_config", "normal",
-        "-On",                  # optimise for code size
+        opt_flag,
         "--debug",
         "--diag_suppress=Pa082",  # suppress volatile ordering warning (harmless)
     ]
