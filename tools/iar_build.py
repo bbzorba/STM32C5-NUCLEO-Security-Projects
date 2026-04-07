@@ -46,7 +46,8 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
 
     # --- IAR C compiler flags ---
-    opt_flag = "-On" if args.opt_level == "size" else "-Onone"
+    # IAR optimization: -On = none, -Ol = low, -Om = medium, -Ohz = high/size
+    opt_flag = "-On" if args.opt_level == "none" else "-Ohz"
 
     icc_base = [
         "--cpu=Cortex-M33",

@@ -1,14 +1,13 @@
 ﻿###############################################################################
 #
-# IAR ELF Linker V9.70.4.588/W64 for ARM                  07/Apr/2026  15:22:17
+# IAR ELF Linker V9.70.4.588/W64 for ARM                  07/Apr/2026  17:38:15
 # Copyright 2007-2026 IAR Systems AB.
 #
 #    Output file  =  iar_out\main.out
 #    Map file     =  iar_out\main.map
 #    Command line =
 #        --config stm32c562re.icf --entry Reset_Handler --map iar_out\main.map
-#        -o iar_out\main.out iar_out\gpio.o iar_out\uart.o iar_out\bxcan.o
-#        iar_out\main.o iar_out\startup.o
+#        -o iar_out\main.out iar_out\gpio.o iar_out\main.o iar_out\startup.o
 #
 ###############################################################################
 
@@ -47,109 +46,30 @@ No sections matched the following patterns:
   ro section .intvec  in "A0"
 
 
-  Section            Kind         Address  Alignment    Size  Object
-  -------            ----         -------  ---------    ----  ------
-"P1":                                                 0x208c
-  .text              ro code   0x800'0000          4   0xbf8  bxcan.o [1]
-  .text              ro code   0x800'0bf8          4   0x244  gpio.o [1]
-  .text              ro code   0x800'0e3c          4    0x56  ABImemcpy_unaligned.o [3]
-  .text              ro code   0x800'0e92          2    0x2a  copy_init3.o [3]
-  .text              ro code   0x800'0ebc          4    0x44  snprintf.o [2]
-  .text              ro code   0x800'0f00          4   0x4ca  uart.o [1]
-  .text              ro code   0x800'13ca          2    0x1a  xsnprout.o [2]
-  .text              ro code   0x800'13e4          4    0x66  ABImemset.o [3]
-  .text              ro code   0x800'144c          4   0x4f1  xprintfsmall_nomb.o [2]
-  .text              ro code   0x800'1940          4    0x16  strchr.o [3]
-  .text              ro code   0x800'1958          4    0x40  xfail_s.o [2]
-  .text              ro code   0x800'1998          4    0x36  strlen.o [3]
-  .text              ro code   0x800'19d0          4    0x58  memchr.o [3]
-  .text              ro code   0x800'1a28          2     0x6  abort.o [2]
-  .text              ro code   0x800'1a30          4     0xc  XXexit.o [3]
-  .text              ro code   0x800'1a3c          4    0x50  main.o [1]
-  .rodata            const     0x800'1a8c          4    0x3c  bxcan.o [1]
-  .rodata            const     0x800'1ac8          4    0x3c  bxcan.o [1]
-  .rodata            const     0x800'1b04          4    0x38  bxcan.o [1]
-  .text              ro code   0x800'1b3c          2    0x38  zero_init3.o [3]
-  .rodata            const     0x800'1b74          4    0x30  bxcan.o [1]
-  .rodata            const     0x800'1ba4          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1bd0          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1bfc          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1c28          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1c54          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1c80          4    0x2c  bxcan.o [1]
-  .rodata            const     0x800'1cac          4    0x28  bxcan.o [1]
-  .rodata            const     0x800'1cd4          4    0x28  bxcan.o [1]
-  .text              ro code   0x800'1cfc          4    0x28  data_init.o [3]
-  .rodata            const     0x800'1d24          4    0x24  bxcan.o [1]
-  .rodata            const     0x800'1d48          4    0x24  bxcan.o [1]
-  .rodata            const     0x800'1d6c          4    0x24  bxcan.o [1]
-  .iar.init_table    const     0x800'1d90          4    0x24  - Linker created -
-  .rodata            const     0x800'1db4          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1dd4          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1df4          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1e14          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1e34          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1e54          4    0x20  bxcan.o [1]
-  .rodata            const     0x800'1e74          4    0x20  bxcan.o [1]
-  .text              ro code   0x800'1e94          4    0x20  startup.o [1]
-  .rodata            const     0x800'1eb4          4    0x1c  bxcan.o [1]
-  .rodata            const     0x800'1ed0          4    0x1c  bxcan.o [1]
-  .rodata            const     0x800'1eec          4    0x1c  bxcan.o [1]
-  .rodata            const     0x800'1f08          4    0x1c  bxcan.o [1]
-  .rodata            const     0x800'1f24          4    0x1c  bxcan.o [1]
-  .rodata            const     0x800'1f40          4    0x1c  main.o [1]
-  .rodata            const     0x800'1f5c          4    0x18  bxcan.o [1]
-  .rodata            const     0x800'1f74          4    0x18  bxcan.o [1]
-  .rodata            const     0x800'1f8c          4    0x18  bxcan.o [1]
-  .rodata            const     0x800'1fa4          4    0x18  bxcan.o [1]
-  .rodata            const     0x800'1fbc          4    0x18  bxcan.o [1]
-  .rodata            const     0x800'1fd4          4    0x14  bxcan.o [1]
-  .rodata            const     0x800'1fe8          4    0x14  bxcan.o [1]
-  .rodata            const     0x800'1ffc          4    0x10  bxcan.o [1]
-  .rodata            const     0x800'200c          4    0x10  bxcan.o [1]
-  .rodata            const     0x800'201c          4    0x10  bxcan.o [1]
-  .rodata            const     0x800'202c          4     0xc  bxcan.o [1]
-  .rodata            const     0x800'2038          4     0xc  bxcan.o [1]
-  .rodata            const     0x800'2044          4     0xc  bxcan.o [1]
-  .rodata            const     0x800'2050          4     0xc  bxcan.o [1]
-  .rodata            const     0x800'205c          4     0xc  bxcan.o [1]
-  .rodata            const     0x800'2068          4     0x8  bxcan.o [1]
-  .rodata            const     0x800'2070          4     0x8  bxcan.o [1]
-  .rodata            const     0x800'2078          4     0x8  bxcan.o [1]
-  .rodata            const     0x800'2080          4     0x8  bxcan.o [1]
-  Initializer bytes  const     0x800'2088          4     0x4  <for P2-1>
-  .rodata            const     0x800'208c                0x0  zero_init3.o [3]
-  .rodata            const     0x800'208c                0x0  copy_init3.o [3]
-                             - 0x800'208c             0x208c
+  Section            Kind         Address  Alignment   Size  Object
+  -------            ----         -------  ---------   ----  ------
+"P1":                                                 0x2f0
+  .text              ro code   0x800'0000          4  0x20c  gpio.o [1]
+  .text              ro code   0x800'020c          4   0x58  main.o [1]
+  .text              ro code   0x800'0264          2   0x2a  copy_init3.o [3]
+  .text              ro code   0x800'0290          4   0x28  data_init.o [3]
+  .iar.init_table    const     0x800'02b8          4   0x14  - Linker created -
+  .text              ro code   0x800'02cc          4   0x20  startup.o [1]
+  Initializer bytes  const     0x800'02ec          4    0x4  <for P2-1>
+  .rodata            const     0x800'02f0               0x0  copy_init3.o [3]
+                             - 0x800'02f0             0x2f0
 
-"P2", part 1 of 2:                                       0x4
-  P2-1                        0x2000'0000          4     0x4  <Init block>
-    .data            inited   0x2000'0000          4     0x4  startup.o [1]
-                            - 0x2000'0004                0x4
-
-"P2", part 2 of 2:                                      0x70
-  .bss               zero     0x2000'0004          4    0x14  bxcan.o [1]
-  .bss               zero     0x2000'0018          4    0x14  bxcan.o [1]
-  .bss               zero     0x2000'002c          4    0x14  bxcan.o [1]
-  .bss               zero     0x2000'0040          4     0x8  bxcan.o [1]
-  .bss               zero     0x2000'0048          4     0x8  bxcan.o [1]
-  .bss               zero     0x2000'0050          4     0x4  uart.o [1]
-  .bss               zero     0x2000'0054          4     0x4  uart.o [1]
-  .bss               zero     0x2000'0058          4     0x4  uart.o [1]
-  .bss               zero     0x2000'005c          4     0x4  uart.o [1]
-  .bss               zero     0x2000'0060          4     0x4  uart.o [1]
-  .bss               zero     0x2000'0064          4     0x4  bxcan.o [1]
-  .bss               zero     0x2000'0068          4     0x4  bxcan.o [1]
-  .bss               zero     0x2000'006c          4     0x4  xfail_s.o [2]
-  .bss               zero     0x2000'0070                0x1  bxcan.o [1]
-                            - 0x2000'0071               0x6d
+"P2":                                                   0x4
+  P2-1                        0x2000'0000          4    0x4  <Init block>
+    .data            inited   0x2000'0000          4    0x4  startup.o [1]
+                            - 0x2000'0004               0x4
 
 Unused ranges:
 
          From           To      Size
          ----           --      ----
-   0x800'208c   0x807'ffff  0x7'df74
-  0x2000'0074  0x2001'ffff  0x1'ff8c
+   0x800'02f0   0x807'ffff  0x7'fd10
+  0x2000'0004  0x2001'ffff  0x1'fffc
 
 
 *******************************************************************************
@@ -158,13 +78,9 @@ Unused ranges:
 
           Address      Size
           -------      ----
-Zero (__iar_zero_init3)
-    1 destination range, total size 0x6d:
-          0x2000'0004  0x6d
-
 Copy (__iar_copy_init3)
     1 source range, total size 0x4:
-           0x800'2088   0x4
+           0x800'02ec   0x4
     1 destination range, total size 0x4:
           0x2000'0000   0x4
 
@@ -174,47 +90,33 @@ Copy (__iar_copy_init3)
 *** MODULE SUMMARY
 ***
 
-    Module                 ro code  ro data  rw data
-    ------                 -------  -------  -------
+    Module          ro code  ro data  rw data
+    ------          -------  -------  -------
 command line/config:
-    ------------------------------------------------
+    -----------------------------------------
     Total:
 
 D:\baris\personal\personal_projects\STM32C5-NUCLEO_Projects\iar_out: [1]
-    bxcan.o                  3'064    1'340       85
-    gpio.o                     580
-    main.o                      80       28
-    startup.o                   32        4        4
-    uart.o                   1'226                20
-    ------------------------------------------------
-    Total:                   4'982    1'372      109
+    gpio.o              524
+    main.o               88
+    startup.o            32        4        4
+    -----------------------------------------
+    Total:              644        4        4
 
 dl7M_tln.a: [2]
-    abort.o                      6
-    snprintf.o                  68
-    xfail_s.o                   64                 4
-    xprintfsmall_nomb.o      1'265
-    xsnprout.o                  26
-    ------------------------------------------------
-    Total:                   1'429                 4
+    -----------------------------------------
+    Total:
 
 rt7M_tl.a: [3]
-    ABImemcpy_unaligned.o       86
-    ABImemset.o                102
-    XXexit.o                    12
-    copy_init3.o                42
-    data_init.o                 40
-    memchr.o                    88
-    strchr.o                    22
-    strlen.o                    54
-    zero_init3.o                56
-    ------------------------------------------------
-    Total:                     502
+    copy_init3.o         42
+    data_init.o          40
+    -----------------------------------------
+    Total:               82
 
-    Gaps                        11
-    Linker created                       36
-----------------------------------------------------
-    Grand Total:             6'924    1'408      113
+    Gaps                  2
+    Linker created                20
+---------------------------------------------
+    Grand Total:        728       24        4
 
 
 *******************************************************************************
@@ -223,91 +125,30 @@ rt7M_tl.a: [3]
 
 Entry                       Address   Size  Type      Object
 -----                       -------   ----  ----      ------
-.iar.init_table$$Base    0x800'1d90          --   Gb  - Linker created -
-.iar.init_table$$Limit   0x800'1db4          --   Gb  - Linker created -
-BRR_Oversample_by_16     0x800'0f29    0xc  Code  Gb  uart.o [1]
-CAN_ComputeNBTP          0x800'00a5   0x32  Code  Lc  bxcan.o [1]
-CAN_DisableRXInterrupt   0x800'03d5   0x18  Code  Gb  bxcan.o [1]
-CAN_EnableRXInterrupt    0x800'03a1   0x34  Code  Gb  bxcan.o [1]
-CAN_FilterAcceptAll      0x800'02b1    0xa  Code  Gb  bxcan.o [1]
-CAN_GPIO_Init            0x800'0049   0x5c  Code  Lc  bxcan.o [1]
-CAN_Init                 0x800'01a1  0x110  Code  Gb  bxcan.o [1]
-CAN_LoopbackTest         0x800'0479  0x3b2  Code  Gb  bxcan.o [1]
-CAN_PrintMsg             0x800'0407   0x6a  Code  Lc  bxcan.o [1]
-CAN_ReadFIFO             0x800'00d7   0xac  Code  Lc  bxcan.o [1]
-CAN_Receive              0x800'0385   0x1c  Code  Gb  bxcan.o [1]
-CAN_TransceiverTest      0x800'0841  0x2a0  Code  Gb  bxcan.o [1]
-CAN_Transmit             0x800'02bb   0xca  Code  Gb  bxcan.o [1]
-CAN_constructor          0x800'0183   0x1c  Code  Gb  bxcan.o [1]
-GPIO_Init                0x800'0c0d  0x146  Code  Gb  gpio.o [1]
-GPIO_ReadPin             0x800'0d53   0x18  Code  Gb  gpio.o [1]
-GPIO_TogglePin           0x800'0d8d   0x10  Code  Gb  gpio.o [1]
-GPIO_WritePin            0x800'0d6b   0x22  Code  Gb  gpio.o [1]
-GPIO_constructor         0x800'0bf9   0x14  Code  Gb  gpio.o [1]
-NVIC_DisableIRQ          0x800'001b   0x1a  Code  Lc  bxcan.o [1]
-NVIC_EnableIRQ           0x800'0f01   0x1a  Code  Lc  uart.o [1]
-NVIC_EnableIRQ           0x800'0001   0x1a  Code  Lc  bxcan.o [1]
-NVIC_SetPriority         0x800'0f1b    0xe  Code  Lc  uart.o [1]
-Region$$Table$$Base      0x800'1d90          --   Gb  - Linker created -
-Region$$Table$$Limit     0x800'1db4          --   Gb  - Linker created -
-Reset_Handler            0x800'1ea5   0x10  Code  Gb  startup.o [1]
+.iar.init_table$$Base    0x800'02b8          --   Gb  - Linker created -
+.iar.init_table$$Limit   0x800'02cc          --   Gb  - Linker created -
+GPIO_Init                0x800'0015  0x146  Code  Gb  gpio.o [1]
+GPIO_TogglePin           0x800'015b   0x10  Code  Gb  gpio.o [1]
+GPIO_constructor         0x800'0001   0x14  Code  Gb  gpio.o [1]
+Region$$Table$$Base      0x800'02b8          --   Gb  - Linker created -
+Region$$Table$$Limit     0x800'02cc          --   Gb  - Linker created -
+Reset_Handler            0x800'02dd   0x10  Code  Gb  startup.o [1]
 SystemCoreClock         0x2000'0000    0x4  Data  Gb  startup.o [1]
-SystemInit               0x800'1e95    0x8  Code  Gb  startup.o [1]
-USART_Init               0x800'0f4d  0x3d4  Code  Gb  uart.o [1]
-USART_WriteString        0x800'139d   0x2e  Code  Gb  uart.o [1]
-USART_constructor        0x800'0f35   0x18  Code  Gb  uart.o [1]
-USART_x_Write            0x800'1321   0x12  Code  Gb  uart.o [1]
-_LC                      0x800'144d    0x6  Code  Lc  xprintfsmall_nomb.o [2]
-_LitobSmallNoMb          0x800'181b   0xce  Code  Lc  xprintfsmall_nomb.o [2]
-_PrintfSmallNoMb         0x800'1455  0x3ba  Code  Gb  xprintfsmall_nomb.o [2]
-_PutcharsSmallNoMb       0x800'18e9   0x2e  Code  Lc  xprintfsmall_nomb.o [2]
-_SNProut                 0x800'13cb   0x1a  Code  Gb  xsnprout.o [2]
-__RCC_GPIO_CLK_ENABLE    0x800'0d9d   0x84  Code  Gb  gpio.o [1]
-__aeabi_memset           0x800'13e5         Code  Gb  ABImemset.o [3]
-__exit                   0x800'1a31         Code  Gb  XXexit.o [3]
-__iar_Fail_s             0x800'1959   0x1c  Code  Gb  xfail_s.o [2]
-__iar_Memchr             0x800'19d1         Code  Gb  memchr.o [3]
-__iar_Memset             0x800'13e5         Code  Gb  ABImemset.o [3]
-__iar_Memset_word        0x800'13ed         Code  Gb  ABImemset.o [3]
-__iar_Strchr             0x800'1941         Code  Gb  strchr.o [3]
-__iar_copy_init3         0x800'0e93   0x2a  Code  Gb  copy_init3.o [3]
-__iar_data_init3         0x800'1cfd   0x28  Code  Gb  data_init.o [3]
-__iar_unaligned_memcpy4
-                         0x800'0e3d         Code  Gb  ABImemcpy_unaligned.o [3]
-__iar_unaligned_memcpy8
-                         0x800'0e3d         Code  Gb  ABImemcpy_unaligned.o [3]
-__iar_zero_init3         0x800'1b3d   0x38  Code  Gb  zero_init3.o [3]
-abort                    0x800'1a29    0x6  Code  Gb  abort.o [2]
-delay                    0x800'0035   0x14  Code  Lc  bxcan.o [1]
-loopback_irq_callback    0x800'03ed   0x1a  Code  Lc  bxcan.o [1]
-main                     0x800'1a3d   0x50  Code  Gb  main.o [1]
-memchr                   0x800'19d1         Code  Gb  memchr.o [3]
-s_b1                    0x2000'0048    0x8  Data  Lc  bxcan.o [1]
-s_b1_init               0x2000'0018   0x14  Data  Lc  bxcan.o [1]
-s_can1_handle           0x2000'0068    0x4  Data  Lc  bxcan.o [1]
-s_gpio_initialized      0x2000'0064    0x4  Data  Lc  bxcan.o [1]
-s_irq_msg_received      0x2000'0070    0x1  Data  Lc  bxcan.o [1]
-s_irq_rx_msg            0x2000'002c   0x14  Data  Lc  bxcan.o [1]
-s_ld1                   0x2000'0040    0x8  Data  Lc  bxcan.o [1]
-s_ld1_init              0x2000'0004   0x14  Data  Lc  bxcan.o [1]
-s_uart4_handle          0x2000'005c    0x4  Data  Lc  uart.o [1]
-s_uart5_handle          0x2000'0060    0x4  Data  Lc  uart.o [1]
-s_usart1_handle         0x2000'0050    0x4  Data  Lc  uart.o [1]
-s_usart2_handle         0x2000'0054    0x4  Data  Lc  uart.o [1]
-s_usart3_handle         0x2000'0058    0x4  Data  Lc  uart.o [1]
-sec_hand                0x2000'006c    0x4  Data  Lc  xfail_s.o [2]
-snprintf                 0x800'0ebd   0x44  Code  Gb  snprintf.o [2]
-strchr                   0x800'1941         Code  Gb  strchr.o [3]
-strlen                   0x800'1999         Code  Gb  strlen.o [3]
+SystemInit               0x800'02cd    0x8  Code  Gb  startup.o [1]
+__RCC_GPIO_CLK_ENABLE    0x800'016b   0x84  Code  Gb  gpio.o [1]
+__iar_copy_init3         0x800'0265   0x2a  Code  Gb  copy_init3.o [3]
+__iar_data_init3         0x800'0291   0x28  Code  Gb  data_init.o [3]
+delay_fn                 0x800'020d   0x1c  Code  Gb  main.o [1]
+main                     0x800'0229   0x32  Code  Gb  main.o [1]
 
 
 [1] = D:\baris\personal\personal_projects\STM32C5-NUCLEO_Projects\iar_out
 [2] = dl7M_tln.a
 [3] = rt7M_tl.a
 
-  6'924 bytes of readonly  code memory
-  1'408 bytes of readonly  data memory
-    113 bytes of readwrite data memory
+  728 bytes of readonly  code memory
+   24 bytes of readonly  data memory
+    4 bytes of readwrite data memory
 
 Errors: none
 Warnings: none
