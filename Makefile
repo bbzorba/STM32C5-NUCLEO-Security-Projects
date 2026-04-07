@@ -6,7 +6,6 @@ PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
 
 #TBD
-#PROJECT_DIR = Projects/Button_LED_Blink_mutex
 #PROJECT_DIR = Projects/Memory_Protection
 #PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_Firmware_Update
@@ -388,12 +387,11 @@ SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/I2C/inc -IDrivers/UART/inc
 endif
 
-# Project-specific wiring for bxCAN: needs GPIO, UART & LED_Blink drivers
+# Project-specific wiring for bxCAN: needs GPIO & UART drivers
 ifeq ($(PROJECT_DIR),Drivers/bxCAN)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(LED_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IProjects/LED_Blink/inc
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
 endif
 
 # Project-specific wiring for LIS302DL_Accelerometer: needs GPIO, SPI & UART drivers
@@ -458,69 +456,82 @@ CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
 
 # --------------------
-# IAR toolchain integration (direct iccarm / ilinkarm / ielftool)
-# - Use `make iar-build` to compile+link using IAR ARM tools directly.
-#   No per-project .ewp file is needed; the Makefile drives source/include
-#   selection the same way it does for GCC.
-# - `make iar-open` / `make iar-debug` still open the IAR IDE if desired.
-# - Override IAR_ARM_PATH if your installation differs.
+# IAR toolchain integration
+# Builds the SAME source files as the GCC target using iccarm/ilinkarm directly.
+# No .ewp project file required — all configuration lives here in the Makefile.
+#
+# Tool paths:  IAR_ROOT  = root of IAR EWARM install
+#              ICCARM    = ARM C compiler
+#              ILINKARM  = ARM linker
+#              IELFTOOL  = converts .out → .hex / .bin  (like arm-none-eabi-objcopy)
+#
+# Overrideable from command line, e.g.:
+#   make iar-build IAR_ROOT=C:/IAR/EWARM9
 # --------------------
 
-IAR_ARM_PATH ?= D:/iar/ewarm-9.70.4/arm/bin
-IAR_COMMON_PATH ?= D:/iar/ewarm-9.70.4/common/bin
-IAR_CC   := $(IAR_ARM_PATH)/iccarm.exe
-IAR_LINK := $(IAR_ARM_PATH)/ilinkarm.exe
-IAR_ELF  := $(IAR_ARM_PATH)/ielftool.exe
-IAREXE   := $(IAR_COMMON_PATH)/IarIdePm.exe
-IAR_ICF  ?= stm32c562re.icf
+IAR_ROOT   ?= D:/iar/ewarm-9.70.4
+ICCARM     := $(IAR_ROOT)/arm/bin/iccarm.exe
+ILINKARM   := $(IAR_ROOT)/arm/bin/ilinkarm.exe
+IELFTOOL   := $(IAR_ROOT)/arm/bin/ielftool.exe
 
-# Translate GCC-style CFLAGS into IAR equivalents
-IAR_CPU := Cortex-M33
-IAR_DEFINES := $(filter -D%,$(CFLAGS))
-IAR_DEFINES := $(IAR_DEFINES:-D%=%)
-IAR_INCLUDES := $(filter -I%,$(CFLAGS))
-IAR_INCLUDES := $(IAR_INCLUDES:-I%=%)
+# IAR output directory — fixed at workspace root so VS Code debug configs stay
+# project-independent (launch.json always points to iar_out/main.out).
+IAR_OUT    := iar_out
 
-IAR_CFLAGS := --cpu $(IAR_CPU) -e --debug \
-	$(foreach d,$(IAR_DEFINES),-D $(d)) \
-	$(foreach i,$(IAR_INCLUDES),-I $(i))
+# IAR linker config — lives beside linker.ld in the project directory
+IAR_ICF    ?= stm32c562re.icf
 
-IAR_OBJDIR := $(PROJECT_DIR)/iar_obj
-IAR_OBJ_C   := $(patsubst %.c,$(IAR_OBJDIR)/%.o,$(notdir $(SRC_C) $(EXTERNAL_SRC_C)))
-IAR_OBJ     := $(IAR_OBJ_C)
-IAR_ALL_SRC := $(SRC_C) $(EXTERNAL_SRC_C)
+# All source files the IAR build should compile (same set as GCC, deduplicated)
+IAR_ALL_SRC := $(sort $(SRC_C) $(EXTERNAL_SRC_C))
 
-.PHONY: iar-build iar-open iar-debug iar-clean
+.PHONY: iar-build iar-clean iar-flash iar-debug
 iar-build:
-	@echo "Building with IAR (direct): $(PROJECT_DIR)"
-	@mkdir -p "$(IAR_OBJDIR)" 2>/dev/null || true
-	$(foreach src,$(IAR_ALL_SRC),\
-		"$(IAR_CC)" $(IAR_CFLAGS) -o "$(IAR_OBJDIR)/$(notdir $(src:.c=.o))" "$(src)" && ) true
-	"$(IAR_LINK)" --config "$(IAR_ICF)" --entry Reset_Handler --map "$(TARGET)_iar.map" \
-		-o "$(TARGET)_iar.out" $(IAR_OBJDIR)/*.o
-	"$(IAR_ELF)" --bin "$(TARGET)_iar.out" "$(TARGET)_iar.bin"
-	@echo "IAR build complete: $(TARGET)_iar.out / $(TARGET)_iar.bin"
+	@echo "----------------------------------------------------"
+	@echo "  IAR build: $(PROJECT_DIR) [iccarm V9.70, Cortex-M33]"
+	@echo "----------------------------------------------------"
+	@if not exist "$(ICCARM)" (echo ERROR: iccarm not found at $(ICCARM) & echo Set IAR_ROOT, e.g.: make iar-build IAR_ROOT=C:/IAR/EWARM9 & exit /b 1)
+	@if not exist "$(IAR_ICF)" (echo ERROR: IAR linker config not found at $(IAR_ICF) & exit /b 1)
+	@if not exist "$(IAR_OUT)" mkdir "$(IAR_OUT)"
+	python tools/iar_build.py \
+	  --iccarm "$(ICCARM)" \
+	  --ilinkarm "$(ILINKARM)" \
+	  --ielftool "$(IELFTOOL)" \
+	  --icf "$(IAR_ICF)" \
+	  --outdir "$(IAR_OUT)" \
+	  --inc "$(PROJECT_DIR)/inc" \
+	  $(foreach d,$(FILTERED_DRIVER_DIRS),--inc "$(d)/inc") \
+	  --define DSTM32C5xx \
+	  $(IAR_ALL_SRC)
+
+iar-flash: iar-build
+	"$(CUBE_PROG)" -c port=SWD -halt -d "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -rst
 
 iar-clean:
-	-rm -rf "$(IAR_OBJDIR)" "$(TARGET)_iar.out" "$(TARGET)_iar.bin" "$(TARGET)_iar.map" 2>/dev/null || true
-
-iar-open:
-	@echo "Opening IAR IDE..."
-	@"$(IAREXE)" &
+	-python -c "import shutil,os; shutil.rmtree('$(IAR_OUT)', ignore_errors=True)"
 
 iar-debug: iar-build
-	@echo "Opening IAR IDE for debugging. Start C-SPY Debug in the IDE."
-	@"$(IAREXE)" &
+	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
+	@echo ""
+	@echo --- IAR build + flash complete: $(IAR_OUT)/main.out ---
+	@echo Press F5 in VS Code (select 'IAR C-SPY: ST-LINK') to start debugging.
 
-# If user uses TOOLCHAIN=iar, make the standard `build` depend on IAR build
+# TOOLCHAIN=iar redirects the standard targets
 ifeq ($(strip $(TOOLCHAIN)),iar)
 build: iar-build
+flash: iar-flash
+clean: iar-clean
 endif
 
+# GCC output mirror — keeps a project-independent copy so VS Code cortex-debug
+# launch config always finds build_out/main.elf regardless of PROJECT_DIR.
+BUILD_OUT := build_out
+
 .PHONY: debug
-debug:
-ifeq ($(strip $(TOOLCHAIN)),iar)
-	$(MAKE) iar-debug
-else
-	@echo "Run your debugger (e.g., cortex-debug) or use IAR by invoking: make iar-debug"
-endif
+debug: build
+	@if not exist "$(BUILD_OUT)" mkdir "$(BUILD_OUT)"
+	@copy /Y "$(subst /,\,$(TARGET)).elf" "$(BUILD_OUT)\main.elf" >nul
+	@copy /Y "$(subst /,\,$(TARGET)).bin" "$(BUILD_OUT)\main.bin" >nul
+	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
+	@echo ""
+	@echo --- GCC build + flash complete: $(BUILD_OUT)/main.elf ---
+	@echo Press F5 in VS Code (select 'Cortex Debug: ST-LINK') to start debugging.

@@ -2,39 +2,40 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "IAR: Build Project",
+      "label": "IAR: Build",
       "type": "shell",
       "command": "make",
-      "args": ["PROJECT_DIR=${input:projectDir}", "TOOLCHAIN=iar", "build"],
-      "group": { "kind": "build", "isDefault": false },
-      "presentation": { "reveal": "always", "panel": "shared" }
+      "args": ["iar-build"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
     },
     {
-      "label": "IAR: Open Project in IAR IDE",
+      "label": "IAR: Build + Flash",
       "type": "shell",
-      "command": "\"${input:iarPath}\"",
-      "args": ["${input:iarProject}"],
-      "presentation": { "reveal": "always", "panel": "dedicated" }
-    }
-  ],
-  "inputs": [
-    {
-      "id": "projectDir",
-      "type": "promptString",
-      "description": "Relative path to project folder (e.g. Projects/LED_Blink or Drivers/bxCAN)",
-      "default": "$(PROJECT_DIR)"
+      "command": "make",
+      "args": ["iar-debug"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
     },
     {
-      "id": "iarPath",
-      "type": "promptString",
-      "description": "Full path to IarIde.exe or IarBuild.exe",
-      "default": "C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.50/common/bin/IarIde.exe"
+      "label": "GCC: Build",
+      "type": "shell",
+      "command": "make",
+      "args": ["build"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
     },
     {
-      "id": "iarProject",
-      "type": "promptString",
-      "description": "Full path to .ewp project file to open",
-      "default": "${workspaceFolder}/${input:projectDir}/project.ewp"
+      "label": "GCC: Build + Flash for Debug",
+      "type": "shell",
+      "command": "make",
+      "args": ["debug"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
     }
   ]
 }
