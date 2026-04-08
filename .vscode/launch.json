@@ -53,15 +53,12 @@
       ],
       "overrideLaunchCommands": [
         "monitor reset halt",
-        "monitor sleep 200",
-        "load",
-        "monitor reset halt",
-        "monitor sleep 100"
+        "monitor sleep 200"
       ],
       "postStartSessionCommands": [
         "continue"
       ],
-      "preLaunchTask": "GCC: Debug Build"
+      "preLaunchTask": "GCC: Build + Flash for Debug"
     }
   ]
 }
