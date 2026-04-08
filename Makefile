@@ -17,20 +17,22 @@ CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
 MCU := cortex-m33
-# Platform-specific shell detection.
-# $(OS) is Windows_NT on *all* Windows machines, but the recipe shell may be
-# /bin/sh (MSYS2 / Git Bash make) or cmd.exe (native Windows make).  Detect the
-# actual shell so we pick the right builtins (rm vs del, cp vs copy, etc.).
-ifneq ($(findstring sh,$(notdir $(SHELL))),)
-# POSIX-like shell (sh / bash / zsh — MSYS2 / Git Bash / Linux / Mac)
-_POSIX_SH := 1
-RM       := rm -f
-DEVNULL  := /dev/null
-else
-# cmd.exe (native Windows make)
+# Platform-specific shell & command selection.
+# On Windows: force cmd.exe as the recipe shell.  Many make distributions
+# (GnuWin32, Chocolatey, scoop) pick up sh.exe from Git-for-Windows in
+# PATH and set $(SHELL) to it, yet still execute recipes through cmd.exe.
+# Forcing SHELL=cmd.exe eliminates that mismatch entirely.
+# On POSIX (Linux / macOS / WSL): use the default POSIX shell.
+ifeq ($(OS),Windows_NT)
+SHELL    := cmd.exe
+.SHELLFLAGS := /C
 _POSIX_SH := 0
 RM       := del /Q /F
 DEVNULL  := nul
+else
+_POSIX_SH := 1
+RM       := rm -f
+DEVNULL  := /dev/null
 endif
 
 # Flashing configuration
