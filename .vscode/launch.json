@@ -39,7 +39,6 @@
       "executable": "${workspaceFolder}/build_out/main.elf",
       "device": "STM32C562RE",
       "interface": "swd",
-      "runToEntryPoint": "main",
       "svdFile": "D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C562.svd",
       "configFiles": [
         "interface/stlink-dap.cfg",
@@ -58,6 +57,9 @@
         "load",
         "monitor reset halt",
         "monitor sleep 100"
+      ],
+      "postStartSessionCommands": [
+        "continue"
       ],
       "preLaunchTask": "GCC: Debug Build"
     }
