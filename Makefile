@@ -4,7 +4,7 @@
 #PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
-PROJECT_DIR = Drivers/AES_encryption
+PROJECT_DIR = Drivers/AES
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -89,8 +89,8 @@ OPENOCD_TARGET := target/stm32u5x.cfg
 OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 endif
 
-# AES_encryption driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/AES_encryption)
+# AES driver has a dedicated STM32C5 register-level port.
+ifeq ($(strip $(PROJECT_DIR)),Drivers/AES)
 MCU := cortex-m33
 CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
 OPENOCD_IF := interface/stlink-dap.cfg
@@ -229,8 +229,8 @@ SRC_CPP += $(filter-out $(SRC_CPP),$(Servo_MOTOR_SRC_CPP))
 CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/UART_cpp/inc -IDrivers/PWM_cpp/inc -IDrivers/PWM/inc
 endif
 
-# Project-specific wiring for AES_encryption: needs GPIO and UART drivers
-ifeq ($(PROJECT_DIR),Drivers/AES_encryption)
+# Project-specific wiring for AES: needs GPIO and UART drivers
+ifeq ($(PROJECT_DIR),Drivers/AES)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc

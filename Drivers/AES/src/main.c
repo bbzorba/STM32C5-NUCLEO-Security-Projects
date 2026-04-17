@@ -117,6 +117,7 @@ static void test_ctr(void)
     pass_fail("  CTR-256 dec", memcmp(dt, plaintext, 16) == 0);
 }
 
+
 int main(void)
 {
     USART_constructor(&g_uart, USART_2, TX_ONLY, __115200);
