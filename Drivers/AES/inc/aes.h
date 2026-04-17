@@ -3,6 +3,7 @@
 #ifndef __AES_H
 #define __AES_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include "../../GPIO/inc/gpio.h"  /* RCC_TypeDef, RCC */
 
@@ -72,10 +73,18 @@ typedef struct {
     AES_KeySizeTypeDef keysize;
 } AES_HandleTypeDef;
 
-/* NS AES peripheral (0x420C0000) — supports 128-bit and 256-bit keys */
+/* Low-level streaming API — init once, call Process for each chunk */
 void AES_constructor(AES_HandleTypeDef *h);
 int  AES_Encrypt_Init(AES_HandleTypeDef *h, const uint8_t *key, const uint8_t *iv);
 int  AES_Decrypt_Init(AES_HandleTypeDef *h, const uint8_t *key, const uint8_t *iv);
 int  AES_Process(AES_HandleTypeDef *h, const uint8_t *in, uint8_t *out, uint32_t len);
+
+/* One-shot mode functions — set up, process entire buffer, done.
+ * len must be a multiple of AES_BLOCK_SIZE (16 bytes). */
+int AES_ECB_Encrypt(const uint8_t *key, AES_KeySizeTypeDef ks, const uint8_t *in, uint8_t *out, uint32_t len);
+int AES_ECB_Decrypt(const uint8_t *key, AES_KeySizeTypeDef ks, const uint8_t *in, uint8_t *out, uint32_t len);
+int AES_CBC_Encrypt(const uint8_t *key, AES_KeySizeTypeDef ks, const uint8_t *iv,    const uint8_t *in, uint8_t *out, uint32_t len);
+int AES_CBC_Decrypt(const uint8_t *key, AES_KeySizeTypeDef ks, const uint8_t *iv,    const uint8_t *in, uint8_t *out, uint32_t len);
+int AES_CTR_Crypt  (const uint8_t *key, AES_KeySizeTypeDef ks, const uint8_t *nonce, const uint8_t *in, uint8_t *out, uint32_t len);
 
 #endif /* __AES_H */

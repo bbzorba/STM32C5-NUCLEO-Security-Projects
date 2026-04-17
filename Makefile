@@ -96,6 +96,7 @@ CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
 OPENOCD_IF := interface/stlink-dap.cfg
 OPENOCD_TARGET := target/stm32u5x.cfg
 OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
+DRIVERS := UART GPIO
 endif
 
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small

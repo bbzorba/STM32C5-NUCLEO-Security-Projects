@@ -43,21 +43,18 @@ static void test_ecb(void)
         0xf3,0xee,0xd1,0xbd, 0xb5,0xd2,0xa0,0x3c,
         0x06,0x4b,0x5a,0x7e, 0x3d,0xb1,0x81,0xf8 };
 
-    AES_HandleTypeDef aes_handler;
     uint8_t ct[16], dt[16];
 
     USART_WriteString(&g_uart, "\r\n--- ECB ---\r\n");
 
-    aes_handler.mode = AES_MODE_ECB; aes_handler.keysize = AES_KEYSIZE_128; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY128, NULL); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_ECB_Encrypt(KEY128, AES_KEYSIZE_128, plaintext, ct, 16);
     pass_fail("  ECB-128 enc", memcmp(ct, exp128, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY128, NULL); AES_Process(&aes_handler, ct, dt, 16);
+    AES_ECB_Decrypt(KEY128, AES_KEYSIZE_128, ct, dt, 16);
     pass_fail("  ECB-128 dec", memcmp(dt, plaintext, 16) == 0);
 
-    aes_handler.mode = AES_MODE_ECB; aes_handler.keysize = AES_KEYSIZE_256; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY256, NULL); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_ECB_Encrypt(KEY256, AES_KEYSIZE_256, plaintext, ct, 16);
     pass_fail("  ECB-256 enc", memcmp(ct, exp256, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY256, NULL); AES_Process(&aes_handler, ct, dt, 16);
+    AES_ECB_Decrypt(KEY256, AES_KEYSIZE_256, ct, dt, 16);
     pass_fail("  ECB-256 dec", memcmp(dt, plaintext, 16) == 0);
 }
 
@@ -71,21 +68,18 @@ static void test_cbc(void)
         0xf5,0x8c,0x4c,0x04, 0xd6,0xe5,0xf1,0xba,
         0x77,0x9e,0xab,0xfb, 0x5f,0x7b,0xfb,0xd6 };
 
-    AES_HandleTypeDef aes_handler;
     uint8_t ct[16], dt[16];
 
     USART_WriteString(&g_uart, "\r\n--- CBC ---\r\n");
 
-    aes_handler.mode = AES_MODE_CBC; aes_handler.keysize = AES_KEYSIZE_128; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY128, IV); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_CBC_Encrypt(KEY128, AES_KEYSIZE_128, IV, plaintext, ct, 16);
     pass_fail("  CBC-128 enc", memcmp(ct, exp128, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY128, IV); AES_Process(&aes_handler, ct, dt, 16);
+    AES_CBC_Decrypt(KEY128, AES_KEYSIZE_128, IV, ct, dt, 16);
     pass_fail("  CBC-128 dec", memcmp(dt, plaintext, 16) == 0);
 
-    aes_handler.mode = AES_MODE_CBC; aes_handler.keysize = AES_KEYSIZE_256; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY256, IV); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_CBC_Encrypt(KEY256, AES_KEYSIZE_256, IV, plaintext, ct, 16);
     pass_fail("  CBC-256 enc", memcmp(ct, exp256, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY256, IV); AES_Process(&aes_handler, ct, dt, 16);
+    AES_CBC_Decrypt(KEY256, AES_KEYSIZE_256, IV, ct, dt, 16);
     pass_fail("  CBC-256 dec", memcmp(dt, plaintext, 16) == 0);
 }
 
@@ -99,21 +93,18 @@ static void test_ctr(void)
         0x60,0x1e,0xc3,0x13, 0x77,0x57,0x89,0xa5,
         0xb7,0xa7,0xf5,0x04, 0xbb,0xf3,0xd2,0x28 };
 
-    AES_HandleTypeDef aes_handler;
     uint8_t ct[16], dt[16];
 
     USART_WriteString(&g_uart, "\r\n--- CTR ---\r\n");
 
-    aes_handler.mode = AES_MODE_CTR; aes_handler.keysize = AES_KEYSIZE_128; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY128, NONCE); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_CTR_Crypt(KEY128, AES_KEYSIZE_128, NONCE, plaintext, ct, 16);
     pass_fail("  CTR-128 enc", memcmp(ct, exp128, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY128, NONCE); AES_Process(&aes_handler, ct, dt, 16);
+    AES_CTR_Crypt(KEY128, AES_KEYSIZE_128, NONCE, ct, dt, 16);
     pass_fail("  CTR-128 dec", memcmp(dt, plaintext, 16) == 0);
 
-    aes_handler.mode = AES_MODE_CTR; aes_handler.keysize = AES_KEYSIZE_256; AES_constructor(&aes_handler);
-    AES_Encrypt_Init(&aes_handler, KEY256, NONCE); AES_Process(&aes_handler, plaintext, ct, 16);
+    AES_CTR_Crypt(KEY256, AES_KEYSIZE_256, NONCE, plaintext, ct, 16);
     pass_fail("  CTR-256 enc", memcmp(ct, exp256, 16) == 0);
-    AES_Decrypt_Init(&aes_handler, KEY256, NONCE); AES_Process(&aes_handler, ct, dt, 16);
+    AES_CTR_Crypt(KEY256, AES_KEYSIZE_256, NONCE, ct, dt, 16);
     pass_fail("  CTR-256 dec", memcmp(dt, plaintext, 16) == 0);
 }
 
