@@ -19,21 +19,39 @@ CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
 MCU := cortex-m33
 # Platform-specific shell & command selection.
-# On Windows: force cmd.exe as the recipe shell.  Many make distributions
-# (GnuWin32, Chocolatey, scoop) pick up sh.exe from Git-for-Windows in
-# PATH and set $(SHELL) to it, yet still execute recipes through cmd.exe.
-# Forcing SHELL=cmd.exe eliminates that mismatch entirely.
+# On Windows we prefer a POSIX shell (sh.exe from Git-for-Windows, MSYS2,
+# Cygwin …) because cmd.exe can misinterpret forward-slash include paths
+# (e.g. -IDrivers/compat_inc) as its own /C switch, causing:
+#   "'ompat_inc' is not recognized as an internal or external command"
+# If no POSIX shell is found we fall back to cmd.exe.
 # On POSIX (Linux / macOS / WSL): use the default POSIX shell.
 ifeq ($(OS),Windows_NT)
-SHELL    := cmd.exe
+# Check whether Make already auto-detected a POSIX shell
+ifneq (,$(filter %sh %sh.exe %bash %bash.exe,$(SHELL)))
+_POSIX_SH := 1
+RM        := rm -f
+DEVNULL   := /dev/null
+else
+# Make defaulted to cmd.exe — look for sh.exe in PATH
+_SH_CHECK := $(shell where sh.exe 2>nul)
+ifneq ($(_SH_CHECK),)
+SHELL     := sh.exe
+_POSIX_SH := 1
+RM        := rm -f
+DEVNULL   := /dev/null
+else
+# No POSIX shell available — use cmd.exe as last resort
+SHELL       := cmd.exe
 .SHELLFLAGS := /C
-_POSIX_SH := 0
-RM       := del /Q /F
-DEVNULL  := nul
+_POSIX_SH   := 0
+RM          := del /Q /F
+DEVNULL     := nul
+endif
+endif
 else
 _POSIX_SH := 1
-RM       := rm -f
-DEVNULL  := /dev/null
+RM        := rm -f
+DEVNULL   := /dev/null
 endif
 
 # Flashing configuration
@@ -96,7 +114,6 @@ CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
 OPENOCD_IF := interface/stlink-dap.cfg
 OPENOCD_TARGET := target/stm32u5x.cfg
 OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-DRIVERS := UART GPIO
 endif
 
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small

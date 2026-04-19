@@ -59,6 +59,25 @@
         "continue"
       ],
       "preLaunchTask": "GCC: Build + Flash for Debug"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "f:/dev/STM32/STM32C5-NUCLEO-Projects/Drivers/AES_encryption/src",
+      "program": "f:/dev/STM32/STM32C5-NUCLEO-Projects/Drivers/AES_encryption/src/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
   ]
 }
