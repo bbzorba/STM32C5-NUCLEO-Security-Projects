@@ -2,36 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "IAR C-SPY: ST-LINK",
-      "type": "cspy",
-      "request": "launch",
-      "target": "arm",
-      "program": "${workspaceFolder}/iar_out/main.out",
-      "stopOnSymbol": "main",
-      "leaveTargetRunning": false,
-      "workbenchPath": "D:/iar/ewarm-9.70.4",
-      "driver": "ST-LINK",
-      "driverOptions": [
-        "--endian=little",
-        "--cpu=Cortex-M33",
-        "--fpu=None",
-        "-p",
-        "D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C562RE.ddf",
-        "--device=STM32C562RE",
-        "--drv_interface=SWD",
-        "--stlink_reset_strategy=0,0",
-        "--drv_catch_exceptions=0x000",
-        "--drv_debug_ap=1"
-      ],
-      "download": {
-        "flashLoader": "D:/iar/ewarm-9.70.4/arm/config/flashloader/ST/FlashSTM32C562xE.board",
-        "deviceMacros": [
-          "D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C5xx_DBG.dmac"
-        ]
-      },
-      "preLaunchTask": "IAR: Debug Build"
-    },
-    {
       "name": "Cortex Debug: ST-LINK",
       "type": "cortex-debug",
       "request": "launch",
@@ -39,7 +9,7 @@
       "executable": "${workspaceFolder}/build_out/main.elf",
       "device": "STM32C562RE",
       "interface": "swd",
-      "svdFile": "D:/iar/ewarm-9.70.4/arm/config/debugger/ST/STM32C562.svd",
+      "svdFile": "${workspaceFolder}/STM32C562.svd",
       "configFiles": [
         "interface/stlink-dap.cfg",
         "${workspaceFolder}/stm32c562re.cfg"
@@ -47,37 +17,8 @@
       "openOCDPreConfigLaunchCommands": [
         "set CPUTAPID 0x6ba02477"
       ],
-      "openOCDLaunchCommands": [
-        "gdb_memory_map disable",
-        "gdb_breakpoint_override hard"
-      ],
-      "overrideLaunchCommands": [
-        "monitor reset halt",
-        "monitor sleep 200"
-      ],
-      "postStartSessionCommands": [
-        "continue"
-      ],
-      "preLaunchTask": "GCC: Build + Flash for Debug"
-    },
-    {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "f:/dev/STM32/STM32C5-NUCLEO-Projects/Drivers/AES_encryption/src",
-      "program": "f:/dev/STM32/STM32C5-NUCLEO-Projects/Drivers/AES_encryption/src/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "runToEntryPoint": "main",
+      "preLaunchTask": "GCC: Debug Build"
     }
   ]
 }

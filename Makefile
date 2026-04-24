@@ -117,6 +117,15 @@ OPENOCD_TARGET := target/stm32u5x.cfg
 OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 endif
 
+# HASH driver has a dedicated STM32C5 register-level port.
+ifeq ($(strip $(PROJECT_DIR)),Drivers/HASH)
+MCU := cortex-m33
+CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
+OPENOCD_IF := interface/stlink-dap.cfg
+OPENOCD_TARGET := target/stm32u5x.cfg
+OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
+endif
+
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small
 CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti -fno-use-cxa-atexit
 
@@ -282,15 +291,17 @@ TARGET=$(PROJECT_DIR)/main
 
 all: build
 
-build: $(OBJ)
+# .SECONDEXPANSION defers prerequisite evaluation to a second pass that runs
+# after the entire Makefile has been read — including all project-specific
+# SRC_C wiring blocks at the bottom.  Without it, build: $(OBJ) is evaluated
+# at parse time, before those ifeq blocks append gpio.c / uart.c etc. to SRC_C,
+# so the driver .o files are never listed as prerequisites and never compiled.
+.SECONDEXPANSION:
+build: $$(OBJ)
 	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $(TARGET).elf $(LDFLAGS) $(EXTRA_LDFLAGS)
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
-ifeq ($(_POSIX_SH),1)
-	-$(RM) $(OBJ) 2>/dev/null || true
-else
-	-$(RM) $(subst /,\,$(OBJ)) 2>nul || exit 0
-endif
+	-python -c "import os; [os.remove(f) for f in '$(OBJ)'.split() if os.path.isfile(f)]"
 
 run: build
 
@@ -341,16 +352,7 @@ flash_stlink: build
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 
 clean:
-ifeq ($(_POSIX_SH),1)
-	-$(RM) $(OBJ) 2>/dev/null || true
-	-$(RM) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map 2>/dev/null || true
-else
-	-$(RM) $(subst /,\,$(OBJ)) 2>nul || exit 0
-	-$(RM) $(subst /,\,$(TARGET)).elf 2>nul || exit 0
-	-$(RM) $(subst /,\,$(TARGET)).hex 2>nul || exit 0
-	-$(RM) $(subst /,\,$(TARGET)).bin 2>nul || exit 0
-	-$(RM) $(subst /,\,$(TARGET)).map 2>nul || exit 0
-endif
+	-python -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
 
 # Print any Makefile variable, e.g. make print-PROJECT_DIR
 .PHONY: print-%
@@ -523,6 +525,13 @@ SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
 CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
 
+# Project-specific wiring for HASH: needs GPIO and UART drivers
+ifeq ($(PROJECT_DIR),Drivers/HASH)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
+endif
+
 # --------------------
 # IAR toolchain integration
 # Builds the SAME source files as the GCC target using iccarm/ilinkarm directly.
@@ -611,15 +620,8 @@ BUILD_OUT := build_out
 debug-build:
 	@$(MAKE) clean
 	@$(MAKE) build DEBUG=1
-ifeq ($(_POSIX_SH),1)
-	@mkdir -p "$(BUILD_OUT)"
-	@cp -f "$(TARGET).elf" "$(BUILD_OUT)/main.elf"
-	@cp -f "$(TARGET).bin" "$(BUILD_OUT)/main.bin"
-else
-	@if not exist "$(BUILD_OUT)" mkdir "$(BUILD_OUT)"
-	@copy /Y "$(subst /,\,$(TARGET)).elf" "$(BUILD_OUT)\main.elf" >nul
-	@copy /Y "$(subst /,\,$(TARGET)).bin" "$(BUILD_OUT)\main.bin" >nul
-endif
+	python -c "import os; os.makedirs('$(BUILD_OUT)', exist_ok=True)"
+	python -c "import shutil; shutil.copy('$(TARGET).elf', '$(BUILD_OUT)/main.elf'); shutil.copy('$(TARGET).bin', '$(BUILD_OUT)/main.bin')"
 	@echo --- Debug build ready: $(BUILD_OUT)/main.elf ---
 
 # debug: standalone build + flash (without VS Code debugger)
