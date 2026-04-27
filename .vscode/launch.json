@@ -7,34 +7,22 @@
       "request": "launch",
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "debug-prep",
-      "executable": "${workspaceFolder}/${config:zephyr.compileDir}/build/zephyr/zephyr.elf",
+      "preLaunchTask": "GCC: Build + Flash for Debug",
+      "executable": "${workspaceFolder}/build_out/main.elf",
+      "device": "${config:stm32.device}",
+      "interface": "swd",
+      "noFileLoad": true,
       "configFiles": [
-        "${workspaceFolder}/.vscode/openocd_fixup.tcl"
+        "interface/stlink.cfg",
+        "${workspaceFolder}/${config:stm32.openocdCfg}"
       ],
-      "gdbPath": "${userHome}/.zephyr_ide/toolchains/${config:zephyr.sdkVersion}/${config:zephyr.gdbArch}/bin/${config:zephyr.gdbArch}-gdb",
-      "svdFile": "${workspaceFolder}/${config:zephyr.svdFile}",
+      "openOCDPreConfigLaunchCommands": [
+        "set CPUTAPID ${config:stm32.cpuTapId}"
+      ],
+      "gdbPath": "arm-none-eabi-gdb",
+      "svdFile": "${workspaceFolder}/${config:stm32.svdFile}",
       "runToEntryPoint": "main",
       "showDevDebugOutput": "raw"
-    },
-    {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
-      "request": "launch",
-      "args": [],
-      "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "${workspaceFolder}/Drivers/HASH/src",
-      "program": "${workspaceFolder}/Drivers/HASH/src/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
     }
   ]
 }

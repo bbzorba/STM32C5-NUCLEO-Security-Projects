@@ -19,6 +19,17 @@ CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
 MCU := cortex-m33
+BOARD := NUCLEO-C562RE
+
+# ── Per-board debug configuration ─────────────────────────
+# These values are written into .vscode/settings.json by `make gen-debug-config`
+# so that launch.json stays board-independent via ${config:stm32.*} variables.
+ifeq ($(strip $(BOARD)),NUCLEO-C562RE)
+DEBUG_DEVICE  := STM32C562RE
+DEBUG_SVD     := STM32C562.svd
+DEBUG_CFG     := stm32c562re.cfg
+DEBUG_TAPID   := 0x6ba02477
+endif
 # Platform-specific shell & command selection.
 # On Windows we prefer a POSIX shell (sh.exe from Git-for-Windows, MSYS2,
 # Cygwin …) because cmd.exe can misinterpret forward-slash include paths
@@ -630,3 +641,16 @@ debug: debug-build
 	@echo ""
 	@echo "--- GCC build + flash complete: $(BUILD_OUT)/main.elf ---"
 	@echo "Press F5 in VS Code [select Cortex Debug: ST-LINK] to start debugging."
+
+# gen-debug-config: writes board-specific stm32.* keys into .vscode/settings.json
+# so that the generic launch.json (which uses ${config:stm32.*}) stays correct
+# whenever BOARD changes.  Run once after changing the BOARD variable.
+.PHONY: gen-debug-config
+gen-debug-config:
+	python -c "\
+import json, sys; \
+path = '.vscode/settings.json'; \
+s = json.load(open(path)) if __import__('os').path.isfile(path) else {}; \
+s.update({'stm32.board': '$(DEBUG_DEVICE and BOARD or BOARD)', 'stm32.device': '$(DEBUG_DEVICE)', 'stm32.svdFile': '$(DEBUG_SVD)', 'stm32.openocdCfg': '$(DEBUG_CFG)', 'stm32.cpuTapId': '$(DEBUG_TAPID)'}); \
+json.dump(s, open(path, 'w'), indent=2); \
+print('--- .vscode/settings.json updated for board: $(BOARD) ---')"

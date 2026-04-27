@@ -1,4 +1,10 @@
 {
+  "stm32.board":      "NUCLEO-C562RE",
+  "stm32.device":     "STM32C562RE",
+  "stm32.svdFile":    "STM32C562.svd",
+  "stm32.openocdCfg": "stm32c562re.cfg",
+  "stm32.cpuTapId":   "0x6ba02477",
+
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
   "C_Cpp_Runner.debuggerPath": "gdb",
