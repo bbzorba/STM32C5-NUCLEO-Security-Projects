@@ -13,18 +13,18 @@ void Hash_Constructor(HASH_HandleTypeDef *hash, HASH_AlgorithmTypeDef algorithm)
 }
 
 void Hash_Init(HASH_HandleTypeDef *hash) {
-    /* 1. Assert INIT first — this resets the hash engine AND clears ALGO/DATATYPE */
-    hash->regs->CR |= HASH_CR_INIT;
-    /* 2. Now configure ALGO and DATATYPE (INIT has self-cleared by now) */
-    uint32_t cr = hash->regs->CR;
-    cr &= ~(HASH_CR_ALGO | HASH_CR_DATATYPE | HASH_CR_DMAE | HASH_CR_MDMAT);
+    /* ALGO is only latched when INIT=1 is set simultaneously (SVD: "This selection
+     * is only taken into account when the INIT bit is set").  Build the full CR
+     * value with INIT + ALGO in a single write so the hardware samples the
+     * correct algorithm at the moment the engine resets.              */
+    uint32_t cr = HASH_CR_INIT;   /* start with INIT=1, all other bits = 0 */
     if (hash->algorithm == HASH_SHA1)
         cr |= HASH_CR_ALGO_SHA1;
     else if (hash->algorithm == HASH_SHA224)
         cr |= HASH_CR_ALGO_SHA224;
     else
         cr |= HASH_CR_ALGO_SHA256;
-    /* DATATYPE=0: 32-bit, no swap. We manually pack big-endian words. */
+    /* DATATYPE=0 (32-bit, no swap), DMAE=0, MDMAT=0, MODE=0 — all clear */
     hash->regs->CR = cr;
     hash->state   = HASH_OK;
     hash->msg_len = 0;
@@ -32,7 +32,15 @@ void Hash_Init(HASH_HandleTypeDef *hash) {
 }
 
 void Hash_Reset(HASH_HandleTypeDef *hash) {
-    hash->regs->CR |= HASH_CR_INIT;
+    /* Same INIT+ALGO-simultaneous rule applies here */
+    uint32_t cr = HASH_CR_INIT;
+    if (hash->algorithm == HASH_SHA1)
+        cr |= HASH_CR_ALGO_SHA1;
+    else if (hash->algorithm == HASH_SHA224)
+        cr |= HASH_CR_ALGO_SHA224;
+    else
+        cr |= HASH_CR_ALGO_SHA256;
+    hash->regs->CR = cr;
     hash->state   = HASH_OK;
     hash->msg_len = 0;
     memset(hash->hash_output, 0, sizeof(hash->hash_output));
@@ -51,9 +59,7 @@ HASH_StatusTypeDef Hash_Process_Data(HASH_HandleTypeDef *hash,
     size_t rem        = len % 4U;
 
     if (full_words > 0) {
-        /* Build a properly byte-ordered DMA source buffer on the stack.
-         * For long messages this should be heap-allocated, but for the
-         * typical short test messages a stack buffer is fine.           */
+        /* Build a byte-ordered DMA source buffer on the stack. For long messages this should be heap-allocated. */
         uint32_t dma_buf[full_words];
         for (size_t i = 0; i < full_words; i++) {
             dma_buf[i] = ((uint32_t)data[i*4+0] << 24) |
@@ -115,11 +121,15 @@ HASH_StatusTypeDef Hash_Final(HASH_HandleTypeDef *hash, unsigned char *hash_outp
     /* Ensure DMA is disabled before triggering digest calculation */
     hash->regs->CR &= ~HASH_CR_DMAE;
 
-    /* NBLW = valid bits in the last word written.
-     * With DATATYPE=2 (byte swap), NBLW counts from the MSB of the
-     * byte-swapped word: 3 bytes -> NBLW=24, 4 bytes -> NBLW=0.   */
+    /* NBLW = number of valid bits in the last word (0 = all 32 bits valid).
+     * Step 1: write NBLW while DCAL=0 (constraint: can't change NBLW while
+     *         a computation is active / DCAL=1).
+     * Step 2: |= DCAL — read-modify-write preserves the NBLW just written.
+     *         A plain write (= HASH_STR_DCAL) would zero NBLW back to 0,
+     *         causing the hardware to treat all 32 bits as valid (wrong).  */
     uint32_t nblw = (uint32_t)((hash->msg_len % 4U) * 8U);
-    hash->regs->STR = (nblw & HASH_STR_NBLW_MASK) | HASH_STR_DCAL;
+    hash->regs->STR = nblw & HASH_STR_NBLW_MASK;  /* step 1: set NBLW    */
+    hash->regs->STR |= HASH_STR_DCAL;              /* step 2: RMW, keep NBLW */
 
     /* Wait for digest calculation complete (DCIS set in SR) */
     while (!(hash->regs->SR & HASH_SR_DCIS));
