@@ -2,23 +2,39 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Cortex Debug: ST-LINK",
+      "name": "Debug: Active App (from Makefile)",
       "type": "cortex-debug",
       "request": "launch",
       "servertype": "openocd",
-      "executable": "${workspaceFolder}/build_out/main.elf",
-      "device": "STM32C562RE",
-      "interface": "swd",
-      "svdFile": "${workspaceFolder}/STM32C562.svd",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "debug-prep",
+      "executable": "${workspaceFolder}/${config:zephyr.compileDir}/build/zephyr/zephyr.elf",
       "configFiles": [
-        "interface/stlink-dap.cfg",
-        "${workspaceFolder}/stm32c562re.cfg"
+        "${workspaceFolder}/.vscode/openocd_fixup.tcl"
       ],
-      "openOCDPreConfigLaunchCommands": [
-        "set CPUTAPID 0x6ba02477"
-      ],
+      "gdbPath": "${userHome}/.zephyr_ide/toolchains/${config:zephyr.sdkVersion}/${config:zephyr.gdbArch}/bin/${config:zephyr.gdbArch}-gdb",
+      "svdFile": "${workspaceFolder}/${config:zephyr.svdFile}",
       "runToEntryPoint": "main",
-      "preLaunchTask": "GCC: Debug Build"
+      "showDevDebugOutput": "raw"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "${workspaceFolder}/Drivers/HASH/src",
+      "program": "${workspaceFolder}/Drivers/HASH/src/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
   ]
 }
