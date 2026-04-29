@@ -5,8 +5,8 @@
 #PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/AES
-#PROJECT_DIR = Drivers/HASH
-PROJECT_DIR = Drivers/SHA256
+PROJECT_DIR = Drivers/HASH
+#PROJECT_DIR = Drivers/SHA256
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection

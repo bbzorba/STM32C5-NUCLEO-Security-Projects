@@ -1,130 +1,88 @@
 ﻿#include "../inc/hash.h"
-#include <string.h>
 
-void Hash_Constructor(HASH_HandleTypeDef *hash, HASH_AlgorithmTypeDef algorithm) {
-    hash->regs      = HASH_regs;
-    hash->algorithm = algorithm;
-    hash->state     = HASH_OK;
-    hash->msg_len   = 0;
-    /* Enable HASH peripheral clock */
+void HASH_Init(HASH_HandleTypeDef *hhash)
+{
     RCC->AHB2ENR |= RCC_AHB2ENR_HASHEN;
-    Hash_Init(hash);
+    hhash->Instance = HASH_PERIPH;
+    hhash->state    = HASH_OK;
+    hhash->msg_len  = 0;
 }
 
-void Hash_Init(HASH_HandleTypeDef *hash) {
-    /* ALGO is only latched when INIT=1 is set simultaneously (SVD: "This selection
-     * is only taken into account when the INIT bit is set").  Build the full CR
-     * value with INIT + ALGO in a single write so the hardware samples the
-     * correct algorithm at the moment the engine resets.              */
-    uint32_t cr = HASH_CR_INIT;   /* start with INIT=1, all other bits = 0 */
-    if (hash->algorithm == HASH_SHA1)
-        cr |= HASH_CR_ALGO_SHA1;
-    else if (hash->algorithm == HASH_SHA224)
-        cr |= HASH_CR_ALGO_SHA224;
-    else
-        cr |= HASH_CR_ALGO_SHA256;
-    hash->regs->CR = cr;
-    /* INIT resets the engine; wait DINIS=1 then confirm DCIS=0 before returning. */
-    while (!(hash->regs->SR & HASH_SR_DINIS));
-    while (  hash->regs->SR & HASH_SR_DCIS);
-    hash->state   = HASH_OK;
-    hash->msg_len = 0;
-    memset(hash->hash_output, 0, sizeof(hash->hash_output));
+HASH_StatusTypeDef HASH_SHA256_Start(HASH_HandleTypeDef *hhash)
+{
+    /* Write INIT + ALGO in a single write — ALGO is only sampled when INIT=1 */
+    hhash->Instance->CR = HASH_CR_INIT | HASH_CR_ALGO_SHA256;
+    /* INIT resets the engine and clears DCIS; wait for DINIS=1 (engine ready)
+     * then confirm DCIS=0 before returning — DINIS can precede DCIS clearance. */
+    while (!(hhash->Instance->SR & HASH_SR_DINIS));
+    while (  hhash->Instance->SR & HASH_SR_DCIS);
+    /* CRITICAL: INIT does NOT reset the STR register.  If the previous run left
+     * a non-zero NBLW (e.g. a 3-byte message leaves NBLW=24), that value persists
+     * in STR across INIT.  For messages whose length is a multiple of 4 bytes,
+     * HASH_SHA256_Update never writes STR, so DIN words are fed while STR still
+     * holds the stale NBLW — the hardware silently truncates the last word to the
+     * old bit-count, reproducing the previous digest instead of the correct one.
+     * Zeroing STR here guarantees NBLW=0 (all 32 bits valid) for every fresh run. */
+    hhash->Instance->STR = 0U;
+    hhash->msg_len = 0;
+    return HASH_OK;
 }
 
-void Hash_Reset(HASH_HandleTypeDef *hash) {
-    /* Same INIT+ALGO-simultaneous rule applies here */
-    uint32_t cr = HASH_CR_INIT;
-    if (hash->algorithm == HASH_SHA1)
-        cr |= HASH_CR_ALGO_SHA1;
-    else if (hash->algorithm == HASH_SHA224)
-        cr |= HASH_CR_ALGO_SHA224;
-    else
-        cr |= HASH_CR_ALGO_SHA256;
-    hash->regs->CR = cr;
-    /* Wait for reset to complete before returning */
-    while (!(hash->regs->SR & HASH_SR_DINIS));
-    while (  hash->regs->SR & HASH_SR_DCIS);
-    hash->state   = HASH_OK;
-    hash->msg_len = 0;
-    memset(hash->hash_output, 0, sizeof(hash->hash_output));
-}
-
-HASH_StatusTypeDef Hash_Process_Data
+HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *data, size_t len)
+{
     if (!data || len == 0)
         return HASH_ERROR;
 
-    /* DATATYPE=0 (no byte swap): we pack bytes into big-endian 32-bit words
-     * ourselves.  Full words are fed via LPDMA1; the last partial word (if
-     * any) is written by the CPU after waiting for DINIS.               */
     size_t full_words = len / 4U;
     size_t rem        = len % 4U;
 
-    /* Feed full 32-bit words via CPU (big-endian packing, poll DINIS each word) */
+    /* Feed full 32-bit words; poll DINIS before each write */
     for (size_t i = 0; i < full_words; i++) {
-        while (!(hash->regs->SR & HASH_SR_DINIS));
+        while (!(hhash->Instance->SR & HASH_SR_DINIS));
         uint32_t w = ((uint32_t)data[i*4+0] << 24) |
                      ((uint32_t)data[i*4+1] << 16) |
                      ((uint32_t)data[i*4+2] <<  8) |
                      ((uint32_t)data[i*4+3]);
-        hash->regs->DIN = w;
+        hhash->Instance->DIN = w;
     }
 
-    /* Write last partial word via CPU (left-justified, big-endian).         *
-     * CRITICAL: NBLW must be written to STR BEFORE the DIN write, not after. *
-     * The peripheral samples NBLW at the moment DIN is written; writing NBLW  *
-     * afterwards (before DCAL) has no effect — the hardware already latched   *
-     * NBLW=0 (all 32 bits valid) at DIN-write time.                           */
+    /* Partial last word: set NBLW in STR BEFORE writing DIN */
     if (rem > 0) {
-        while (!(hash->regs->SR & HASH_SR_DINIS));
-        /* Step 1: set NBLW=valid-bits BEFORE writing the partial last word */
-        uint32_t nblw = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
-        hash->regs->STR = nblw;
-        /* Step 2: write the left-justified last word */
+        while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        hhash->Instance->STR = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
         uint32_t last = 0;
         for (size_t j = 0; j < rem; j++)
             last |= ((uint32_t)data[full_words*4 + j] << (24U - 8U*j));
-        hash->regs->DIN = last;
+        hhash->Instance->DIN = last;
     }
 
-    hash->msg_len += len;
+    hhash->msg_len += len;
     return HASH_OK;
 }
 
-HASH_StatusTypeDef Hash_Final(HASH_HandleTypeDef *hash, unsigned char *hash_output)
+HASH_StatusTypeDef HASH_SHA256_Final(HASH_HandleTypeDef *hhash, uint8_t *digest)
 {
-    if (!hash_output)
+    if (!digest)
         return HASH_ERROR;
 
-    /* Ensure DMA is disabled before triggering digest calculation */
-    hash->regs->CR &= ~HASH_CR_DMAE;
-
-    /* Write NBLW (valid bits in last word) together with DCAL so the
-     * hardware sees the correct padding length when it starts the final
-     * computation.  NBLW = (msg_len % 4) * 8; 0 means all 32 bits valid
-     * (exact multiple of 4 bytes).                                       */
-    uint32_t nblw = (uint32_t)((hash->msg_len % 4U) * 8U) & HASH_STR_NBLW_MASK;
-    /* Guard against stale DCIS before firing DCAL */
-    while (  hash->regs->SR & HASH_SR_DCIS);
-    hash->regs->STR = nblw | HASH_STR_DCAL;
-    while (!(hash->regs->SR & HASH_SR_DCIS));
-    while (  hash->regs->SR & HASH_SR_BUSY );
+    /* NBLW = valid bits in last word (0 = all 32 bits valid, i.e. full-word message) */
+    uint32_t nblw = (uint32_t)((hhash->msg_len % 4U) * 8U) & HASH_STR_NBLW_MASK;
+    /* Guard against stale DCIS from a previous run (cleared by INIT in Start,
+     * but confirm it is 0 before firing DCAL so we don't return old HR values). */
+    while (  hhash->Instance->SR & HASH_SR_DCIS);
+    hhash->Instance->STR = nblw | HASH_STR_DCAL;
+    while (!(hhash->Instance->SR & HASH_SR_DCIS));
+    while (  hhash->Instance->SR & HASH_SR_BUSY);
     __asm volatile("dsb" : : : "memory");
 
-    /* SHA-1=5 words, SHA-224=7 words, SHA-256=8 words */
-    int words = (hash->algorithm == HASH_SHA1)   ? 5 :
-                (hash->algorithm == HASH_SHA224)  ? 7 : 8;
-
-    /* Read digest from HASH_HR0-HR7 at HASH_BASE + 0x310 (verified from SVD) */
     volatile uint32_t *hr = HASH_HR_OUT;
-    for (int i = 0; i < words; i++) {
-        uint32_t w = hr[i];
-        hash_output[i*4+0] = (uint8_t)(w >> 24);
-        hash_output[i*4+1] = (uint8_t)(w >> 16);
-        hash_output[i*4+2] = (uint8_t)(w >>  8);
-        hash_output[i*4+3] = (uint8_t)(w);
+    for (int i = 0; i < 8; i++) {
+        uint32_t val  = hr[i];
+        digest[i*4+0] = (uint8_t)(val >> 24);
+        digest[i*4+1] = (uint8_t)(val >> 16);
+        digest[i*4+2] = (uint8_t)(val >>  8);
+        digest[i*4+3] = (uint8_t)(val);
     }
 
-    hash->state = HASH_OK;
     return HASH_OK;
 }

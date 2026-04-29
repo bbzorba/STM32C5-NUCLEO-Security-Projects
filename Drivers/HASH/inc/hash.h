@@ -1,103 +1,57 @@
 ﻿#ifndef __HASH_H
 #define __HASH_H
 
-#include <stddef.h>
 #include <stdint.h>
-#include "../../GPIO/inc/gpio.h"  /* RCC_TypeDef, RCC */
+#include <stddef.h>
+#include "../../GPIO/inc/gpio.h"   /* RCC_TypeDef / RCC */
 
 #define __IO volatile
 
-/* Base addresses */
-#define HASH_BASE           0x420C0400U
-#define LPDMA1_BASE              0x40020000U
-#define LPDMA1_C0_BASE           (LPDMA1_BASE + 0x50U)
+/* HASH peripheral base address (STM32C562RE, RM Table 2) */
+#define HASH_BASE  0x420C0400U
 
-/* RCC AHB1 clock enable bit for LPDMA1 and AHB2 clock enable bit for HASH */
-#define RCC_AHB2ENR_HASHEN  (1U << 17)
-#define RCC_AHB1ENR_LPDMA1EN (1U << 0)
-
-/* HASH_CR bits */
-#define HASH_CR_INIT             0x00000004U   /* bit 2 : INIT - reset hash engine (self-clearing) */
-#define HASH_CR_DMAE             0x00000008U   /* bit 3 : DMAE - enable DMA data-input requests */
-#define HASH_CR_DATATYPE         0x00000030U   /* bits [5:4] DATATYPE   - 00=32-bit no swap, 10=8-bit byte swap */
-#define HASH_CR_DATATYPE_BYTE    0x00000020U   /* DATATYPE=10: byte swap  */
-#define HASH_CR_MDMAT            0x00002000U   /* bit 13 : MDMAT - multiple DMA transfers mode */
-#define HASH_CR_ALGO             0x00060000U   /* bits [18:17] : ALGO - 00=SHA1, 10=SHA224, 11=SHA256 */
-#define HASH_CR_ALGO_SHA1        0x00000000U   /* ALGO = 00 */
-#define HASH_CR_ALGO_SHA224      0x00040000U   /* ALGO = 10 */
-#define HASH_CR_ALGO_SHA256      0x00060000U   /* ALGO = 11 */
-
-/* HASH_STR bits */
-#define HASH_STR_NBLW_MASK  0x0000001FU
-#define HASH_STR_DCAL       0x00000100U
-
-/* HASH_SR bits */
-#define HASH_SR_DINIS       0x00000001U   /* bit 0: data-input ready  */
-#define HASH_SR_DCIS        0x00000002U   /* bit 1: digest complete   */
-#define HASH_SR_BUSY        0x00000008U   /* bit 3: engine busy       */
-
-/* HASH register structure */
+/* HASH register map (offsets 0x000 - 0x024) */
 typedef struct {
-    __IO uint32_t CR;      /* 0x000  Control Register               */
-    __IO uint32_t DIN;     /* 0x004  Data Input Register            */
-    __IO uint32_t STR;     /* 0x008  Start Register (NBLW + DCAL)   */
-    __IO uint32_t HRA[5];  /* 0x00C..0x01C  read-access hash words  */
-    __IO uint32_t IMR;     /* 0x020  Interrupt Mask Register        */
-    __IO uint32_t SR;      /* 0x024  Status Register                */
-} HASH_ManualTypeDef;
+    __IO uint32_t CR;     /* 0x000  Control                */
+    __IO uint32_t DIN;    /* 0x004  Data Input             */
+    __IO uint32_t STR;    /* 0x008  Start (NBLW / DCAL)    */
+    __IO uint32_t HRA[5]; /* 0x00C  Intermediate digest    */
+    __IO uint32_t IMR;    /* 0x020  Interrupt Mask         */
+    __IO uint32_t SR;     /* 0x024  Status                 */
+} HASH_TypeDef;
 
-/* SHA-256/SHA-224/SHA-1 digest output registers */
+#define HASH_PERIPH  ((HASH_TypeDef *)HASH_BASE)
+
+/* Final SHA-256 digest output: 8 × 32-bit words at offset 0x310 */
 #define HASH_HR_OUT  ((volatile uint32_t *)(HASH_BASE + 0x310U))
-#define HASH_regs    ((HASH_ManualTypeDef *)HASH_BASE)
-#define HASH_DIN_ADDR (HASH_BASE + 0x004U) /* HASH_DIN address (used as DMA destination) */
 
-/* LPDMA1 registers */
-#define LPDMA1_C0CFCR  (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x0CU)) /* Flag clear  */
-#define LPDMA1_C0SR    (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x10U)) /* Status      */
-#define LPDMA1_C0CR    (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x14U)) /* Control     */
-#define LPDMA1_C0TR1   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x40U)) /* Transfer 1  */
-#define LPDMA1_C0TR2   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x44U)) /* Transfer 2  */
-#define LPDMA1_C0BR1   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x48U)) /* Block reg 1 */
-#define LPDMA1_C0SAR   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x4CU)) /* Src addr    */
-#define LPDMA1_C0DAR   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x50U)) /* Dst addr    */
-#define LPDMA1_C0LLR   (*(volatile uint32_t *)(LPDMA1_C0_BASE + 0x7CU)) /* Linked list */
+/* RCC clock enable for HASH */
+#define RCC_AHB2ENR_HASHEN  (1U << 17)
 
-/* LPDMA1 CCR bits */
-#define LPDMA1_CCR_EN            (1U << 0)  /* Channel enable */
-#define LPDMA1_CCR_RESET         (1U << 1)  /* Channel reset */
+/* CR bits */
+#define HASH_CR_INIT        (1U << 2)   /* Reset engine (self-clearing)    */
+#define HASH_CR_ALGO_SHA256 (3U << 17)  /* bits[18:17] = 11 → SHA-256      */
 
-/* LPDMA1 CTR1: SDW_LOG2[1:0]=2(word), SINC[3]=1, DDW_LOG2[17:16]=2(word), DINC[19]=0 */
-#define LPDMA1_CTR1_MEM_TO_PERIPH_WORD  ((2U << 0) | (1U << 3) | (2U << 16))
+/* STR bits */
+#define HASH_STR_NBLW_MASK  0x1FU
+#define HASH_STR_DCAL       (1U << 8)   /* Fire padding + digest calc      */
 
-/* LPDMA1 CTR2: REQSEL=63 (HASH_IN), SWREQ=0, BREQ=0 */
-#define LPDMA1_REQUEST_HASH_IN   63U
+/* SR bits */
+#define HASH_SR_DINIS  (1U << 0)  /* Engine ready for input  */
+#define HASH_SR_DCIS   (1U << 1)  /* Digest complete         */
+#define HASH_SR_BUSY   (1U << 3)  /* Engine busy             */
 
-/* LPDMA1 C0SR flags */
-#define LPDMA1_C0SR_TCF (1U << 8)  /* Transfer complete flag  */
-
-typedef enum {
-    HASH_OK    = 0,
-    HASH_ERROR = 1
-} HASH_StatusTypeDef;
-
-typedef enum {
-    HASH_SHA1   = 0,
-    HASH_SHA224 = 1,
-    HASH_SHA256 = 2
-} HASH_AlgorithmTypeDef;
+typedef enum { HASH_OK = 0, HASH_ERROR } HASH_StatusTypeDef;
 
 typedef struct {
-    HASH_ManualTypeDef    *regs;
-    HASH_AlgorithmTypeDef  algorithm;
-    HASH_StatusTypeDef     state;
-    size_t                 msg_len;       /* bytes fed, used for NBLW */
-    unsigned char          hash_output[32];
+    HASH_TypeDef       *Instance;
+    HASH_StatusTypeDef  state;
+    size_t              msg_len;  /* total bytes fed (used for NBLW) */
 } HASH_HandleTypeDef;
 
-void               Hash_Constructor (HASH_HandleTypeDef *hash, HASH_AlgorithmTypeDef algorithm);
-void               Hash_Init        (HASH_HandleTypeDef *hash);
-void               Hash_Reset       (HASH_HandleTypeDef *hash);
-HASH_StatusTypeDef Hash_Process_Data(HASH_HandleTypeDef *hash, const unsigned char *data, size_t len);
-HASH_StatusTypeDef Hash_Final       (HASH_HandleTypeDef *hash, unsigned char *hash_output);
+void               HASH_Init        (HASH_HandleTypeDef *hhash);
+HASH_StatusTypeDef HASH_SHA256_Start(HASH_HandleTypeDef *hhash);
+HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *data, size_t len);
+HASH_StatusTypeDef HASH_SHA256_Final (HASH_HandleTypeDef *hhash, uint8_t *digest);
 
 #endif /* __HASH_H */
