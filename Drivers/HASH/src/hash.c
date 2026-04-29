@@ -8,6 +8,64 @@ void HASH_Init(HASH_HandleTypeDef *hhash)
     hhash->msg_len  = 0;
 }
 
+/* ── Static helpers shared by all algorithm Start/Final variants ─────── */
+
+static HASH_StatusTypeDef hash_start(HASH_HandleTypeDef *hhash, uint32_t algo)
+{
+    hhash->Instance->CR  = HASH_CR_INIT | algo;
+    while (!(hhash->Instance->SR & HASH_SR_DINIS));
+    while (  hhash->Instance->SR & HASH_SR_DCIS);
+    hhash->Instance->STR = 0U;   /* clear stale NBLW from any previous run */
+    hhash->msg_len = 0;
+    return HASH_OK;
+}
+
+static HASH_StatusTypeDef hash_final(HASH_HandleTypeDef *hhash, uint8_t *digest, int words)
+{
+    if (!digest) return HASH_ERROR;
+    uint32_t nblw = (uint32_t)((hhash->msg_len % 4U) * 8U) & HASH_STR_NBLW_MASK;
+    while (  hhash->Instance->SR & HASH_SR_DCIS);
+    hhash->Instance->STR = nblw | HASH_STR_DCAL;
+    while (!(hhash->Instance->SR & HASH_SR_DCIS));
+    while (  hhash->Instance->SR & HASH_SR_BUSY);
+    __asm volatile("dsb" : : : "memory");
+    volatile uint32_t *hr = HASH_HR_OUT;
+    for (int i = 0; i < words; i++) {
+        uint32_t val  = hr[i];
+        digest[i*4+0] = (uint8_t)(val >> 24);
+        digest[i*4+1] = (uint8_t)(val >> 16);
+        digest[i*4+2] = (uint8_t)(val >>  8);
+        digest[i*4+3] = (uint8_t)(val);
+    }
+    return HASH_OK;
+}
+
+/* ── SHA-1 (160-bit / 5 words) ─────────────────────────────────────── */
+
+HASH_StatusTypeDef HASH_SHA1_Start(HASH_HandleTypeDef *hhash)
+{
+    return hash_start(hhash, HASH_CR_ALGO_SHA1);
+}
+
+HASH_StatusTypeDef HASH_SHA1_Final(HASH_HandleTypeDef *hhash, uint8_t *digest)
+{
+    return hash_final(hhash, digest, 5);
+}
+
+/* ── SHA-224 (224-bit / 7 words) ────────────────────────────────────── */
+
+HASH_StatusTypeDef HASH_SHA224_Start(HASH_HandleTypeDef *hhash)
+{
+    return hash_start(hhash, HASH_CR_ALGO_SHA224);
+}
+
+HASH_StatusTypeDef HASH_SHA224_Final(HASH_HandleTypeDef *hhash, uint8_t *digest)
+{
+    return hash_final(hhash, digest, 7);
+}
+
+/* ── SHA-256 (256-bit / 8 words) — unchanged ────────────────────────── */
+
 HASH_StatusTypeDef HASH_SHA256_Start(HASH_HandleTypeDef *hhash)
 {
     /* Write INIT + ALGO in a single write — ALGO is only sampled when INIT=1 */

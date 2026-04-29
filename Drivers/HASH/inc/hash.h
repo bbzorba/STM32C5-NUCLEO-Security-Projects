@@ -30,6 +30,8 @@ typedef struct {
 
 /* CR bits */
 #define HASH_CR_INIT        (1U << 2)   /* Reset engine (self-clearing)    */
+#define HASH_CR_ALGO_SHA1   (0U << 17)  /* bits[18:17] = 00 → SHA-1        */
+#define HASH_CR_ALGO_SHA224 (2U << 17)  /* bits[18:17] = 10 → SHA-224      */
 #define HASH_CR_ALGO_SHA256 (3U << 17)  /* bits[18:17] = 11 → SHA-256      */
 
 /* STR bits */
@@ -49,9 +51,20 @@ typedef struct {
     size_t              msg_len;  /* total bytes fed (used for NBLW) */
 } HASH_HandleTypeDef;
 
-void               HASH_Init        (HASH_HandleTypeDef *hhash);
-HASH_StatusTypeDef HASH_SHA256_Start(HASH_HandleTypeDef *hhash);
+void               HASH_Init         (HASH_HandleTypeDef *hhash);
+
+HASH_StatusTypeDef HASH_SHA1_Start   (HASH_HandleTypeDef *hhash);
+HASH_StatusTypeDef HASH_SHA1_Final   (HASH_HandleTypeDef *hhash, uint8_t *digest); /* 20 bytes */
+
+HASH_StatusTypeDef HASH_SHA224_Start (HASH_HandleTypeDef *hhash);
+HASH_StatusTypeDef HASH_SHA224_Final (HASH_HandleTypeDef *hhash, uint8_t *digest); /* 28 bytes */
+
+HASH_StatusTypeDef HASH_SHA256_Start (HASH_HandleTypeDef *hhash);
+HASH_StatusTypeDef HASH_SHA256_Final (HASH_HandleTypeDef *hhash, uint8_t *digest); /* 32 bytes */
+
+/* Update is algorithm-agnostic; all three share the same implementation */
 HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *data, size_t len);
-HASH_StatusTypeDef HASH_SHA256_Final (HASH_HandleTypeDef *hhash, uint8_t *digest);
+#define HASH_SHA1_Update   HASH_SHA256_Update
+#define HASH_SHA224_Update HASH_SHA256_Update
 
 #endif /* __HASH_H */
