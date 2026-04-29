@@ -5,7 +5,8 @@
 #PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/AES
-PROJECT_DIR = Drivers/HASH
+#PROJECT_DIR = Drivers/HASH
+PROJECT_DIR = Drivers/SHA256
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -75,15 +76,13 @@ CUBE_PROG?=C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
 OPENOCD?=openocd
 STFLASH?=st-flash
 OPENOCD_SCRIPTS?=
-OPENOCD_IF?=interface/stlink.cfg
-OPENOCD_TARGET?=target/stm32f4x.cfg
-OPENOCD_EXTRA?=
+OPENOCD_IF?=interface/stlink-dap.cfg
+OPENOCD_TARGET?=target/stm32u5x.cfg
+OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 
-CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32F407xx -DUSE_HAL_DRIVER \
+CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32C5xx \
 	-IDrivers/compat_inc \
 	-IDrivers/CMSIS \
-	-IDrivers/STM32F4xx_HAL_Driver \
-	-IDrivers/STM32F4xx_HAL_Driver/Legacy \
 	-I$(PROJECT_DIR)/inc \
 	-ffunction-sections -fdata-sections
 
@@ -92,50 +91,7 @@ ifeq ($(strip $(DEBUG)),1)
 CFLAGS := $(filter-out -O2,$(CFLAGS)) -Og -g3 -fno-inline
 endif
 
-# UART driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/UART)
-MCU := cortex-m33
-CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_IF := interface/stlink-dap.cfg
-OPENOCD_TARGET := target/stm32u5x.cfg
-OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-endif
-
-# GPIO driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/GPIO)
-MCU := cortex-m33
-CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_IF := interface/stlink-dap.cfg
-OPENOCD_TARGET := target/stm32u5x.cfg
-OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-endif
-
-# bxCAN (FDCAN) driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/bxCAN)
-MCU := cortex-m33
-CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_IF := interface/stlink-dap.cfg
-OPENOCD_TARGET := target/stm32u5x.cfg
-OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-endif
-
-# AES driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/AES)
-MCU := cortex-m33
-CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_IF := interface/stlink-dap.cfg
-OPENOCD_TARGET := target/stm32u5x.cfg
-OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-endif
-
-# HASH driver has a dedicated STM32C5 register-level port.
-ifeq ($(strip $(PROJECT_DIR)),Drivers/HASH)
-MCU := cortex-m33
-CFLAGS := $(filter-out -DSTM32F407xx -DUSE_HAL_DRIVER,$(CFLAGS)) -DSTM32C5xx
-OPENOCD_IF := interface/stlink-dap.cfg
-OPENOCD_TARGET := target/stm32u5x.cfg
-OPENOCD_EXTRA := -c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
-endif
+# All current projects target STM32C5 (Cortex-M33) via ST-LINK DAP.
 
 # C++ flags largely mirror C; disable RTTI/exceptions to keep size small
 CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti -fno-use-cxa-atexit
@@ -186,15 +142,6 @@ CFLAGS += $(DRIVER_INCLUDES)
 SRC_C   := $(wildcard $(PROJECT_DIR)/src/*.c)
 SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
 SRC := $(SRC_C) $(SRC_CPP)
-
-# If the project uses HAL, add a minimal set of HAL sources
-HAL_SRC := \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal.c \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_rcc.c \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_gpio.c \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_cortex.c \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_hal_pcd.c \
-	Drivers/STM32F4xx_HAL_Driver/stm32f4xx_ll_usb.c
 
 GPIO_SRC_C := Drivers/GPIO/src/gpio.c
 GPIO_SRC_CPP := Drivers/GPIO_cpp/src/gpio.cpp
@@ -536,8 +483,8 @@ SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
 CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
 
-# Project-specific wiring for HASH: needs GPIO and UART drivers
-ifeq ($(PROJECT_DIR),Drivers/HASH)
+# Project-specific wiring for HASH and SHA256: needs GPIO and UART drivers
+ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/HASH Drivers/SHA256))
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc

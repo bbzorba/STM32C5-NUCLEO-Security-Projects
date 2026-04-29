@@ -6,9 +6,8 @@ void Hash_Constructor(HASH_HandleTypeDef *hash, HASH_AlgorithmTypeDef algorithm)
     hash->algorithm = algorithm;
     hash->state     = HASH_OK;
     hash->msg_len   = 0;
-    /* Enable clocks before any register access */
-    RCC->AHB1ENR |= RCC_AHB1ENR_LPDMA1EN;  /* LPDMA1 for DMA data feed  */
-    RCC->AHB2ENR |= RCC_AHB2ENR_HASHEN;    /* HASH peripheral           */
+    /* Enable HASH peripheral clock */
+    RCC->AHB2ENR |= RCC_AHB2ENR_HASHEN;
     Hash_Init(hash);
 }
 
@@ -24,8 +23,10 @@ void Hash_Init(HASH_HandleTypeDef *hash) {
         cr |= HASH_CR_ALGO_SHA224;
     else
         cr |= HASH_CR_ALGO_SHA256;
-    /* DATATYPE=0 (32-bit, no swap), DMAE=0, MDMAT=0, MODE=0 — all clear */
     hash->regs->CR = cr;
+    /* INIT resets the engine; wait DINIS=1 then confirm DCIS=0 before returning. */
+    while (!(hash->regs->SR & HASH_SR_DINIS));
+    while (  hash->regs->SR & HASH_SR_DCIS);
     hash->state   = HASH_OK;
     hash->msg_len = 0;
     memset(hash->hash_output, 0, sizeof(hash->hash_output));
@@ -41,14 +42,15 @@ void Hash_Reset(HASH_HandleTypeDef *hash) {
     else
         cr |= HASH_CR_ALGO_SHA256;
     hash->regs->CR = cr;
+    /* Wait for reset to complete before returning */
+    while (!(hash->regs->SR & HASH_SR_DINIS));
+    while (  hash->regs->SR & HASH_SR_DCIS);
     hash->state   = HASH_OK;
     hash->msg_len = 0;
     memset(hash->hash_output, 0, sizeof(hash->hash_output));
 }
 
-HASH_StatusTypeDef Hash_Process_Data(HASH_HandleTypeDef *hash,
-                                     const unsigned char *data, size_t len)
-{
+HASH_StatusTypeDef Hash_Process_Data
     if (!data || len == 0)
         return HASH_ERROR;
 
@@ -58,51 +60,27 @@ HASH_StatusTypeDef Hash_Process_Data(HASH_HandleTypeDef *hash,
     size_t full_words = len / 4U;
     size_t rem        = len % 4U;
 
-    if (full_words > 0) {
-        /* Build a byte-ordered DMA source buffer on the stack. For long messages this should be heap-allocated. */
-        uint32_t dma_buf[full_words];
-        for (size_t i = 0; i < full_words; i++) {
-            dma_buf[i] = ((uint32_t)data[i*4+0] << 24) |
-                         ((uint32_t)data[i*4+1] << 16) |
-                         ((uint32_t)data[i*4+2] <<  8) |
-                         ((uint32_t)data[i*4+3]);
-        }
-
-        /* Enable HASH DMA request generation */
-        hash->regs->CR |= HASH_CR_DMAE;
-
-        /* Reset LPDMA1 Channel 0 */
-        LPDMA1_C0CR = LPDMA1_CCR_RESET;
-        while (LPDMA1_C0CR & LPDMA1_CCR_RESET);
-
-        LPDMA1_C0CFCR = 0x1FFU;  /* clear all flags */
-
-        /* CTR1: src=word(2), SINC=1, dst=word(2), DINC=0 */
-        LPDMA1_C0TR1 = LPDMA1_CTR1_MEM_TO_PERIPH_WORD;
-
-        /* CTR2: REQSEL=63 (HASH_IN), hardware request */
-        LPDMA1_C0TR2 = LPDMA1_REQUEST_HASH_IN;
-
-        /* CBR1: byte count */
-        LPDMA1_C0BR1 = (uint32_t)(full_words * 4U);
-
-        LPDMA1_C0SAR = (uint32_t)dma_buf;
-        LPDMA1_C0DAR = HASH_DIN_ADDR;
-        LPDMA1_C0LLR = 0U;
-
-        /* Enable channel */
-        LPDMA1_C0CR = LPDMA1_CCR_EN;
-
-        /* Wait for transfer complete */
-        while (!(LPDMA1_C0SR & LPDMA1_C0SR_TCF));
-
-        /* Disable HASH DMA requests */
-        hash->regs->CR &= ~HASH_CR_DMAE;
+    /* Feed full 32-bit words via CPU (big-endian packing, poll DINIS each word) */
+    for (size_t i = 0; i < full_words; i++) {
+        while (!(hash->regs->SR & HASH_SR_DINIS));
+        uint32_t w = ((uint32_t)data[i*4+0] << 24) |
+                     ((uint32_t)data[i*4+1] << 16) |
+                     ((uint32_t)data[i*4+2] <<  8) |
+                     ((uint32_t)data[i*4+3]);
+        hash->regs->DIN = w;
     }
 
-    /* Write last partial word via CPU (left-justified, big-endian) */
+    /* Write last partial word via CPU (left-justified, big-endian).         *
+     * CRITICAL: NBLW must be written to STR BEFORE the DIN write, not after. *
+     * The peripheral samples NBLW at the moment DIN is written; writing NBLW  *
+     * afterwards (before DCAL) has no effect — the hardware already latched   *
+     * NBLW=0 (all 32 bits valid) at DIN-write time.                           */
     if (rem > 0) {
         while (!(hash->regs->SR & HASH_SR_DINIS));
+        /* Step 1: set NBLW=valid-bits BEFORE writing the partial last word */
+        uint32_t nblw = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
+        hash->regs->STR = nblw;
+        /* Step 2: write the left-justified last word */
         uint32_t last = 0;
         for (size_t j = 0; j < rem; j++)
             last |= ((uint32_t)data[full_words*4 + j] << (24U - 8U*j));
@@ -121,18 +99,17 @@ HASH_StatusTypeDef Hash_Final(HASH_HandleTypeDef *hash, unsigned char *hash_outp
     /* Ensure DMA is disabled before triggering digest calculation */
     hash->regs->CR &= ~HASH_CR_DMAE;
 
-    /* NBLW = number of valid bits in the last word (0 = all 32 bits valid).
-     * Step 1: write NBLW while DCAL=0 (constraint: can't change NBLW while
-     *         a computation is active / DCAL=1).
-     * Step 2: |= DCAL — read-modify-write preserves the NBLW just written.
-     *         A plain write (= HASH_STR_DCAL) would zero NBLW back to 0,
-     *         causing the hardware to treat all 32 bits as valid (wrong).  */
-    uint32_t nblw = (uint32_t)((hash->msg_len % 4U) * 8U);
-    hash->regs->STR = nblw & HASH_STR_NBLW_MASK;  /* step 1: set NBLW    */
-    hash->regs->STR |= HASH_STR_DCAL;              /* step 2: RMW, keep NBLW */
-
-    /* Wait for digest calculation complete (DCIS set in SR) */
+    /* Write NBLW (valid bits in last word) together with DCAL so the
+     * hardware sees the correct padding length when it starts the final
+     * computation.  NBLW = (msg_len % 4) * 8; 0 means all 32 bits valid
+     * (exact multiple of 4 bytes).                                       */
+    uint32_t nblw = (uint32_t)((hash->msg_len % 4U) * 8U) & HASH_STR_NBLW_MASK;
+    /* Guard against stale DCIS before firing DCAL */
+    while (  hash->regs->SR & HASH_SR_DCIS);
+    hash->regs->STR = nblw | HASH_STR_DCAL;
     while (!(hash->regs->SR & HASH_SR_DCIS));
+    while (  hash->regs->SR & HASH_SR_BUSY );
+    __asm volatile("dsb" : : : "memory");
 
     /* SHA-1=5 words, SHA-224=7 words, SHA-256=8 words */
     int words = (hash->algorithm == HASH_SHA1)   ? 5 :

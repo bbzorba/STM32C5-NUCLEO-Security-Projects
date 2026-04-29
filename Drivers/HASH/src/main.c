@@ -19,19 +19,25 @@ int main(void)
     USART_WriteString(&g_uart, "\r\n=== Hash Tests ===\r\n");
 
     HASH_HandleTypeDef hash;
-    Hash_Constructor(&hash, HASH_SHA256);
-
-    const char *msg = "abc";
     uint8_t digest[32];
 
-    Hash_Process_Data(&hash, (const unsigned char*)msg, strlen(msg));
+    /* --- Test 1: SHA-256("abc") --- */
+    Hash_Constructor(&hash, HASH_SHA256);
+    Hash_Process_Data(&hash, (const unsigned char *)"abc", 3);
     Hash_Final(&hash, digest);
 
-    /* Expected SHA-256("abc"):
-       ba7816bf8f01cfea414140de5dae2ec73b338c0aa843c8a3cb3480e4f0d9c872 */
-    USART_WriteString(&g_uart, "SHA-256(\"abc\") = ");
+    USART_WriteString(&g_uart, "SHA-256(\"abc\")    = ");
     print_hex(&g_uart, digest, 32);
-    USART_WriteString(&g_uart, "\r\nExpected:        ba7816bf8f01cfea414140de5dae2ec73b338c0aa843c8a3cb3480e4f0d9c872\r\n");
+    USART_WriteString(&g_uart, "\r\nExpected:          ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\r\n");
+
+    /* --- Test 2: SHA-256("abcd") — exact 4-byte word, NBLW=0 --- */
+    Hash_Constructor(&hash, HASH_SHA256);
+    Hash_Process_Data(&hash, (const unsigned char *)"abcd", 4);
+    Hash_Final(&hash, digest);
+
+    USART_WriteString(&g_uart, "SHA-256(\"abcd\")   = ");
+    print_hex(&g_uart, digest, 32);
+    USART_WriteString(&g_uart, "\r\nExpected:          88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589\r\n");
 
     while (1) {}
 }
