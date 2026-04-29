@@ -35,13 +35,14 @@ int main(void)
     USART_constructor(&g_uart, USART_2, TX_ONLY, __115200);
     USART_WriteString(&g_uart, "\r\n=== SHA-256 Tests ===\r\n\n");
 
-    run_test("SHA-256(\"abcd\")  = ",
+    run_test("SHA-256(\"abc\")  = ",
+             "abc",
+             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+
+    run_test("SHA-256(\"abcd\") = ",
              "abcd",
              "88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589");
 
-    run_test("SHA-256(\"abc\") = ",
-             "abc",
-             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 
     while (1) {}
 }

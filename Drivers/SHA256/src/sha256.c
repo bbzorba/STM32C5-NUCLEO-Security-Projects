@@ -16,6 +16,14 @@ HASH_StatusTypeDef HASH_SHA256_Start(HASH_HandleTypeDef *hhash)
      * then confirm DCIS=0 before returning — DINIS can precede DCIS clearance. */
     while (!(hhash->Instance->SR & HASH_SR_DINIS));
     while (  hhash->Instance->SR & HASH_SR_DCIS);
+    /* CRITICAL: INIT does NOT reset the STR register.  If the previous run left
+     * a non-zero NBLW (e.g. a 3-byte message leaves NBLW=24), that value persists
+     * in STR across INIT.  For messages whose length is a multiple of 4 bytes,
+     * HASH_SHA256_Update never writes STR, so DIN words are fed while STR still
+     * holds the stale NBLW — the hardware silently truncates the last word to the
+     * old bit-count, reproducing the previous digest instead of the correct one.
+     * Zeroing STR here guarantees NBLW=0 (all 32 bits valid) for every fresh run. */
+    hhash->Instance->STR = 0U;
     hhash->msg_len = 0;
     return HASH_OK;
 }

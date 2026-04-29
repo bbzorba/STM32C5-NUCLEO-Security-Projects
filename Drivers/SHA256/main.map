@@ -270,8 +270,8 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .rodata.run_test.str1.4
                 0x080008e4       0x1c Drivers/SHA256/src/main.o
  .rodata.main.str1.4
-                0x08000900       0xd6 Drivers/SHA256/src/main.o
- *fill*         0x080009d6        0x2 
+                0x08000900       0xd7 Drivers/SHA256/src/main.o
+ *fill*         0x080009d7        0x1 
  .rodata.hex.0  0x080009d8       0x11 Drivers/SHA256/src/main.o
  *(.glue_7)
  .glue_7        0x080009e9        0x0 linker stubs
@@ -405,11 +405,11 @@ LOAD linker stubs
  .debug_ranges  0x00000100       0x30 Drivers/SHA256/src/startup.o
  .debug_ranges  0x00000130      0x1e0 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x1895
+.debug_line     0x00000000     0x189d
  .debug_line    0x00000000      0x2e7 Drivers/SHA256/src/main.o
- .debug_line    0x000002e7      0x553 Drivers/SHA256/src/sha256.o
- .debug_line    0x0000083a      0x21a Drivers/SHA256/src/startup.o
- .debug_line    0x00000a54      0xe41 Drivers/UART/src/uart.o
+ .debug_line    0x000002e7      0x55b Drivers/SHA256/src/sha256.o
+ .debug_line    0x00000842      0x21a Drivers/SHA256/src/startup.o
+ .debug_line    0x00000a5c      0xe41 Drivers/UART/src/uart.o
 
 .debug_str      0x00000000      0x834
  .debug_str     0x00000000      0x32b Drivers/SHA256/src/main.o
