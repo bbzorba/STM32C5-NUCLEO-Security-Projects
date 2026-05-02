@@ -5,8 +5,8 @@
 #PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/AES
-PROJECT_DIR = Drivers/HASH
-#PROJECT_DIR = Drivers/SHA256
+#PROJECT_DIR = Drivers/HASH
+PROJECT_DIR = Drivers/CRC
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -483,8 +483,15 @@ SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
 CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
 endif
 
-# Project-specific wiring for HASH and SHA256: needs GPIO and UART drivers
-ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/HASH Drivers/SHA256))
+# Project-specific wiring for HASH: needs GPIO and UART drivers
+ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/HASH))
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
+endif
+
+# Project-specific wiring for CRC: needs GPIO and UART drivers
+ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/CRC))
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc

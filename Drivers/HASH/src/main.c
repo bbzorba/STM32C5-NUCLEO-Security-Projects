@@ -21,9 +21,10 @@ static void run_test(const char *label, const char *msg,
                      size_t digest_len, const char *expected)
 {
     HASH_HandleTypeDef hhash;
+    HASH_Constructor(&hhash);
+    
     uint8_t digest[32];
 
-    HASH_Init(&hhash);
     start_fn(&hhash);
     HASH_SHA256_Update(&hhash, (const uint8_t *)msg, strlen(msg));
     final_fn(&hhash, digest);

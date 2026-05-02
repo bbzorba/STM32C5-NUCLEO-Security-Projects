@@ -7,11 +7,9 @@ c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (__libc_init_array)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                              Drivers/HASH/src/startup.o (memcpy)
+                              Drivers/CRC/src/startup.o (memcpy)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (memset)
-c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
-                              Drivers/HASH/src/main.o (strlen)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o) (_exit)
 
@@ -36,6 +34,17 @@ Discarded input sections
  .ARM.exidx     0x00000000       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o
  .ARM.attributes
                 0x00000000       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o
+ .text          0x00000000        0x0 Drivers/CRC/src/crc.o
+ .data          0x00000000        0x0 Drivers/CRC/src/crc.o
+ .bss           0x00000000        0x0 Drivers/CRC/src/crc.o
+ .text          0x00000000        0x0 Drivers/CRC/src/main.o
+ .data          0x00000000        0x0 Drivers/CRC/src/main.o
+ .bss           0x00000000        0x0 Drivers/CRC/src/main.o
+ .text          0x00000000        0x0 Drivers/CRC/src/startup.o
+ .data          0x00000000        0x0 Drivers/CRC/src/startup.o
+ .bss           0x00000000        0x0 Drivers/CRC/src/startup.o
+ .text.SystemInit
+                0x00000000       0x10 Drivers/CRC/src/startup.o
  .text          0x00000000        0x0 Drivers/GPIO/src/gpio.o
  .data          0x00000000        0x0 Drivers/GPIO/src/gpio.o
  .bss           0x00000000        0x0 Drivers/GPIO/src/gpio.o
@@ -71,17 +80,6 @@ Discarded input sections
  .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
  .ARM.attributes
                 0x00000000       0x34 Drivers/GPIO/src/gpio.o
- .text          0x00000000        0x0 Drivers/HASH/src/hash.o
- .data          0x00000000        0x0 Drivers/HASH/src/hash.o
- .bss           0x00000000        0x0 Drivers/HASH/src/hash.o
- .text          0x00000000        0x0 Drivers/HASH/src/main.o
- .data          0x00000000        0x0 Drivers/HASH/src/main.o
- .bss           0x00000000        0x0 Drivers/HASH/src/main.o
- .text          0x00000000        0x0 Drivers/HASH/src/startup.o
- .data          0x00000000        0x0 Drivers/HASH/src/startup.o
- .bss           0x00000000        0x0 Drivers/HASH/src/startup.o
- .text.SystemInit
-                0x00000000       0x10 Drivers/HASH/src/startup.o
  .text          0x00000000        0x0 Drivers/UART/src/uart.o
  .data          0x00000000        0x0 Drivers/UART/src/uart.o
  .bss           0x00000000        0x0 Drivers/UART/src/uart.o
@@ -151,8 +149,6 @@ Discarded input sections
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
- .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
@@ -187,10 +183,10 @@ Linker script and memory map
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crtbegin.o
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o
+LOAD Drivers/CRC/src/crc.o
+LOAD Drivers/CRC/src/main.o
+LOAD Drivers/CRC/src/startup.o
 LOAD Drivers/GPIO/src/gpio.o
-LOAD Drivers/HASH/src/hash.o
-LOAD Drivers/HASH/src/main.o
-LOAD Drivers/HASH/src/startup.o
 LOAD Drivers/UART/src/uart.o
 START GROUP
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp\libgcc.a
@@ -213,130 +209,101 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
 
 .isr_vector     0x08000000      0x180
  *(.isr_vector)
- .isr_vector    0x08000000      0x180 Drivers/HASH/src/startup.o
+ .isr_vector    0x08000000      0x180 Drivers/CRC/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000180      0xa08
+.text           0x08000180      0x6ac
  *(.text*)
- .text.hash_final
-                0x08000180       0x60 Drivers/HASH/src/hash.o
- .text.HASH_Constructor
-                0x080001e0       0x28 Drivers/HASH/src/hash.o
-                0x080001e0                HASH_Constructor
- .text.HASH_SHA1_Start
-                0x08000208       0x1c Drivers/HASH/src/hash.o
-                0x08000208                HASH_SHA1_Start
- .text.HASH_SHA1_Final
-                0x08000224        0x8 Drivers/HASH/src/hash.o
-                0x08000224                HASH_SHA1_Final
- .text.HASH_SHA224_Start
-                0x0800022c       0x20 Drivers/HASH/src/hash.o
-                0x0800022c                HASH_SHA224_Start
- .text.HASH_SHA224_Final
-                0x0800024c        0x8 Drivers/HASH/src/hash.o
-                0x0800024c                HASH_SHA224_Final
- .text.HASH_SHA256_Start
-                0x08000254       0x20 Drivers/HASH/src/hash.o
-                0x08000254                HASH_SHA256_Start
- .text.HASH_SHA256_Update
-                0x08000274       0x90 Drivers/HASH/src/hash.o
-                0x08000274                HASH_SHA256_Update
- .text.HASH_SHA256_Final
-                0x08000304       0x60 Drivers/HASH/src/hash.o
-                0x08000304                HASH_SHA256_Final
- .text.run_test
-                0x08000364       0x90 Drivers/HASH/src/main.o
+ .text.CRC_Constructor
+                0x08000180       0x24 Drivers/CRC/src/crc.o
+                0x08000180                CRC_Constructor
+ .text.CRC_Calculate
+                0x080001a4       0x40 Drivers/CRC/src/crc.o
+                0x080001a4                CRC_Calculate
  .text.startup.main
-                0x080003f4       0xb4 Drivers/HASH/src/main.o
-                0x080003f4                main
+                0x080001e4       0x98 Drivers/CRC/src/main.o
+                0x080001e4                main
  .text.Default_Handler
-                0x080004a8        0x4 Drivers/HASH/src/startup.o
-                0x080004a8                Default_Handler
+                0x0800027c        0x4 Drivers/CRC/src/startup.o
+                0x0800027c                Default_Handler
  .text.HardFault_Handler
-                0x080004ac        0x4 Drivers/HASH/src/startup.o
-                0x080004ac                HardFault_Handler
+                0x08000280        0x4 Drivers/CRC/src/startup.o
+                0x08000280                HardFault_Handler
  .text.SecureFault_Handler
-                0x080004b0        0x4 Drivers/HASH/src/startup.o
-                0x080004b0                SecureFault_Handler
+                0x08000284        0x4 Drivers/CRC/src/startup.o
+                0x08000284                SecureFault_Handler
  .text.Reset_Handler
-                0x080004b4       0x5c Drivers/HASH/src/startup.o
-                0x080004b4                Reset_Handler
+                0x08000288       0x5c Drivers/CRC/src/startup.o
+                0x08000288                Reset_Handler
  .text.USART_Init
-                0x08000510      0x458 Drivers/UART/src/uart.o
-                0x08000510                USART_Init
+                0x080002e4      0x458 Drivers/UART/src/uart.o
+                0x080002e4                USART_Init
  .text.USART_constructor
-                0x08000968        0xc Drivers/UART/src/uart.o
-                0x08000968                USART_constructor
+                0x0800073c        0xc Drivers/UART/src/uart.o
+                0x0800073c                USART_constructor
  .text.USART_WriteChar
-                0x08000974       0x10 Drivers/UART/src/uart.o
-                0x08000974                USART_WriteChar
+                0x08000748       0x10 Drivers/UART/src/uart.o
+                0x08000748                USART_WriteChar
  .text.USART_WriteString
-                0x08000984       0x30 Drivers/UART/src/uart.o
-                0x08000984                USART_WriteString
- .text.memcpy   0x080009b4       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                0x080009b4                memcpy
- .text.memset   0x080009ce       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
-                0x080009ce                memset
- .text          0x080009de       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
-                0x080009de                strlen
+                0x08000758       0x30 Drivers/UART/src/uart.o
+                0x08000758                USART_WriteString
+ .text.memcpy   0x08000788       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x08000788                memcpy
+ .text.memset   0x080007a2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x080007a2                memset
  *(.rodata*)
- *fill*         0x080009ee        0x2 
- .rodata.run_test.str1.4
-                0x080009f0       0x15 Drivers/HASH/src/main.o
-                                 0x1c (size before relaxing)
- *fill*         0x08000a05        0x3 
+ *fill*         0x080007b2        0x2 
  .rodata.main.str1.4
-                0x08000a08      0x161 Drivers/HASH/src/main.o
- *fill*         0x08000b69        0x3 
- .rodata.hex.0  0x08000b6c       0x11 Drivers/HASH/src/main.o
+                0x080007b4       0x5c Drivers/CRC/src/main.o
+ .rodata.hex.0  0x08000810       0x11 Drivers/CRC/src/main.o
  *(.glue_7)
- .glue_7        0x08000b7d        0x0 linker stubs
+ .glue_7        0x08000821        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000b7d        0x0 linker stubs
+ .glue_7t       0x08000821        0x0 linker stubs
  *(.init)
- *fill*         0x08000b7d        0x3 
- .init          0x08000b80        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000b80                _init
+ *fill*         0x08000821        0x3 
+ .init          0x08000824        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000824                _init
  *(.fini)
- .fini          0x08000b84        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000b84                _fini
+ .fini          0x08000828        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000828                _fini
 
-.vfp11_veneer   0x08000b88        0x0
- .vfp11_veneer  0x08000b88        0x0 linker stubs
+.vfp11_veneer   0x0800082c        0x0
+ .vfp11_veneer  0x0800082c        0x0 linker stubs
 
-.v4_bx          0x08000b88        0x0
- .v4_bx         0x08000b88        0x0 linker stubs
+.v4_bx          0x0800082c        0x0
+ .v4_bx         0x0800082c        0x0 linker stubs
 
-.iplt           0x08000b88        0x0
- .iplt          0x08000b88        0x0 Drivers/HASH/src/hash.o
+.iplt           0x0800082c        0x0
+ .iplt          0x0800082c        0x0 Drivers/CRC/src/main.o
 
-.rel.dyn        0x08000b88        0x0
- .rel.iplt      0x08000b88        0x0 Drivers/HASH/src/hash.o
+.rel.dyn        0x0800082c        0x0
+ .rel.iplt      0x0800082c        0x0 Drivers/CRC/src/main.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000b88        0x0
-                0x08000b88                __exidx_start = .
+.ARM.exidx      0x0800082c        0x0
+                0x0800082c                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000b88                __exidx_end = .
-                0x08000b88                __etext = .
+                0x0800082c                __exidx_end = .
+                0x0800082c                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000b88
+.data           0x20000000        0x4 load address 0x0800082c
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
-                0x20000000        0x4 Drivers/HASH/src/startup.o
+                0x20000000        0x4 Drivers/CRC/src/startup.o
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000b8c
- .igot.plt      0x20000004        0x0 Drivers/HASH/src/hash.o
+.igot.plt       0x20000004        0x0 load address 0x08000830
+ .igot.plt      0x20000004        0x0 Drivers/CRC/src/main.o
 
-.bss            0x20000004       0x20 load address 0x08000b8c
+.bss            0x20000004       0x20 load address 0x08000830
                 0x20000004                __bss_start__ = .
  *(.bss*)
- .bss.g_uart    0x20000004        0xc Drivers/HASH/src/main.o
+ .bss.g_uart    0x20000004        0xc Drivers/CRC/src/main.o
  .bss.s_uart4_handle
                 0x20000010        0x4 Drivers/UART/src/uart.o
  .bss.s_uart5_handle
@@ -353,13 +320,13 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000024                end = .
                 0x20000024                __end__ = .
 
-.stack          0x20000024      0x404 load address 0x08000bac
+.stack          0x20000024      0x404 load address 0x08000850
                 0x20000028                . = ALIGN (0x8)
  *fill*         0x20000024        0x4 
                 0x20000028                _stack = .
                 0x20000428                . = (. + 0x400)
  *fill*         0x20000028      0x400 
-OUTPUT(Drivers/HASH/main.elf elf32-littlearm)
+OUTPUT(Drivers/CRC/main.elf elf32-littlearm)
 LOAD linker stubs
 
 .ARM.attributes
@@ -367,80 +334,78 @@ LOAD linker stubs
  .ARM.attributes
                 0x00000000       0x22 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
  .ARM.attributes
-                0x00000022       0x34 Drivers/HASH/src/hash.o
+                0x00000022       0x34 Drivers/CRC/src/crc.o
  .ARM.attributes
-                0x00000056       0x34 Drivers/HASH/src/main.o
+                0x00000056       0x34 Drivers/CRC/src/main.o
  .ARM.attributes
-                0x0000008a       0x34 Drivers/HASH/src/startup.o
+                0x0000008a       0x34 Drivers/CRC/src/startup.o
  .ARM.attributes
                 0x000000be       0x34 Drivers/UART/src/uart.o
  .ARM.attributes
                 0x000000f2       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
  .ARM.attributes
                 0x00000124       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .ARM.attributes
-                0x00000156       0x17 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
 
 .comment        0x00000000       0x49
- .comment       0x00000000       0x49 Drivers/HASH/src/hash.o
+ .comment       0x00000000       0x49 Drivers/CRC/src/crc.o
                                  0x4a (size before relaxing)
- .comment       0x00000049       0x4a Drivers/HASH/src/main.o
- .comment       0x00000049       0x4a Drivers/HASH/src/startup.o
+ .comment       0x00000049       0x4a Drivers/CRC/src/main.o
+ .comment       0x00000049       0x4a Drivers/CRC/src/startup.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x1f39
- .debug_info    0x00000000      0x795 Drivers/HASH/src/hash.o
- .debug_info    0x00000795      0x75b Drivers/HASH/src/main.o
- .debug_info    0x00000ef0      0x1f2 Drivers/HASH/src/startup.o
- .debug_info    0x000010e2      0xe57 Drivers/UART/src/uart.o
+.debug_info     0x00000000     0x1a3c
+ .debug_info    0x00000000      0x421 Drivers/CRC/src/crc.o
+ .debug_info    0x00000421      0x5d2 Drivers/CRC/src/main.o
+ .debug_info    0x000009f3      0x1f2 Drivers/CRC/src/startup.o
+ .debug_info    0x00000be5      0xe57 Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0x980
- .debug_abbrev  0x00000000      0x212 Drivers/HASH/src/hash.o
- .debug_abbrev  0x00000212      0x205 Drivers/HASH/src/main.o
- .debug_abbrev  0x00000417      0x147 Drivers/HASH/src/startup.o
- .debug_abbrev  0x0000055e      0x422 Drivers/UART/src/uart.o
+.debug_abbrev   0x00000000      0x8ec
+ .debug_abbrev  0x00000000      0x191 Drivers/CRC/src/crc.o
+ .debug_abbrev  0x00000191      0x1f2 Drivers/CRC/src/main.o
+ .debug_abbrev  0x00000383      0x147 Drivers/CRC/src/startup.o
+ .debug_abbrev  0x000004ca      0x422 Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000      0xf71
- .debug_loc     0x00000000      0x531 Drivers/HASH/src/hash.o
- .debug_loc     0x00000531      0x19c Drivers/HASH/src/main.o
- .debug_loc     0x000006cd      0x8a4 Drivers/UART/src/uart.o
+.debug_loc      0x00000000      0xa9a
+ .debug_loc     0x00000000      0x132 Drivers/CRC/src/crc.o
+ .debug_loc     0x00000132       0xc4 Drivers/CRC/src/main.o
+ .debug_loc     0x000001f6      0x8a4 Drivers/UART/src/uart.o
 
-.debug_aranges  0x00000000      0x170
+.debug_aranges  0x00000000      0x130
  .debug_aranges
-                0x00000000       0x60 Drivers/HASH/src/hash.o
+                0x00000000       0x28 Drivers/CRC/src/crc.o
  .debug_aranges
-                0x00000060       0x28 Drivers/HASH/src/main.o
+                0x00000028       0x20 Drivers/CRC/src/main.o
  .debug_aranges
-                0x00000088       0x40 Drivers/HASH/src/startup.o
+                0x00000048       0x40 Drivers/CRC/src/startup.o
  .debug_aranges
-                0x000000c8       0xa8 Drivers/UART/src/uart.o
+                0x00000088       0xa8 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x3a0
- .debug_ranges  0x00000000      0x160 Drivers/HASH/src/hash.o
- .debug_ranges  0x00000160       0x30 Drivers/HASH/src/main.o
- .debug_ranges  0x00000190       0x30 Drivers/HASH/src/startup.o
- .debug_ranges  0x000001c0      0x1e0 Drivers/UART/src/uart.o
+.debug_ranges   0x00000000      0x250
+ .debug_ranges  0x00000000       0x18 Drivers/CRC/src/crc.o
+ .debug_ranges  0x00000018       0x28 Drivers/CRC/src/main.o
+ .debug_ranges  0x00000040       0x30 Drivers/CRC/src/startup.o
+ .debug_ranges  0x00000070      0x1e0 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x1ae4
- .debug_line    0x00000000      0x792 Drivers/HASH/src/hash.o
- .debug_line    0x00000792      0x2f9 Drivers/HASH/src/main.o
- .debug_line    0x00000a8b      0x218 Drivers/HASH/src/startup.o
- .debug_line    0x00000ca3      0xe41 Drivers/UART/src/uart.o
+.debug_line     0x00000000     0x157f
+ .debug_line    0x00000000      0x2c4 Drivers/CRC/src/crc.o
+ .debug_line    0x000002c4      0x263 Drivers/CRC/src/main.o
+ .debug_line    0x00000527      0x217 Drivers/CRC/src/startup.o
+ .debug_line    0x0000073e      0xe41 Drivers/UART/src/uart.o
 
-.debug_str      0x00000000      0x8c7
- .debug_str     0x00000000      0x373 Drivers/HASH/src/hash.o
-                                0x3be (size before relaxing)
- .debug_str     0x00000373      0x161 Drivers/HASH/src/main.o
-                                0x38b (size before relaxing)
- .debug_str     0x000004d4       0xfd Drivers/HASH/src/startup.o
-                                0x282 (size before relaxing)
- .debug_str     0x000005d1      0x2f6 Drivers/UART/src/uart.o
+.debug_str      0x00000000      0x7ed
+ .debug_str     0x00000000      0x2d7 Drivers/CRC/src/crc.o
+                                0x31c (size before relaxing)
+ .debug_str     0x000002d7      0x124 Drivers/CRC/src/main.o
+                                0x345 (size before relaxing)
+ .debug_str     0x000003fb       0xfc Drivers/CRC/src/startup.o
+                                0x281 (size before relaxing)
+ .debug_str     0x000004f7      0x2f6 Drivers/UART/src/uart.o
                                 0x66c (size before relaxing)
 
-.debug_frame    0x00000000      0x384
- .debug_frame   0x00000000       0xe0 Drivers/HASH/src/hash.o
- .debug_frame   0x000000e0       0x54 Drivers/HASH/src/main.o
- .debug_frame   0x00000134       0x68 Drivers/HASH/src/startup.o
- .debug_frame   0x0000019c      0x1a0 Drivers/UART/src/uart.o
- .debug_frame   0x0000033c       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x00000364       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+.debug_frame    0x00000000      0x2c4
+ .debug_frame   0x00000000       0x48 Drivers/CRC/src/crc.o
+ .debug_frame   0x00000048       0x2c Drivers/CRC/src/main.o
+ .debug_frame   0x00000074       0x68 Drivers/CRC/src/startup.o
+ .debug_frame   0x000000dc      0x1a0 Drivers/UART/src/uart.o
+ .debug_frame   0x0000027c       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x000002a4       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

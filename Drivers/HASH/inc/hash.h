@@ -46,12 +46,14 @@ typedef struct {
 typedef enum { HASH_OK = 0, HASH_ERROR } HASH_StatusTypeDef;
 
 typedef struct {
-    HASH_TypeDef       *Instance;
-    HASH_StatusTypeDef  state;
-    size_t              msg_len;  /* total bytes fed (used for NBLW) */
+    HASH_TypeDef *Instance;
+    HASH_StatusTypeDef state;
+    size_t msg_len;  /* total bytes fed (used for NBLW) */
 } HASH_HandleTypeDef;
 
-void               HASH_Init         (HASH_HandleTypeDef *hhash);
+
+/* Public API */
+void HASH_Constructor(HASH_HandleTypeDef *hhash);
 
 HASH_StatusTypeDef HASH_SHA1_Start   (HASH_HandleTypeDef *hhash);
 HASH_StatusTypeDef HASH_SHA1_Final   (HASH_HandleTypeDef *hhash, uint8_t *digest); /* 20 bytes */

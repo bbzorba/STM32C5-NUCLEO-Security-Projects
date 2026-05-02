@@ -1,6 +1,6 @@
 ﻿#include "../inc/hash.h"
 
-void HASH_Init(HASH_HandleTypeDef *hhash)
+void HASH_Constructor(HASH_HandleTypeDef *hhash)
 {
     RCC->AHB2ENR |= RCC_AHB2ENR_HASHEN;
     hhash->Instance = HASH_PERIPH;
@@ -9,7 +9,6 @@ void HASH_Init(HASH_HandleTypeDef *hhash)
 }
 
 /* ── Static helpers shared by all algorithm Start/Final variants ─────── */
-
 static HASH_StatusTypeDef hash_start(HASH_HandleTypeDef *hhash, uint32_t algo)
 {
     hhash->Instance->CR  = HASH_CR_INIT | algo;
@@ -22,13 +21,18 @@ static HASH_StatusTypeDef hash_start(HASH_HandleTypeDef *hhash, uint32_t algo)
 
 static HASH_StatusTypeDef hash_final(HASH_HandleTypeDef *hhash, uint8_t *digest, int words)
 {
-    if (!digest) return HASH_ERROR;
+    if (!digest) 
+        return HASH_ERROR;
+
     uint32_t nblw = (uint32_t)((hhash->msg_len % 4U) * 8U) & HASH_STR_NBLW_MASK;
+
     while (  hhash->Instance->SR & HASH_SR_DCIS);
     hhash->Instance->STR = nblw | HASH_STR_DCAL;
     while (!(hhash->Instance->SR & HASH_SR_DCIS));
     while (  hhash->Instance->SR & HASH_SR_BUSY);
+    
     __asm volatile("dsb" : : : "memory");
+
     volatile uint32_t *hr = HASH_HR_OUT;
     for (int i = 0; i < words; i++) {
         uint32_t val  = hr[i];
@@ -39,6 +43,7 @@ static HASH_StatusTypeDef hash_final(HASH_HandleTypeDef *hhash, uint8_t *digest,
     }
     return HASH_OK;
 }
+
 
 /* ── SHA-1 (160-bit / 5 words) ─────────────────────────────────────── */
 
