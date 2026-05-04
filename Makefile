@@ -6,7 +6,8 @@
 #PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/HASH
-PROJECT_DIR = Drivers/CRC
+#PROJECT_DIR = Drivers/CRC
+PROJECT_DIR = Drivers/DMA
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -221,6 +222,14 @@ SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
 endif
+
+# Project-specific wiring for DMA: needs GPIO
+ifeq ($(PROJECT_DIR),Drivers/DMA)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
+endif
+
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
 OBJ=$(sort $(OBJ_UNSORTED))

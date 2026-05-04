@@ -253,6 +253,37 @@ void UART5_IRQHandler(void)  { if (s_uart5_handle)  USART_IRQHandler(s_uart5_han
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
+////////////////////////////////////////DMA API ////////////////////////////////////////////
+void USART_EnableTXDMA(USART_HandleType *handle) {
+    handle->regs->CR3 |= USART_CR3_DMAT;
+}
+
+void USART_DisableTXDMA(USART_HandleType *handle) {
+    handle->regs->CR3 &= ~USART_CR3_DMAT;
+}
+
+void USART_EnableRXDMA(USART_HandleType *handle) {
+    handle->regs->CR3 |= USART_CR3_DMAR;
+}
+
+void USART_DisableRXDMA(USART_HandleType *handle) {
+    handle->regs->CR3 &= ~USART_CR3_DMAR;
+}
+
+DMA_StatusType USART_HandleTXDMA(USART_HandleType *handle) {
+    // Placeholder for handling TX DMA completion or errors
+    // In a real implementation, this would check DMA status flags and clear them
+    return DMA_OK;
+}
+
+DMA_StatusType USART_HandleRXDMA(USART_HandleType *handle) {
+    // Placeholder for handling RX DMA completion or errors
+    // In a real implementation, this would check DMA status flags and clear them
+    return DMA_OK;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////Object style wrappers///////////////////////////////////////

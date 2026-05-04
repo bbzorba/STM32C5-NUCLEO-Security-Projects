@@ -17,6 +17,13 @@
 #define GPIOH_BASE      0x42021C00U
 /* Note: STM32C562RE has GPIOA-E and GPIOH only */
 
+#define AHB1_BASE        0x40020000U
+#define AHB2_BASE        0x42020000U
+#define AHB3_BASE        0x44020800U
+#define APB1_BASE        0x40000000U
+#define APB2_BASE        0x40012C00U
+#define APB3_BASE        0x44000400U
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RCC peripheral declarations and direct port access use RCC_TypeDef struct below (RCC->AHB2ENR etc.)
 

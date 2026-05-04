@@ -39,7 +39,6 @@ typedef enum IRQn
 #define USART_3_BASE  0x40004800U                           // APB1
 #define UART_4_BASE   0x40004C00U                           // APB1
 #define UART_5_BASE   0x40005000U                           // APB1
-/* Note: STM32C562RE has USART1-3, UART4-5, LPUART1. No USART6. */
 
 // RCC clock enable bits — USART2/3, UART4/5 on APB1 (RCC->APB1LENR)
 #define RCC_APB1LENR_USART2EN ((uint32_t)(1UL << 17))
@@ -64,6 +63,10 @@ typedef enum IRQn
 #define USART_CR1_TE      0x0008U                          // Bit 3:  Transmitter Enable
 #define USART_CR1_RXNEIE  0x0020U                          // Bit 5:  RXNE Interrupt Enable
 #define USART_CR1_TXEIE   0x0080U                          // Bit 7:  TXE Interrupt Enable
+
+/* ---- USART CR3 register bit definitions ---- */
+#define USART_CR3_DMAR    0x0040U                          // Bit 6: DMA Enable Receiver
+#define USART_CR3_DMAT    0x0080U                          // Bit 7: DMA Enable Transmitter
 
 /* ---- USART ISR (Interrupt and Status Register) bit definitions ---- */
 #define USART_ISR_PE       0x0001U                         // Bit 0:  Parity Error
@@ -111,6 +114,12 @@ typedef enum {
     __9600,
 } UART_BaudRateType;
 
+typedef enum {
+    DMA_OK = 0,
+    DMA_ERROR,
+    DMA_BUSY
+} DMA_StatusType;
+
 typedef void (*USART_Callback_t)(char c);
 
 typedef struct {
@@ -137,6 +146,14 @@ const char* GetPortName(USART_HandleType *handle);
 void USART_EnableRXInterrupt(USART_HandleType *handle, USART_Callback_t callback);
 void USART_DisableRXInterrupt(USART_HandleType *handle);
 void USART_IRQHandler(USART_HandleType *handle);
+
+// DMA API
+void USART_EnableTXDMA(USART_HandleType *handle);
+void USART_DisableTXDMA(USART_HandleType *handle);
+void USART_EnableRXDMA(USART_HandleType *handle);
+void USART_DisableRXDMA(USART_HandleType *handle);
+DMA_StatusType USART_HandleTXDMA(USART_HandleType *handle);
+DMA_StatusType USART_HandleRXDMA(USART_HandleType *handle);
 
 // High-level (object-style) API
 void USART_constructor(USART_HandleType *handle, USART_ManualType *regs, UART_COMType _comtype, UART_BaudRateType _baudrate);
