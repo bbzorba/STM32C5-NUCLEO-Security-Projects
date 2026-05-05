@@ -3,11 +3,12 @@
 #DONE
 PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Drivers/GPIO
-#PROJECT_DIR = Drivers/bxCAN
+#PROJECT_DIR = Drivers/FDCAN
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/HASH
 #PROJECT_DIR = Drivers/CRC
 #PROJECT_DIR = Drivers/DMA
+#PROJECT_DIR = Drivers/NVIC
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -109,7 +110,7 @@ LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--
 ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink)
 DRIVERS := UART
 endif
-ifeq ($(strip $(PROJECT_DIR)),Drivers/bxCAN)
+ifeq ($(strip $(PROJECT_DIR)),Drivers/FDCAN)
 DRIVERS := UART GPIO
 endif
 ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink_cpp)
@@ -237,6 +238,22 @@ SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
 endif
+
+# Project-specific wiring for NVIC: needs GPIO + UART + DMA drivers
+NVIC_SRC_C := Drivers/NVIC/src/nvic.c
+ifeq ($(PROJECT_DIR),Drivers/NVIC)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(DMA_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/DMA/inc
+endif
+
+# nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
+# Startup files reference these names in their vector tables, so nvic.c must
+# always be linked. Projects that already include nvic.c in their SRC_C
+# (e.g. Drivers/NVIC) are skipped via filter-out.
+SRC_C  += $(filter-out $(SRC_C),$(NVIC_SRC_C))
+CFLAGS += -IDrivers/NVIC/inc
 
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
@@ -432,8 +449,8 @@ SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/I2C/inc -IDrivers/UART/inc
 endif
 
-# Project-specific wiring for bxCAN: needs GPIO & UART drivers
-ifeq ($(PROJECT_DIR),Drivers/bxCAN)
+# Project-specific wiring for FDCAN: needs GPIO & UART drivers
+ifeq ($(PROJECT_DIR),Drivers/FDCAN)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc

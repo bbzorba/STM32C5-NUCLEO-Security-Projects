@@ -21,36 +21,8 @@
 #define __NVIC_PRIO_BITS 4
 #endif
 
-/* Merged IRQn_Type covering FDCAN + USART IRQs for STM32C562RE.
-   Guard matches uart.h so it won't re-declare. */
-#ifndef __STM32C5xx_H
-typedef enum IRQn
-{
-    NonMaskableInt_IRQn         = -14,
-    MemoryManagement_IRQn       = -12,
-    BusFault_IRQn               = -11,
-    UsageFault_IRQn             = -10,
-    SVCall_IRQn                 = -5,
-    DebugMonitor_IRQn           = -4,
-    PendSV_IRQn                 = -2,
-    SysTick_IRQn                = -1,
-
-    /* FDCAN1 interrupt lines */
-    FDCAN1_IT0_IRQn             = 34,
-    FDCAN1_IT1_IRQn             = 35,
-
-    /* USART/UART */
-    USART1_IRQn                 = 51,
-    USART2_IRQn                 = 52,
-    USART3_IRQn                 = 53,
-    UART4_IRQn                  = 54,
-    UART5_IRQn                  = 55,
-} IRQn_Type;
-#define __STM32C5xx_H   /* prevent uart.h from re-declaring IRQn_Type */
-#endif
-
+/* IRQn_Type and NVIC helper API come from nvic.h (included via uart.h below). */
 #include "../../UART/inc/uart.h"
-#include "core_cm4.h"
 
 ////////////////////////////// PERIPHERAL BASE ADDRESSES //////////////////////////////
 

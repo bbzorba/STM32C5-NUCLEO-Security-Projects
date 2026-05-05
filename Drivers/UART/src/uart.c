@@ -29,12 +29,10 @@ void USART_constructor(USART_HandleType *huart, USART_ManualType *regs, UART_COM
     USART_Init(huart);
 }
 
-// Static pointers used by IRQ wrappers so the IRQ handler can find the handle
-static USART_HandleType *s_usart1_handle = NULL;
-static USART_HandleType *s_usart2_handle = NULL;
-static USART_HandleType *s_usart3_handle = NULL;
-static USART_HandleType *s_uart4_handle  = NULL;
-static USART_HandleType *s_uart5_handle  = NULL;
+// Dispatch adapter: called by nvic.c dispatch, forwards to USART_IRQHandler
+static void uart_irq_dispatch(void *arg) {
+    USART_IRQHandler((USART_HandleType *)arg);
+}
 
 // High-level init: fill handle then configure hardware
 void USART_Init(USART_HandleType *huart)
@@ -179,15 +177,7 @@ void USART_Init(USART_HandleType *huart)
     else if (huart->regs == UART_5)  irq = UART5_IRQn;
     else return;
 
-    NVIC_SetPriority(irq, 0);
-    NVIC_EnableIRQ(irq);
-
-    // Register handle for IRQ wrappers
-    if      (huart->regs == USART_1) s_usart1_handle = huart;
-    else if (huart->regs == USART_2) s_usart2_handle = huart;
-    else if (huart->regs == USART_3) s_usart3_handle = huart;
-    else if (huart->regs == UART_4)  s_uart4_handle  = huart;
-    else if (huart->regs == UART_5)  s_uart5_handle  = huart;
+    NVIC_RegisterHandler(irq, uart_irq_dispatch, huart, 0U);
 }
 
 //////////////////////////////POLLING API (for both RX and TX)//////////////////////////////
@@ -244,12 +234,6 @@ void USART_IRQHandler(USART_HandleType *huart) {
     }
 }
 
-// CMSIS IRQ wrappers: call the common handler with the registered handle
-void USART1_IRQHandler(void) { if (s_usart1_handle) USART_IRQHandler(s_usart1_handle); }
-void USART2_IRQHandler(void) { if (s_usart2_handle) USART_IRQHandler(s_usart2_handle); }
-void USART3_IRQHandler(void) { if (s_usart3_handle) USART_IRQHandler(s_usart3_handle); }
-void UART4_IRQHandler(void)  { if (s_uart4_handle)  USART_IRQHandler(s_uart4_handle); }
-void UART5_IRQHandler(void)  { if (s_uart5_handle)  USART_IRQHandler(s_uart5_handle); }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -258,8 +242,7 @@ void USART_EnableTXDMA(USART_HandleType *huart) {
     huart->regs->CR3 |= USART_CR3_DMAT;
 }
 
-void USART_DisableTXDMA(USART_HandleType *huart, DMA_HandleType *dma) {
-    DMA_Stop(dma);
+void USART_DisableTXDMA(USART_HandleType *huart) {
     huart->regs->CR3 &= ~USART_CR3_DMAT;
 }
 
@@ -267,8 +250,7 @@ void USART_EnableRXDMA(USART_HandleType *huart) {
     huart->regs->CR3 |= USART_CR3_DMAR;
 }
 
-void USART_DisableRXDMA(USART_HandleType *huart, DMA_HandleType *dma) {
-    DMA_Stop(dma);
+void USART_DisableRXDMA(USART_HandleType *huart) {
     huart->regs->CR3 &= ~USART_CR3_DMAR;
 }
 
@@ -277,9 +259,9 @@ LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma,
     LPDMA_StatusType st;
     if (huart == NULL || dma == NULL || buf == NULL || len == 0U) { return LPDMA_ERROR; }
 
-    /* Wait for shift register to drain before handing TX to DMA */
-    while (!(huart->regs->ISR & USART_ISR_TC)) { }
-    huart->regs->ICR = USART_ICR_TCCF;
+    /* Wait for TDR to be empty (TXE=1) before handing TX to DMA.
+     * Using TXE (not TC) avoids a hang when TC was cleared by the caller. */
+    while (!(huart->regs->ISR & USART_ISR_TXE)) { }
 
     st = DMA_ConfigTransfer(dma,
                             (uintptr_t)buf,

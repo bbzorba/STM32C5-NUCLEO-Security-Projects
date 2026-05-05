@@ -6,33 +6,7 @@
 #include "../../GPIO/inc/gpio.h"
 #include "../../DMA/inc/dma.h"
 
-#define __IO volatile
-#define __NVIC_PRIO_BITS 4
-
-/* IRQn_Type for STM32C562RE USART/UART peripherals.
-   Verified against official stm32c5xx-dfp startup_stm32c562xx.c vector table. */
-#ifndef __STM32C5xx_H
-typedef enum IRQn
-{
-    NonMaskableInt_IRQn         = -14,
-    MemoryManagement_IRQn       = -12,
-    BusFault_IRQn               = -11,
-    UsageFault_IRQn             = -10,
-    SVCall_IRQn                 = -5,
-    DebugMonitor_IRQn           = -4,
-    PendSV_IRQn                 = -2,
-    SysTick_IRQn                = -1,
-
-    /* STM32C562RE peripheral IRQs (subset) */
-    USART1_IRQn                 = 51,
-    USART2_IRQn                 = 52,
-    USART3_IRQn                 = 53,
-    UART4_IRQn                  = 54,
-    UART5_IRQn                  = 55,
-} IRQn_Type;
-#endif
-
-#include "core_cm4.h"
+#include "../../NVIC/inc/nvic.h"  /* IRQn_Type + core_cm4.h NVIC functions */
 
 // USART peripheral base addresses (STM32C562RE)
 #define USART_1_BASE  0x40013800U                           // APB2
@@ -76,6 +50,7 @@ typedef enum IRQn
 #define USART_ISR_ORE      0x0008U                         // Bit 3:  Overrun Error
 #define USART_ISR_RXNE     0x0020U                         // Bit 5:  Read Data Reg Not Empty
 #define USART_ISR_TC       0x0040U                         // Bit 6:  Transmission Complete
+#define USART_ISR_TXE      0x0080U                         // Bit 7:  TDR Empty
 #define USART_ISR_TXE      0x0080U                         // Bit 7:  Transmit Data Reg Empty
 #define USART_ISR_ERR_MASK (USART_ISR_PE | USART_ISR_FE | USART_ISR_NE | USART_ISR_ORE) // Error flags mask
 
@@ -144,9 +119,9 @@ void USART_IRQHandler(USART_HandleType *huart);
 
 // DMA API
 void USART_EnableTXDMA(USART_HandleType *huart);
-void USART_DisableTXDMA(USART_HandleType *huart, DMA_HandleType *dma);  /* stops DMA then clears DMAT */
+void USART_DisableTXDMA(USART_HandleType *huart);  /* stops DMA then clears DMAT */
 void USART_EnableRXDMA(USART_HandleType *huart);
-void USART_DisableRXDMA(USART_HandleType *huart, DMA_HandleType *dma);  /* stops DMA then clears DMAR */
+void USART_DisableRXDMA(USART_HandleType *huart);  /* stops DMA then clears DMAR */
 LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma, const uint8_t *buf, uint16_t len);  /* blocking */
 LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma, uint8_t *buf, uint16_t len);         /* blocking */
 

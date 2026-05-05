@@ -1,14 +1,22 @@
 ﻿#include <stdint.h>
-extern int main(void); extern void SystemInit(void);
-void Reset_Handler(void); void Default_Handler(void);
+
+extern int main(void);
+extern void SystemInit(void);
+void Reset_Handler(void);
+void Default_Handler(void);
+
 typedef void (*isr_handler_t)(void);
+
 #ifndef STM32_IRQ_TABLE_SIZE
 #define STM32_IRQ_TABLE_SIZE 128U
 #endif
+
 uint32_t SystemCoreClock = 48000000UL;
+
 void SystemInit(void) { SystemCoreClock = 48000000UL; }
+
 /* IRQ handler declarations — strong definitions in Drivers/NVIC/src/nvic.c.
-   This project uses EXTI lines only. */
+   bxCAN project: EXTI lines (GPIO interrupts) + FDCAN1 interrupt lines. */
 extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
 extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
 extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
@@ -17,8 +25,12 @@ extern void EXTI8_IRQHandler(void);  extern void EXTI9_IRQHandler(void);
 extern void EXTI10_IRQHandler(void); extern void EXTI11_IRQHandler(void);
 extern void EXTI12_IRQHandler(void); extern void EXTI13_IRQHandler(void);
 extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
+extern void FDCAN1_IT0_IRQHandler(void);
+extern void FDCAN1_IT1_IRQHandler(void);
+
 #define VECTOR_TABLE_CONTENT                                              \
-    [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                          \
+    [0]  = _VT_STACK_TOP,                                                \
+    [1]  = Reset_Handler,                                                \
     [2]  = Default_Handler, [3]  = Default_Handler,                      \
     [4]  = Default_Handler, [5]  = Default_Handler,                      \
     [6]  = Default_Handler, [11] = Default_Handler,                      \
@@ -31,7 +43,10 @@ extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
     [16 + 15] = EXTI8_IRQHandler,  [16 + 16] = EXTI9_IRQHandler,        \
     [16 + 17] = EXTI10_IRQHandler, [16 + 18] = EXTI11_IRQHandler,       \
     [16 + 19] = EXTI12_IRQHandler, [16 + 20] = EXTI13_IRQHandler,       \
-    [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler
+    [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,       \
+    [16 + 34] = FDCAN1_IT0_IRQHandler,                                   \
+    [16 + 35] = FDCAN1_IT1_IRQHandler
+
 #if defined(__ICCARM__)
 extern void *CSTACK$$Limit;
 #define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
@@ -54,4 +69,5 @@ void Reset_Handler(void) {
     SystemInit(); main(); while (1);
 }
 #endif
+
 void Default_Handler(void) { while (1); }

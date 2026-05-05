@@ -29,7 +29,9 @@ int main(void) {
 
     // Initialize DMA channels
     DMA_Constructor(&dmaTx, LPDMA1_Channel0, LPDMA_MEMORY_TO_PERIPH);
+    DMA_Init(&dmaTx);
     DMA_Constructor(&dmaRx, LPDMA1_Channel1, LPDMA_PERIPH_TO_MEMORY);
+    DMA_Init(&dmaRx);
 
     // -------- Test 1: Polling TX test --------
     USART_WriteString(&usart, "=== Polling TX test ===\r\n");
@@ -48,14 +50,16 @@ int main(void) {
     // -------- Test 3: DMA-based TX test --------
     USART_WriteString(&usart, "\r\n=== DMA TX test ===\r\n");
     USART_WriteDMA(&usart, &dmaTx, dma_tx_buf, (uint16_t)(sizeof(dma_tx_buf) - 1U));
-    USART_DisableTXDMA(&usart, &dmaTx);
+    DMA_Stop(&dmaTx);  // Ensure DMA is stopped before disabling
+    USART_DisableTXDMA(&usart);
     USART_WriteString(&usart, "DMA TX complete!\r\n");
 
     // -------- Test 4: DMA-based RX test --------
     USART_WriteString(&usart, "\r\n=== DMA RX test ===\r\n");
     USART_WriteString(&usart, "Send exactly 8 bytes...\r\n");
     USART_ReadDMA(&usart, &dmaRx, dma_rx_buf, (uint16_t)sizeof(dma_rx_buf));
-    USART_DisableRXDMA(&usart, &dmaRx);
+    DMA_Stop(&dmaRx);  // Ensure DMA is stopped before disabling
+    USART_DisableRXDMA(&usart);
 
     USART_WriteString(&usart, "Received: ");
     for (uint8_t i = 0; i < (uint8_t)sizeof(dma_rx_buf); i++) {

@@ -4,7 +4,7 @@
     Test results are printed over USART2 (PA2/PA3) at 115200 baud.
 */
 
-#include "../inc/bxcan.h"
+#include "../inc/fdcan.h"
 
 int main(void)
 {

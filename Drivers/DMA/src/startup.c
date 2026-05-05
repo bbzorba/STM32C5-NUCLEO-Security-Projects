@@ -1,133 +1,64 @@
-#include <stdint.h>
-
-extern int main(void);
-extern void SystemInit(void);
-void Reset_Handler(void);
-void Default_Handler(void);
-
+﻿#include <stdint.h>
+extern int main(void); extern void SystemInit(void);
+void Reset_Handler(void); void Default_Handler(void);
 typedef void (*isr_handler_t)(void);
-
-/* Need at least 56 entries for UART5_IRQn = 55 */
 #ifndef STM32_IRQ_TABLE_SIZE
-#define STM32_IRQ_TABLE_SIZE 64U
+#define STM32_IRQ_TABLE_SIZE 128U
 #endif
-
-/* STM32C562RE boots from HSI = 48 MHz (144 MHz oscillator / 3) */
 uint32_t SystemCoreClock = 48000000UL;
-
-void SystemInit(void) {
-    SystemCoreClock = 48000000UL;
-}
-
-/* ---------- IAR Compiler (iccarm) ---------- */
+void SystemInit(void) { SystemCoreClock = 48000000UL; }
+/* DMA project: EXTI (GPIO interrupts) + LPDMA1 channel completion IRQs. */
+extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
+extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
+extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
+extern void EXTI6_IRQHandler(void);  extern void EXTI7_IRQHandler(void);
+extern void EXTI8_IRQHandler(void);  extern void EXTI9_IRQHandler(void);
+extern void EXTI10_IRQHandler(void); extern void EXTI11_IRQHandler(void);
+extern void EXTI12_IRQHandler(void); extern void EXTI13_IRQHandler(void);
+extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
+extern void LPDMA1_Channel0_IRQHandler(void); extern void LPDMA1_Channel1_IRQHandler(void);
+extern void LPDMA1_Channel2_IRQHandler(void); extern void LPDMA1_Channel3_IRQHandler(void);
+extern void LPDMA1_Channel4_IRQHandler(void); extern void LPDMA1_Channel5_IRQHandler(void);
+extern void LPDMA1_Channel6_IRQHandler(void); extern void LPDMA1_Channel7_IRQHandler(void);
+#define VECTOR_TABLE_CONTENT                                              \
+    [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                          \
+    [2]  = Default_Handler, [3]  = Default_Handler,                      \
+    [4]  = Default_Handler, [5]  = Default_Handler,                      \
+    [6]  = Default_Handler, [11] = Default_Handler,                      \
+    [12] = Default_Handler, [14] = Default_Handler,                      \
+    [15] = Default_Handler,                                              \
+    [16 +  7] = EXTI0_IRQHandler,  [16 +  8] = EXTI1_IRQHandler,        \
+    [16 +  9] = EXTI2_IRQHandler,  [16 + 10] = EXTI3_IRQHandler,        \
+    [16 + 11] = EXTI4_IRQHandler,  [16 + 12] = EXTI5_IRQHandler,        \
+    [16 + 13] = EXTI6_IRQHandler,  [16 + 14] = EXTI7_IRQHandler,        \
+    [16 + 15] = EXTI8_IRQHandler,  [16 + 16] = EXTI9_IRQHandler,        \
+    [16 + 17] = EXTI10_IRQHandler, [16 + 18] = EXTI11_IRQHandler,       \
+    [16 + 19] = EXTI12_IRQHandler, [16 + 20] = EXTI13_IRQHandler,       \
+    [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,       \
+    [16 + 23] = LPDMA1_Channel0_IRQHandler, [16 + 24] = LPDMA1_Channel1_IRQHandler, \
+    [16 + 25] = LPDMA1_Channel2_IRQHandler, [16 + 26] = LPDMA1_Channel3_IRQHandler, \
+    [16 + 27] = LPDMA1_Channel4_IRQHandler, [16 + 28] = LPDMA1_Channel5_IRQHandler, \
+    [16 + 29] = LPDMA1_Channel6_IRQHandler, [16 + 30] = LPDMA1_Channel7_IRQHandler
 #if defined(__ICCARM__)
-
-#pragma weak USART1_IRQHandler = Default_Handler
-#pragma weak USART2_IRQHandler = Default_Handler
-#pragma weak USART3_IRQHandler = Default_Handler
-#pragma weak UART4_IRQHandler  = Default_Handler
-#pragma weak UART5_IRQHandler  = Default_Handler
-
-extern void USART1_IRQHandler(void);
-extern void USART2_IRQHandler(void);
-extern void USART3_IRQHandler(void);
-extern void UART4_IRQHandler(void);
-extern void UART5_IRQHandler(void);
-
 extern void *CSTACK$$Limit;
-
+#define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
 #pragma location = ".intvec"
-const isr_handler_t __vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
-    [0]  = (isr_handler_t)&CSTACK$$Limit,
-    [1]  = Reset_Handler,
-    [2]  = Default_Handler,   /* NMI */
-    [3]  = Default_Handler,   /* HardFault */
-    [4]  = Default_Handler,   /* MemManage */
-    [5]  = Default_Handler,   /* BusFault */
-    [6]  = Default_Handler,   /* UsageFault */
-    [11] = Default_Handler,   /* SVCall */
-    [12] = Default_Handler,   /* DebugMon */
-    [14] = Default_Handler,   /* PendSV */
-    [15] = Default_Handler,   /* SysTick */
-    /* STM32C562RE USART/UART IRQs */
-    [16 + 51] = USART1_IRQHandler,
-    [16 + 52] = USART2_IRQHandler,
-    [16 + 53] = USART3_IRQHandler,
-    [16 + 54] = UART4_IRQHandler,
-    [16 + 55] = UART5_IRQHandler,
-};
-
+const isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = { VECTOR_TABLE_CONTENT };
 void Reset_Handler(void) {
-    extern void __iar_data_init3(void);
-    __iar_data_init3();
-
-    SystemInit();
-    main();
-    while (1);
+    extern void __iar_data_init3(void); __iar_data_init3();
+    SystemInit(); main(); while (1);
 }
-
-/* ---------- GCC / arm-none-eabi-gcc ---------- */
 #else
-
-extern uint32_t _estack;
-
-/* Linker-provided symbols for .data and .bss initialization */
-extern uint32_t __etext;        /* end of .text (LMA of .data in flash) */
-extern uint32_t __data_start__;  /* start of .data in RAM */
-extern uint32_t __data_end__;    /* end of .data in RAM */
-extern uint32_t __bss_start__;   /* start of .bss */
-extern uint32_t __bss_end__;     /* end of .bss */
-
-/* Weak aliases so that these handlers resolve to Default_Handler
-   unless overridden by strong definitions (e.g. in uart.c) */
-__attribute__((weak, alias("Default_Handler"))) void USART1_IRQHandler(void);
-__attribute__((weak, alias("Default_Handler"))) void USART2_IRQHandler(void);
-__attribute__((weak, alias("Default_Handler"))) void USART3_IRQHandler(void);
-__attribute__((weak, alias("Default_Handler"))) void UART4_IRQHandler(void);
-__attribute__((weak, alias("Default_Handler"))) void UART5_IRQHandler(void);
-
+extern uint32_t _estack, __etext, __data_start__, __data_end__, __bss_start__, __bss_end__;
+#define _VT_STACK_TOP  ((isr_handler_t)&_estack)
 __attribute__((section(".isr_vector")))
-isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
-    [0]  = (isr_handler_t)&_estack,
-    [1]  = Reset_Handler,
-    [2]  = Default_Handler,   /* NMI */
-    [3]  = Default_Handler,   /* HardFault */
-    [4]  = Default_Handler,   /* MemManage */
-    [5]  = Default_Handler,   /* BusFault */
-    [6]  = Default_Handler,   /* UsageFault */
-    [11] = Default_Handler,   /* SVCall */
-    [12] = Default_Handler,   /* DebugMon */
-    [14] = Default_Handler,   /* PendSV */
-    [15] = Default_Handler,   /* SysTick */
-    /* STM32C562RE USART/UART IRQs */
-    [16 + 51] = USART1_IRQHandler,
-    [16 + 52] = USART2_IRQHandler,
-    [16 + 53] = USART3_IRQHandler,
-    [16 + 54] = UART4_IRQHandler,
-    [16 + 55] = UART5_IRQHandler,
-};
-
+isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = { VECTOR_TABLE_CONTENT };
 void Reset_Handler(void) {
-    /* Copy .data section from flash (LMA) to RAM (VMA) */
-    uint32_t *src = &__etext;
-    uint32_t *dst = &__data_start__;
-    while (dst < &__data_end__) {
-        *dst++ = *src++;
-    }
-
-    /* Zero-fill .bss section */
+    uint32_t *src = &__etext, *dst = &__data_start__;
+    while (dst < &__data_end__)  { *dst++ = *src++; }
     dst = &__bss_start__;
-    while (dst < &__bss_end__) {
-        *dst++ = 0;
-    }
-
-    SystemInit();
-    main();
-    while (1);
+    while (dst < &__bss_end__)   { *dst++ = 0; }
+    SystemInit(); main(); while (1);
 }
-
-#endif /* __ICCARM__ */
-
-void Default_Handler(void) {
-    while (1);
-}
+#endif
+void Default_Handler(void) { while (1); }

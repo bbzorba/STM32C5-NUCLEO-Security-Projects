@@ -7,7 +7,7 @@
     Provides both polling and interrupt-based APIs.
 */
 
-#include "../inc/bxcan.h"
+#include "../inc/fdcan.h"
 
 #define NO_OF_CONT_TX_RX_TEST 500
 
@@ -17,8 +17,6 @@ static GPIO_InitTypeDef   s_ld1_init;
 static GPIO_HandleTypeDef s_b1;
 static GPIO_InitTypeDef   s_b1_init;
 static int s_gpio_initialized = 0;
-
-static CAN_HandleType *s_can1_handle = NULL;
 
 /* Used by interrupt-based test */
 static volatile uint8_t s_irq_msg_received = 0;
@@ -151,8 +149,6 @@ void CAN_constructor(CAN_HandleType *handle, FDCAN_GlobalTypeDef *regs,
 
 void CAN_Init(CAN_HandleType *handle)
 {
-    s_can1_handle = handle;
-
     /* FDCAN kernel clock = pclk1 (default FDCAN1SEL=0 in CCIPR1).
        pclk1 = HSIDIV3 = 48 MHz on STM32C562RE after reset.
        No oscillator enable or CCIPR1 write needed. */
@@ -312,42 +308,37 @@ int CAN_Receive(CAN_HandleType *handle, CAN_MsgType *msg)
 
 //////////////////////////////INTERRUPT API//////////////////////////////////////////////
 
+/*
+ * Internal callback registered with the NVIC dispatch table.
+ * Invoked by nvic.c's FDCAN1_IT0_IRQHandler when the interrupt fires.
+ * 'arg' is the CAN_HandleType pointer passed to CAN_EnableRXInterrupt().
+ */
+static void fdcan_it0_handler(void *arg)
+{
+    CAN_HandleType *handle = (CAN_HandleType *)arg;
+    if (handle->regs->IR & FDCAN_IR_RF0N) {
+        handle->regs->IR = FDCAN_IR_RF0N;   /* write-1-to-clear */
+        CAN_MsgType msg;
+        if (CAN_ReadFIFO(handle->regs, &msg) && handle->rxCallback) {
+            handle->rxCallback(&msg);
+        }
+    }
+}
+
 void CAN_EnableRXInterrupt(CAN_HandleType *handle, CAN_RxCallback_t callback)
 {
     handle->rxCallback = callback;
-
-    /* Enable Rx FIFO 0 New Message interrupt */
-    handle->regs->IE |= FDCAN_IE_RF0NE;
-
-    /* Route RF0N to interrupt line 0 (ILS bit 0 = 0 → line 0, which is default) */
-    handle->regs->ILS &= ~FDCAN_IR_RF0N;
-
-    /* Enable interrupt line 0 */
-    handle->regs->ILE |= FDCAN_ILE_EINT0;
-
-    NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
+    handle->regs->IE  |= FDCAN_IE_RF0NE;    /* Rx FIFO 0 new-message interrupt */
+    handle->regs->ILS &= ~FDCAN_IR_RF0N;    /* route RF0N to interrupt line 0  */
+    handle->regs->ILE |= FDCAN_ILE_EINT0;   /* enable interrupt line 0         */
+    /* Register callback — nvic.c owns FDCAN1_IT0_IRQHandler and dispatches here */
+    NVIC_RegisterHandler(FDCAN1_IT0_IRQn, fdcan_it0_handler, handle, 0);
 }
 
 void CAN_DisableRXInterrupt(CAN_HandleType *handle)
 {
     handle->regs->IE &= ~FDCAN_IE_RF0NE;
-    NVIC_DisableIRQ(FDCAN1_IT0_IRQn);
-}
-
-/* IRQ handler for FDCAN1 interrupt line 0 */
-void FDCAN1_IT0_IRQHandler(void)
-{
-    if (!s_can1_handle) return;
-
-    if (s_can1_handle->regs->IR & FDCAN_IR_RF0N) {
-        /* Clear the flag (write 1 to clear) */
-        s_can1_handle->regs->IR = FDCAN_IR_RF0N;
-
-        CAN_MsgType msg;
-        if (CAN_ReadFIFO(CAN_1, &msg) && s_can1_handle->rxCallback) {
-            s_can1_handle->rxCallback(&msg);
-        }
-    }
+    NVIC_UnregisterHandler(FDCAN1_IT0_IRQn);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
