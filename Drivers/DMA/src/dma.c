@@ -1,4 +1,5 @@
 #include "../inc/dma.h"
+#include "../../GPIO/inc/gpio.h"  /* RCC_TypeDef / RCC */
 
 volatile uint32_t g_dma_debug_point = 0U;
 
@@ -171,3 +172,4 @@ uintptr_t DMA_GetRegisterAddress(DMA_HandleType *LPDMA_handle, uint32_t regOffse
 
     return ((uintptr_t)LPDMA_handle->channel + regOffset);
 }
+

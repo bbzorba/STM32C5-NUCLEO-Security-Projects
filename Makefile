@@ -1,13 +1,13 @@
 # Makefile for STM32 NUCLEO C562RE development board
 
 #DONE
-#PROJECT_DIR = Drivers/UART
+PROJECT_DIR = Drivers/UART
 #PROJECT_DIR = Drivers/GPIO
 #PROJECT_DIR = Drivers/bxCAN
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/HASH
 #PROJECT_DIR = Drivers/CRC
-PROJECT_DIR = Drivers/DMA
+#PROJECT_DIR = Drivers/DMA
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection
@@ -221,6 +221,14 @@ ifeq ($(PROJECT_DIR),Drivers/AES)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
+endif
+
+# Project-specific wiring for UART: needs GPIO and DMA drivers
+DMA_SRC_C := Drivers/DMA/src/dma.c
+ifeq ($(PROJECT_DIR),Drivers/UART)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(DMA_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/DMA/inc
 endif
 
 # Project-specific wiring for DMA: needs GPIO

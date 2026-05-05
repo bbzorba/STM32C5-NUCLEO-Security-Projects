@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "../../GPIO/inc/gpio.h"
-#include "../../UART/inc/uart.h"
 
 #define __IO volatile
 
@@ -107,6 +105,11 @@ typedef struct {
 #define LPDMA2_Channel3 ((LPDMA_ChannelType *)LPDMA_CHANNEL_ADDR(LPDMA2_BASE, 3U))
 #define LPDMA2_Channel4 ((LPDMA_ChannelType *)LPDMA_CHANNEL_ADDR(LPDMA2_BASE, 4U))
 #define LPDMA2_Channel5 ((LPDMA_ChannelType *)LPDMA_CHANNEL_ADDR(LPDMA2_BASE, 5U))
+
+/* LPDMA hardware request numbers for USART2 (STM32C562RE).
+ * Source: stm32c5xx_ll_dma.h — same values for both LPDMA1 and LPDMA2. */
+#define LPDMA_REQSEL_USART2_TX   15U   /* LL_LPDMA1_REQUEST_USART2_TX */
+#define LPDMA_REQSEL_USART2_RX   14U   /* LL_LPDMA1_REQUEST_USART2_RX */
 
 extern volatile uint32_t g_dma_debug_point;
 

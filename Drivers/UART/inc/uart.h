@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "../../GPIO/inc/gpio.h"
+#include "../../DMA/inc/dma.h"
 
 #define __IO volatile
 #define __NVIC_PRIO_BITS 4
@@ -137,32 +138,39 @@ typedef struct {
 #define UART_5  ((USART_ManualType *)UART_5_BASE)
 
 // Low-level (register) API
-void USART_x_Write(USART_HandleType *handle, int ch);
-char USART_x_Read(USART_HandleType *handle);
+void USART_x_Write(USART_HandleType *huart, int ch);
+char USART_x_Read(USART_HandleType *huart);
 uint16_t BRR_Oversample_by_16(uint32_t fck_hz, uint32_t baud);
-const char* GetPortName(USART_HandleType *handle);
+const char* GetPortName(USART_HandleType *huart);
 
 // Interrupt API
-void USART_EnableRXInterrupt(USART_HandleType *handle, USART_Callback_t callback);
-void USART_DisableRXInterrupt(USART_HandleType *handle);
-void USART_IRQHandler(USART_HandleType *handle);
+void USART_EnableRXInterrupt(USART_HandleType *huart, USART_Callback_t callback);
+void USART_DisableRXInterrupt(USART_HandleType *huart);
+void USART_IRQHandler(USART_HandleType *huart);
 
 // DMA API
-void USART_EnableTXDMA(USART_HandleType *handle);
-void USART_DisableTXDMA(USART_HandleType *handle);
-void USART_EnableRXDMA(USART_HandleType *handle);
-void USART_DisableRXDMA(USART_HandleType *handle);
-DMA_StatusType USART_HandleTXDMA(USART_HandleType *handle);
-DMA_StatusType USART_HandleRXDMA(USART_HandleType *handle);
+/* DMA-accelerated TX/RX.
+ * TX: `dma` init with LPDMA_MEMORY_TO_PERIPH. Poll IsTXDMAComplete(), then DMA_Stop() + DisableTXDMA().
+ * RX: `dma` init with LPDMA_PERIPH_TO_MEMORY. Poll IsRXDMAComplete(), then DMA_Stop() + DisableRXDMA(). */
+ void USART_EnableTXDMA(USART_HandleType *huart);
+void USART_DisableTXDMA(USART_HandleType *huart);
+void USART_EnableRXDMA(USART_HandleType *huart);
+void USART_DisableRXDMA(USART_HandleType *huart);
+LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma,
+                                 const uint8_t *buf, uint16_t len);
+uint8_t          USART_IsTXDMAComplete(DMA_HandleType *dma);
+LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma,
+                                uint8_t *buf, uint16_t len);
+uint8_t          USART_IsRXDMAComplete(DMA_HandleType *dma);
 
 // High-level (object-style) API
-void USART_constructor(USART_HandleType *handle, USART_ManualType *regs, UART_COMType _comtype, UART_BaudRateType _baudrate);
-void USART_Init(USART_HandleType *handle);
-void USART_WriteChar(USART_HandleType *handle, int ch);
-char USART_ReadChar(USART_HandleType *handle);
-void USART_WriteString(USART_HandleType *handle, const char *str);
-void USART_ReadString(USART_HandleType *handle, char *buffer, size_t maxLength);
-void uart_write_hex8(USART_HandleType *handle, uint8_t byte);
-void uart_write_hex32(USART_HandleType *handle, uint32_t word);
+void USART_constructor(USART_HandleType *huart, USART_ManualType *regs, UART_COMType _comtype, UART_BaudRateType _baudrate);
+void USART_Init(USART_HandleType *huart);
+void USART_WriteChar(USART_HandleType *huart, int ch);
+char USART_ReadChar(USART_HandleType *huart);
+void USART_WriteString(USART_HandleType *huart, const char *str);
+void USART_ReadString(USART_HandleType *huart, char *buffer, size_t maxLength);
+void uart_write_hex8(USART_HandleType *huart, uint8_t byte);
+void uart_write_hex32(USART_HandleType *huart, uint32_t word);
 
 #endif // __UART_H
