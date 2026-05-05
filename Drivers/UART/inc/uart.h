@@ -162,5 +162,7 @@ void USART_WriteChar(USART_HandleType *handle, int ch);
 char USART_ReadChar(USART_HandleType *handle);
 void USART_WriteString(USART_HandleType *handle, const char *str);
 void USART_ReadString(USART_HandleType *handle, char *buffer, size_t maxLength);
+void uart_write_hex8(USART_HandleType *handle, uint8_t byte);
+void uart_write_hex32(USART_HandleType *handle, uint32_t word);
 
 #endif // __UART_H

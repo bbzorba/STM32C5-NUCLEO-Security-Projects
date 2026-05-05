@@ -352,4 +352,17 @@ void USART_ReadString(USART_HandleType *handle, char *buffer, size_t maxLength) 
     }
     buffer[i] = '\0';
 }
+
+void uart_write_hex8(USART_HandleType *handle, uint8_t byte) {
+    const char hexDigits[] = "0123456789ABCDEF";
+    USART_WriteChar(handle, hexDigits[(byte >> 4) & 0x0F]);
+    USART_WriteChar(handle, hexDigits[byte & 0x0F]);
+}
+
+void uart_write_hex32(USART_HandleType *handle, uint32_t word) {
+    uart_write_hex8(handle, (word >> 24) & 0xFF);
+    uart_write_hex8(handle, (word >> 16) & 0xFF);
+    uart_write_hex8(handle, (word >> 8) & 0xFF);
+    uart_write_hex8(handle, word & 0xFF);
+}
 ////////////////////////////////////////////////////////////////////////////////////////////
