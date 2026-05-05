@@ -12,10 +12,10 @@
 #define NO_OF_CONT_TX_RX_TEST 500
 
 /* GPIO handles for LD1 (PA5) and B1 button (PC13) */
-static GPIO_HandleTypeDef s_ld1;
-static GPIO_InitTypeDef   s_ld1_init;
-static GPIO_HandleTypeDef s_b1;
-static GPIO_InitTypeDef   s_b1_init;
+static GPIO_HandleTypeDef h_led1;
+static GPIO_InitTypeDef   led1_init;
+static GPIO_HandleTypeDef h_button1;
+static GPIO_InitTypeDef   button1_init;
 static int s_gpio_initialized = 0;
 
 /* Used by interrupt-based test */
@@ -33,20 +33,20 @@ static void CAN_GPIO_Init(void)
     if (s_gpio_initialized) return;
 
     /* LD1 Green — PA5, push-pull output */
-    s_ld1_init.Pin       = GPIO_PIN_5;
-    s_ld1_init.Mode      = GPIO_MODE_OUTPUT_PP;
-    s_ld1_init.Pull      = GPIO_NOPULL;
-    s_ld1_init.Speed     = GPIO_SPEED_MEDIUM;
-    s_ld1_init.Alternate = 0;
-    GPIO_constructor(&s_ld1, GPIO_A, &s_ld1_init);
+    led1_init.Pin       = GPIO_PIN_5;
+    led1_init.Mode      = GPIO_MODE_OUTPUT_PP;
+    led1_init.Pull      = GPIO_NOPULL;
+    led1_init.Speed     = GPIO_SPEED_MEDIUM;
+    led1_init.Alternate = 0;
+    GPIO_constructor(&h_led1, GPIO_A, &led1_init);
 
     /* B1 user button — PC13, input (active-low, external pull-up on board) */
-    s_b1_init.Pin       = GPIO_PIN_13;
-    s_b1_init.Mode      = GPIO_MODE_INPUT;
-    s_b1_init.Pull      = GPIO_NOPULL;
-    s_b1_init.Speed     = GPIO_SPEED_LOW;
-    s_b1_init.Alternate = 0;
-    GPIO_constructor(&s_b1, GPIO_C, &s_b1_init);
+    button1_init.Pin       = GPIO_PIN_13;
+    button1_init.Mode      = GPIO_MODE_INPUT;
+    button1_init.Pull      = GPIO_NOPULL;
+    button1_init.Speed     = GPIO_SPEED_LOW;
+    button1_init.Alternate = 0;
+    GPIO_constructor(&h_button1, GPIO_C, &button1_init);
 
     s_gpio_initialized = 1;
 }
@@ -136,18 +136,18 @@ static int CAN_ReadFIFO(FDCAN_GlobalTypeDef *regs, CAN_MsgType *msg)
 
 //////////////////////////////CONSTRUCTOR & INIT////////////////////////////////////////
 
-void CAN_constructor(CAN_HandleType *handle, FDCAN_GlobalTypeDef *regs,
+void CAN_constructor(CAN_HandleType *hcan, FDCAN_GlobalTypeDef *regs,
                      CAN_BaudRateType baudrate, CAN_ModeType mode)
 {
-    handle->regs       = regs;
-    handle->baudRate   = baudrate;
-    handle->mode       = mode;
-    handle->rxCallback = NULL;
+    hcan->regs       = regs;
+    hcan->baudRate   = baudrate;
+    hcan->mode       = mode;
+    hcan->rxCallback = NULL;
 
-    CAN_Init(handle);
+    CAN_Init(hcan);
 }
 
-void CAN_Init(CAN_HandleType *handle)
+void CAN_Init(CAN_HandleType *hcan)
 {
     /* FDCAN kernel clock = pclk1 (default FDCAN1SEL=0 in CCIPR1).
        pclk1 = HSIDIV3 = 48 MHz on STM32C562RE after reset.
@@ -170,11 +170,11 @@ void CAN_Init(CAN_HandleType *handle)
     GPIO_A->PUPDR  |=  (GPIO_PULLUP << 22);  /* PA11 pull-up */
 
     /* 3. Request FDCAN initialisation mode */
-    handle->regs->CCCR |= FDCAN_CCCR_INIT;
-    while (!(handle->regs->CCCR & FDCAN_CCCR_INIT)) { /* wait */ }
+    hcan->regs->CCCR |= FDCAN_CCCR_INIT;
+    while (!(hcan->regs->CCCR & FDCAN_CCCR_INIT)) { /* wait */ }
 
     /* 4. Enable configuration change */
-    handle->regs->CCCR |= FDCAN_CCCR_CCE;
+    hcan->regs->CCCR |= FDCAN_CCCR_CCE;
 
     /* 4b. Zero the message SRAM for this FDCAN instance so filters/FIFOs
        start from a clean state rather than uninitialized garbage. */
@@ -185,31 +185,31 @@ void CAN_Init(CAN_HandleType *handle)
     }
 
     /* 5. Configure nominal bit timing */
-    handle->regs->NBTP = CAN_ComputeNBTP(handle->baudRate);
+    hcan->regs->NBTP = CAN_ComputeNBTP(hcan->baudRate);
 
     /* 6. Set operating mode */
-    uint32_t cccr = handle->regs->CCCR;
+    uint32_t cccr = hcan->regs->CCCR;
     cccr &= ~(FDCAN_CCCR_MON | FDCAN_CCCR_TEST);
     cccr |= FDCAN_CCCR_DAR;  /* disable automatic retransmission */
-    if (handle->mode == CAN_MODE_LOOPBACK || handle->mode == CAN_MODE_SILENT_LOOPBACK) {
+    if (hcan->mode == CAN_MODE_LOOPBACK || hcan->mode == CAN_MODE_SILENT_LOOPBACK) {
         cccr |= FDCAN_CCCR_TEST;
     }
-    if (handle->mode == CAN_MODE_SILENT || handle->mode == CAN_MODE_SILENT_LOOPBACK) {
+    if (hcan->mode == CAN_MODE_SILENT || hcan->mode == CAN_MODE_SILENT_LOOPBACK) {
         cccr |= FDCAN_CCCR_MON;
     }
-    handle->regs->CCCR = cccr;
+    hcan->regs->CCCR = cccr;
 
     /* For loopback: set TEST.LBCK (TEST register writable only when CCCR.TEST=1) */
-    if (handle->mode == CAN_MODE_LOOPBACK || handle->mode == CAN_MODE_SILENT_LOOPBACK) {
-        handle->regs->TEST |= FDCAN_TEST_LBCK;
+    if (hcan->mode == CAN_MODE_LOOPBACK || hcan->mode == CAN_MODE_SILENT_LOOPBACK) {
+        hcan->regs->TEST |= FDCAN_TEST_LBCK;
     }
 
     /* 7. Configure accept-all filter */
-    CAN_FilterAcceptAll(handle);
+    CAN_FilterAcceptAll(hcan);
 
     /* 8. Leave initialisation mode → enter operational mode */
-    handle->regs->CCCR &= ~FDCAN_CCCR_INIT;
-    while (handle->regs->CCCR & FDCAN_CCCR_INIT) { /* wait */ }
+    hcan->regs->CCCR &= ~FDCAN_CCCR_INIT;
+    while (hcan->regs->CCCR & FDCAN_CCCR_INIT) { /* wait */ }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,12 +220,12 @@ void CAN_Init(CAN_HandleType *handle)
 /*  Configure RXGFC to accept ALL frames (standard and extended)
     into Rx FIFO 0 as non-matching frames.  No filter elements are
     needed — LSS=0, LSE=0, ANFS=00, ANFE=00. */
-void CAN_FilterAcceptAll(CAN_HandleType *handle)
+void CAN_FilterAcceptAll(CAN_HandleType *hcan)
 {
     /* ANFS=00 (accept std non-matching → FIFO 0)
        ANFE=00 (accept ext non-matching → FIFO 0)
        LSS=0, LSE=0, RRFE=0, RRFS=0 */
-    handle->regs->RXGFC = 0x00000000U;
+    hcan->regs->RXGFC = 0x00000000U;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -238,10 +238,10 @@ void CAN_FilterAcceptAll(CAN_HandleType *handle)
     (no dedicated TX buffers).  Use TXFQS.TFQPI for the put index
     and poll TXBTO for completion (IR.TC requires TXBTIE).
     Returns 0 on success, -1 if FIFO full or TX timed out. */
-int CAN_Transmit(CAN_HandleType *handle, const CAN_MsgType *msg)
+int CAN_Transmit(CAN_HandleType *hcan, const CAN_MsgType *msg)
 {
     /* Check TX FIFO is not full */
-    uint32_t txfqs = handle->regs->TXFQS;
+    uint32_t txfqs = hcan->regs->TXFQS;
     if (txfqs & FDCAN_TXFQS_TFQF)
         return -1;
 
@@ -279,12 +279,12 @@ int CAN_Transmit(CAN_HandleType *handle, const CAN_MsgType *msg)
     tx_elem[3] = data1;
 
     /* Request transmission */
-    handle->regs->TXBAR = (1U << buf_idx);
+    hcan->regs->TXBAR = (1U << buf_idx);
 
     /* Wait for Transmission Occurred — TXBTO bit is set when TXBRP clears
        after a successful transmission.  Does NOT require TXBTIE. */
     volatile uint32_t timeout = 1000000U;
-    while (!(handle->regs->TXBTO & (1U << buf_idx))) {
+    while (!(hcan->regs->TXBTO & (1U << buf_idx))) {
         if (--timeout == 0) return -1;  /* TX timed out */
     }
 
@@ -298,9 +298,9 @@ int CAN_Transmit(CAN_HandleType *handle, const CAN_MsgType *msg)
 
 /*  Receive one CAN message from FIFO 0 (polling).
     Returns 0 if a message was read, -1 if FIFO was empty. */
-int CAN_Receive(CAN_HandleType *handle, CAN_MsgType *msg)
+int CAN_Receive(CAN_HandleType *hcan, CAN_MsgType *msg)
 {
-    return CAN_ReadFIFO(handle->regs, msg) ? 0 : -1;
+    return CAN_ReadFIFO(hcan->regs, msg) ? 0 : -1;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -315,29 +315,29 @@ int CAN_Receive(CAN_HandleType *handle, CAN_MsgType *msg)
  */
 static void fdcan_it0_handler(void *arg)
 {
-    CAN_HandleType *handle = (CAN_HandleType *)arg;
-    if (handle->regs->IR & FDCAN_IR_RF0N) {
-        handle->regs->IR = FDCAN_IR_RF0N;   /* write-1-to-clear */
+    CAN_HandleType *hcan = (CAN_HandleType *)arg;
+    if (hcan->regs->IR & FDCAN_IR_RF0N) {
+        hcan->regs->IR = FDCAN_IR_RF0N;   /* write-1-to-clear */
         CAN_MsgType msg;
-        if (CAN_ReadFIFO(handle->regs, &msg) && handle->rxCallback) {
-            handle->rxCallback(&msg);
+        if (CAN_ReadFIFO(hcan->regs, &msg) && hcan->rxCallback) {
+            hcan->rxCallback(&msg);
         }
     }
 }
 
-void CAN_EnableRXInterrupt(CAN_HandleType *handle, CAN_RxCallback_t callback)
+void CAN_EnableRXInterrupt(CAN_HandleType *hcan, CAN_RxCallback_t callback)
 {
-    handle->rxCallback = callback;
-    handle->regs->IE  |= FDCAN_IE_RF0NE;    /* Rx FIFO 0 new-message interrupt */
-    handle->regs->ILS &= ~FDCAN_IR_RF0N;    /* route RF0N to interrupt line 0  */
-    handle->regs->ILE |= FDCAN_ILE_EINT0;   /* enable interrupt line 0         */
+    hcan->rxCallback = callback;
+    hcan->regs->IE  |= FDCAN_IE_RF0NE;    /* Rx FIFO 0 new-message interrupt */
+    hcan->regs->ILS &= ~FDCAN_IR_RF0N;    /* route RF0N to interrupt line 0  */
+    hcan->regs->ILE |= FDCAN_ILE_EINT0;   /* enable interrupt line 0         */
     /* Register callback — nvic.c owns FDCAN1_IT0_IRQHandler and dispatches here */
-    NVIC_RegisterHandler(FDCAN1_IT0_IRQn, fdcan_it0_handler, handle, 0);
+    NVIC_RegisterHandler(FDCAN1_IT0_IRQn, fdcan_it0_handler, hcan, 0);
 }
 
-void CAN_DisableRXInterrupt(CAN_HandleType *handle)
+void CAN_DisableRXInterrupt(CAN_HandleType *hcan)
 {
-    handle->regs->IE &= ~FDCAN_IE_RF0NE;
+    hcan->regs->IE &= ~FDCAN_IE_RF0NE;
     NVIC_UnregisterHandler(FDCAN1_IT0_IRQn);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,17 +354,17 @@ static void loopback_irq_callback(const CAN_MsgType *msg)
 }
 
 /* Helper: print a CAN message in hex over UART */
-static void CAN_PrintMsg(USART_HandleType *uart, const char *label, const CAN_MsgType *msg)
+static void CAN_PrintMsg(USART_HandleType *huart, const char *label, const CAN_MsgType *msg)
 {
     char buf[128];
     snprintf(buf, sizeof(buf), "  %s: ID=0x%03lX DLC=%u Data=",
              label, (unsigned long)(msg->IDE ? msg->ExtId : msg->StdId), msg->DLC);
-    USART_WriteString(uart, buf);
+    USART_WriteString(huart, buf);
     for (uint8_t i = 0; i < msg->DLC; i++) {
         snprintf(buf, sizeof(buf), "%02X ", msg->Data[i]);
-        USART_WriteString(uart, buf);
+        USART_WriteString(huart, buf);
     }
-    USART_WriteString(uart, "\n");
+    USART_WriteString(huart, "\n");
 }
 
 /*  Self-test using internal loopback.
@@ -374,17 +374,17 @@ static void CAN_PrintMsg(USART_HandleType *uart, const char *label, const CAN_Ms
     LD1 off after each phase reset.
     All results are printed over UART.
     Returns 0 on overall PASS, -1 on FAIL. */
-int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart)
+int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *huart)
 {
     CAN_GPIO_Init();
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     char buf[128];
     int pass = 0;
 
-    USART_WriteString(uart, "\n========================================\n");
-    USART_WriteString(uart, " FDCAN Loopback Self-Test (STM32C562RE)\n");
-    USART_WriteString(uart, "========================================\n");
+    USART_WriteString(huart, "\n========================================\n");
+    USART_WriteString(huart, " FDCAN Loopback Self-Test (STM32C562RE)\n");
+    USART_WriteString(huart, "========================================\n");
 
     /* Print configuration */
     snprintf(buf, sizeof(buf), "Mode: LOOPBACK | Baud: %s\n",
@@ -392,19 +392,19 @@ int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart)
              (handle->baudRate == CAN_500KBPS)  ? "500 kbps" :
              (handle->baudRate == CAN_250KBPS)  ? "250 kbps" :
              (handle->baudRate == CAN_125KBPS)  ? "125 kbps" : "unknown");
-    USART_WriteString(uart, buf);
+    USART_WriteString(huart, buf);
     snprintf(buf, sizeof(buf), "CCCR=0x%08lX  NBTP=0x%08lX  PSR=0x%08lX\n",
              (unsigned long)handle->regs->CCCR,
              (unsigned long)handle->regs->NBTP,
              (unsigned long)handle->regs->PSR);
-    USART_WriteString(uart, buf);
+    USART_WriteString(huart, buf);
     snprintf(buf, sizeof(buf), "TEST=0x%08lX  RCC_CR1=0x%08lX\n",
              (unsigned long)handle->regs->TEST,
              (unsigned long)RCC->CR1);
-    USART_WriteString(uart, buf);
+    USART_WriteString(huart, buf);
 
     /* ---- Phase 1: Polling TX → Polling RX ---- */
-    USART_WriteString(uart, "\n--- Phase 1: Polling TX -> Polling RX ---\n");
+    USART_WriteString(huart, "\n--- Phase 1: Polling TX -> Polling RX ---\n");
 
     CAN_MsgType tx_msg = {0};
     tx_msg.StdId   = 0x123;
@@ -416,87 +416,87 @@ int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart)
     tx_msg.Data[2] = 0xBE;
     tx_msg.Data[3] = 0xEF;
 
-    CAN_PrintMsg(uart, "TX", &tx_msg);
+    CAN_PrintMsg(huart, "TX", &tx_msg);
 
     if (CAN_Transmit(handle, &tx_msg) != 0) {
-        USART_WriteString(uart, "  TX FAILED!\n");
+        USART_WriteString(huart, "  TX FAILED!\n");
         snprintf(buf, sizeof(buf), "  PSR=0x%08lX\n", (unsigned long)handle->regs->PSR);
-        USART_WriteString(uart, buf);
-        USART_WriteString(uart, "  RESULT: FAIL\n");
+        USART_WriteString(huart, buf);
+        USART_WriteString(huart, "  RESULT: FAIL\n");
         return -1;
     }
-    USART_WriteString(uart, "  TX OK\n");
+    USART_WriteString(huart, "  TX OK\n");
 
     CAN_MsgType rx_msg;
     while (CAN_Receive(handle, &rx_msg) != 0) { /* spin */ }
 
-    CAN_PrintMsg(uart, "RX", &rx_msg);
+    CAN_PrintMsg(huart, "RX", &rx_msg);
 
     if (rx_msg.StdId == 0x123 &&
         rx_msg.Data[0] == 0xDE && rx_msg.Data[1] == 0xAD &&
         rx_msg.Data[2] == 0xBE && rx_msg.Data[3] == 0xEF)
     {
-        USART_WriteString(uart, "  RX MATCH: PASS\n");
-        GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_SET);
+        USART_WriteString(huart, "  RX MATCH: PASS\n");
+        GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_SET);
     } else {
-        USART_WriteString(uart, "  RX MISMATCH: FAIL\n");
+        USART_WriteString(huart, "  RX MISMATCH: FAIL\n");
         pass = -1;
     }
 
     delay(3000000);
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     /* ---- Phase 2: Interrupt-based RX ---- */
-    USART_WriteString(uart, "\n--- Phase 2: Polling TX -> Interrupt RX ---\n");
+    USART_WriteString(huart, "\n--- Phase 2: Polling TX -> Interrupt RX ---\n");
 
     s_irq_msg_received = 0;
     CAN_EnableRXInterrupt(handle, loopback_irq_callback);
-    USART_WriteString(uart, "  RX interrupt enabled (FIFO 0)\n");
+    USART_WriteString(huart, "  RX interrupt enabled (FIFO 0)\n");
 
     tx_msg.StdId   = 0x456;
     tx_msg.DLC     = 2;
     tx_msg.Data[0] = 0xCA;
     tx_msg.Data[1] = 0xFE;
 
-    CAN_PrintMsg(uart, "TX", &tx_msg);
+    CAN_PrintMsg(huart, "TX", &tx_msg);
 
     if (CAN_Transmit(handle, &tx_msg) != 0) {
-        USART_WriteString(uart, "  TX FAILED!\n");
+        USART_WriteString(huart, "  TX FAILED!\n");
         pass = -1;
     } else {
-        USART_WriteString(uart, "  TX OK, waiting for IRQ callback...\n");
+        USART_WriteString(huart, "  TX OK, waiting for IRQ callback...\n");
     }
 
     while (!s_irq_msg_received) { /* spin */ }
-    USART_WriteString(uart, "  IRQ callback fired!\n");
+    USART_WriteString(huart, "  IRQ callback fired!\n");
 
-    CAN_PrintMsg(uart, "IRQ RX", &s_irq_rx_msg);
+    CAN_PrintMsg(huart, "IRQ RX", &s_irq_rx_msg);
 
     if (s_irq_rx_msg.StdId == 0x456 &&
         s_irq_rx_msg.Data[0] == 0xCA && s_irq_rx_msg.Data[1] == 0xFE)
     {
-        USART_WriteString(uart, "  IRQ RX MATCH: PASS\n");
-        GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_SET);
+        USART_WriteString(huart, "  IRQ RX MATCH: PASS\n");
+        GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_SET);
     } else {
-        USART_WriteString(uart, "  IRQ RX MISMATCH: FAIL\n");
+        USART_WriteString(huart, "  IRQ RX MISMATCH: FAIL\n");
         pass = -1;
     }
 
     CAN_DisableRXInterrupt(handle);
 
     delay(3000000);
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     /* ---- Overall result ---- */
-    USART_WriteString(uart, "\n========================================\n");
+    USART_WriteString(huart, "\n========================================\n");
     if (pass == 0)
-        USART_WriteString(uart, " LOOPBACK TEST: ALL PASSED\n");
+        USART_WriteString(huart, " LOOPBACK TEST: ALL PASSED\n");
     else
-        USART_WriteString(uart, " LOOPBACK TEST: FAILED\n");
-    USART_WriteString(uart, "========================================\n");
+        USART_WriteString(huart, " LOOPBACK TEST: FAILED\n");
+    USART_WriteString(huart, "========================================\n");
 
     /* ---- Phase 3: Continuous loopback (press B1 on PC13 to exit) ---- */
-    USART_WriteString(uart, "\nPhase 3: Continuous loopback (press B1 button to exit)\n");
+    USART_WriteString(huart, "\nPhase 3: Continuous loopback (press B1 button to exit)\n");
 
     uint8_t counter = 0;
     for (;;) {
@@ -510,20 +510,20 @@ int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart)
             snprintf(buf, sizeof(buf), "  Loop #%u: TX=0x%02X RX=0x%02X %s\n",
                      (unsigned)(counter - 1), tx_msg.Data[0], rx_msg.Data[0],
                      (tx_msg.Data[0] == rx_msg.Data[0]) ? "OK" : "MISMATCH");
-            USART_WriteString(uart, buf);
+            USART_WriteString(huart, buf);
 
-            GPIO_TogglePin(&s_ld1, GPIO_PIN_5);
+            GPIO_TogglePin(&h_led1, GPIO_PIN_5);
         } else {
-            USART_WriteString(uart, "  Loop TX failed\n");
+            USART_WriteString(huart, "  Loop TX failed\n");
             pass = -1;
         }
         delay(1000000);
         /* B1 user button on PC13 — active LOW (pressed=0) */
-        if (GPIO_ReadPin(&s_b1, GPIO_PIN_13) == GPIO_PIN_RESET) break;
+        if (GPIO_ReadPin(&h_button1, GPIO_PIN_13) == GPIO_PIN_RESET) break;
     }
 
-    USART_WriteString(uart, "Phase 3 completed cont. test \n");
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    USART_WriteString(huart, "Phase 3 completed cont. test \n");
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
     return pass;
 }
 
@@ -533,32 +533,32 @@ int CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart)
     another CAN node on the bus.
     All results are printed over UART.
     Returns 0 on overall PASS, -1 on FAIL. */
-int CAN_TransceiverTest(CAN_HandleType *handle, USART_HandleType *uart)
+int CAN_TransceiverTest(CAN_HandleType *hcan, USART_HandleType *huart)
 {
     CAN_GPIO_Init();
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     char buf[128];
     int pass = 0;
 
-    USART_WriteString(uart, "\n========================================\n");
-    USART_WriteString(uart, " FDCAN Transceiver Test (Normal Mode)\n");
-    USART_WriteString(uart, "========================================\n");
+    USART_WriteString(huart, "\n========================================\n");
+    USART_WriteString(huart, " FDCAN Transceiver Test (Normal Mode)\n");
+    USART_WriteString(huart, "========================================\n");
 
     snprintf(buf, sizeof(buf), "Mode: NORMAL | Baud: %s\n",
-             (handle->baudRate == CAN_1MBPS)   ? "1 Mbps"   :
-             (handle->baudRate == CAN_500KBPS)  ? "500 kbps" :
-             (handle->baudRate == CAN_250KBPS)  ? "250 kbps" :
-             (handle->baudRate == CAN_125KBPS)  ? "125 kbps" : "unknown");
-    USART_WriteString(uart, buf);
+             (hcan->baudRate == CAN_1MBPS)   ? "1 Mbps"   :
+             (hcan->baudRate == CAN_500KBPS)  ? "500 kbps" :
+             (hcan->baudRate == CAN_250KBPS)  ? "250 kbps" :
+             (hcan->baudRate == CAN_125KBPS)  ? "125 kbps" : "unknown");
+    USART_WriteString(huart, buf);
     snprintf(buf, sizeof(buf), "CCCR=0x%08lX  NBTP=0x%08lX  PSR=0x%08lX\n",
-             (unsigned long)handle->regs->CCCR,
-             (unsigned long)handle->regs->NBTP,
-             (unsigned long)handle->regs->PSR);
-    USART_WriteString(uart, buf);
+             (unsigned long)hcan->regs->CCCR,
+             (unsigned long)hcan->regs->NBTP,
+             (unsigned long)hcan->regs->PSR);
+    USART_WriteString(huart, buf);
 
     /* ---- Phase 1: Polling TX ---- */
-    USART_WriteString(uart, "\n--- Phase 1: Polling TX ---\n");
+    USART_WriteString(huart, "\n--- Phase 1: Polling TX ---\n");
 
     CAN_MsgType tx_msg = {0};
     tx_msg.StdId   = 0x200;
@@ -569,66 +569,66 @@ int CAN_TransceiverTest(CAN_HandleType *handle, USART_HandleType *uart)
     tx_msg.Data[1] = 'A';
     tx_msg.Data[2] = 'N';
 
-    CAN_PrintMsg(uart, "TX", &tx_msg);
+    CAN_PrintMsg(huart, "TX", &tx_msg);
 
-    if (CAN_Transmit(handle, &tx_msg) == 0) {
-        USART_WriteString(uart, "  TX OK\n");
-        GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_SET);
+    if (CAN_Transmit(hcan, &tx_msg) == 0) {
+        USART_WriteString(huart, "  TX OK\n");
+        GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_SET);
     } else {
-        USART_WriteString(uart, "  TX FAILED!\n");
+        USART_WriteString(huart, "  TX FAILED!\n");
         snprintf(buf, sizeof(buf), "  PSR=0x%08lX\n",
-                 (unsigned long)handle->regs->PSR);
-        USART_WriteString(uart, buf);
+                 (unsigned long)hcan->regs->PSR);
+        USART_WriteString(huart, buf);
         pass = -1;
     }
 
     /* ---- Phase 2: Polling RX (wait for any message from another node) ---- */
-    USART_WriteString(uart, "\n--- Phase 2: Polling RX (waiting for remote node) ---\n");
+    USART_WriteString(huart, "\n--- Phase 2: Polling RX (waiting for remote node) ---\n");
 
     CAN_MsgType rx_msg;
-    while (CAN_Receive(handle, &rx_msg) != 0) { /* spin until a message arrives */ }
+    while (CAN_Receive(hcan, &rx_msg) != 0) { /* spin until a message arrives */ }
 
-    USART_WriteString(uart, "  Message received!\n");
-    CAN_PrintMsg(uart, "RX", &rx_msg);
+    USART_WriteString(huart, "  Message received!\n");
+    CAN_PrintMsg(huart, "RX", &rx_msg);
 
     delay(3000000);
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     /* ---- Phase 3: Interrupt-based RX ---- */
-    USART_WriteString(uart, "\n--- Phase 3: Interrupt RX (waiting for remote echo) ---\n");
+    USART_WriteString(huart, "\n--- Phase 3: Interrupt RX (waiting for remote echo) ---\n");
 
     s_irq_msg_received = 0;
-    CAN_EnableRXInterrupt(handle, loopback_irq_callback);
-    USART_WriteString(uart, "  RX interrupt enabled (FIFO 0)\n");
+    CAN_EnableRXInterrupt(hcan, loopback_irq_callback);
+    USART_WriteString(huart, "  RX interrupt enabled (FIFO 0)\n");
 
     tx_msg.StdId   = 0x201;
     tx_msg.DLC     = 1;
     tx_msg.Data[0] = 0x42;
 
-    CAN_PrintMsg(uart, "TX", &tx_msg);
-    CAN_Transmit(handle, &tx_msg);
-    USART_WriteString(uart, "  Waiting for IRQ callback...\n");
+    CAN_PrintMsg(huart, "TX", &tx_msg);
+    CAN_Transmit(hcan, &tx_msg);
+    USART_WriteString(huart, "  Waiting for IRQ callback...\n");
 
     while (!s_irq_msg_received) { /* spin until IRQ callback fires */ }
-    USART_WriteString(uart, "  IRQ callback fired!\n");
-    CAN_PrintMsg(uart, "IRQ RX", &s_irq_rx_msg);
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_SET);
+    USART_WriteString(huart, "  IRQ callback fired!\n");
+    CAN_PrintMsg(huart, "IRQ RX", &s_irq_rx_msg);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_SET);
 
-    CAN_DisableRXInterrupt(handle);
+    CAN_DisableRXInterrupt(hcan);
 
     delay(3000000);
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
 
     /* ---- Overall result ---- */
-    USART_WriteString(uart, "\n========================================\n");
+    USART_WriteString(huart, "\n========================================\n");
     if (pass == 0)
-        USART_WriteString(uart, " TRANSCEIVER TEST: ALL PASSED\n");
+        USART_WriteString(huart, " TRANSCEIVER TEST: ALL PASSED\n");
     else
-        USART_WriteString(uart, " TRANSCEIVER TEST: FAILED\n");
-    USART_WriteString(uart, "========================================\n");
+        USART_WriteString(huart, " TRANSCEIVER TEST: FAILED\n");
+    USART_WriteString(huart, "========================================\n");
 
     /* ---- Phase 4: Continuous TX+RX ---- */
-    USART_WriteString(uart, "\nPhase 4: TX+RX cont. test (LD1 toggles)\n");
+    USART_WriteString(huart, "\nPhase 4: TX+RX cont. test (LD1 toggles)\n");
 
     uint8_t counter = 0;
     for (uint16_t i = 0; i < NO_OF_CONT_TX_RX_TEST; i++) {
@@ -636,19 +636,19 @@ int CAN_TransceiverTest(CAN_HandleType *handle, USART_HandleType *uart)
         tx_msg.DLC     = 1;
         tx_msg.Data[0] = counter++;
 
-        CAN_Transmit(handle, &tx_msg);
+        CAN_Transmit(hcan, &tx_msg);
 
-        if (CAN_Receive(handle, &rx_msg) == 0) {
+        if (CAN_Receive(hcan, &rx_msg) == 0) {
             snprintf(buf, sizeof(buf), "  Loop #%u: TX=0x%02X RX=0x%02X\n",
                      (unsigned)(counter - 1), tx_msg.Data[0], rx_msg.Data[0]);
-            USART_WriteString(uart, buf);
-            GPIO_TogglePin(&s_ld1, GPIO_PIN_5);
+            USART_WriteString(huart, buf);
+            GPIO_TogglePin(&h_led1, GPIO_PIN_5);
         }
         delay(1000000);
     }
 
-    USART_WriteString(uart, "Phase 4 cont. test complete\n");
-    GPIO_WritePin(&s_ld1, GPIO_PIN_5, GPIO_PIN_RESET);
+    USART_WriteString(huart, "Phase 4 cont. test complete\n");
+    GPIO_WritePin(&h_led1, GPIO_PIN_5, GPIO_PIN_RESET);
     return pass;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////

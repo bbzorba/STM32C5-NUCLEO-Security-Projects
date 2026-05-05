@@ -289,27 +289,27 @@ typedef struct {
 ////////////////////////////// API DECLARATIONS ////////////////////////////////////////
 
 /* Constructor / initialisation */
-void CAN_constructor(CAN_HandleType *handle, FDCAN_GlobalTypeDef *regs,
+void CAN_constructor(CAN_HandleType *hcan, FDCAN_GlobalTypeDef *regs,
                      CAN_BaudRateType baudrate, CAN_ModeType mode);
-void CAN_Init(CAN_HandleType *handle);
+void CAN_Init(CAN_HandleType *hcan);
 
 /* Filter configuration (accept-all into FIFO 0) */
-void CAN_FilterAcceptAll(CAN_HandleType *handle);
+void CAN_FilterAcceptAll(CAN_HandleType *hcan);
 
 /* Polling TX: returns 0 on success, -1 on failure */
-int  CAN_Transmit(CAN_HandleType *handle, const CAN_MsgType *msg);
+int  CAN_Transmit(CAN_HandleType *hcan, const CAN_MsgType *msg);
 
 /* Polling RX (FIFO 0): returns 0 if a message was read, -1 if FIFO empty */
-int  CAN_Receive(CAN_HandleType *handle, CAN_MsgType *msg);
+int  CAN_Receive(CAN_HandleType *hcan, CAN_MsgType *msg);
 
 /* Interrupt-based RX (FIFO 0) */
-void CAN_EnableRXInterrupt(CAN_HandleType *handle, CAN_RxCallback_t callback);
-void CAN_DisableRXInterrupt(CAN_HandleType *handle);
+void CAN_EnableRXInterrupt(CAN_HandleType *hcan, CAN_RxCallback_t callback);
+void CAN_DisableRXInterrupt(CAN_HandleType *hcan);
 
 /* Built-in test: loopback self-test (returns 0 on PASS, -1 on FAIL) */
-int  CAN_LoopbackTest(CAN_HandleType *handle, USART_HandleType *uart);
+int  CAN_LoopbackTest(CAN_HandleType *hcan, USART_HandleType *uart);
 
 /* Transceiver test: send and receive on real bus (returns 0 on PASS, -1 on FAIL) */
-int  CAN_TransceiverTest(CAN_HandleType *handle, USART_HandleType *uart);
+int  CAN_TransceiverTest(CAN_HandleType *hcan, USART_HandleType *uart);
 
 #endif /* __BXCAN_H */
