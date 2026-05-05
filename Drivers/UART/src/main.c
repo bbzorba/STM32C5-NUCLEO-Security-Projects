@@ -2,7 +2,7 @@
 
 static char buffer[64];
 static uint8_t dma_rx_buf[8];
-uint8_t dma_tx_buf[] = "Hello via DMA TX!\r\n";
+static const uint8_t dma_tx_buf[] = "Hello via DMA TX!\r\n";
 
 // Global handles so callbacks and DMA ops can reach them from any scope
 static USART_HandleType usart;
@@ -29,53 +29,43 @@ int main(void) {
 
     // Initialize DMA channels
     DMA_Constructor(&dmaTx, LPDMA1_Channel0, LPDMA_MEMORY_TO_PERIPH);
-    DMA_Init(&dmaTx);
     DMA_Constructor(&dmaRx, LPDMA1_Channel1, LPDMA_PERIPH_TO_MEMORY);
-    DMA_Init(&dmaRx);
 
-    // -------- Phase 1: Polling TX test --------
+    // -------- Test 1: Polling TX test --------
     USART_WriteString(&usart, "=== Polling TX test ===\r\n");
     USART_WriteString(&usart, "If you can read this, TX works!\r\n");
 
-    // -------- Phase 2: Polling RX test --------
+    // -------- Test 2: Polling RX test --------
     USART_WriteString(&usart, "\r\n=== Polling RX test ===\r\n");
     USART_WriteString(&usart, "Type something and press Enter:\r\n");
 
     USART_ReadString(&usart, buffer, sizeof(buffer));
-
     USART_WriteString(&usart, "You typed: ");
     USART_WriteString(&usart, buffer);
     USART_WriteString(&usart, "\r\n");
     USART_WriteString(&usart, "Polling RX works!\r\n");
 
-    // -------- Phase 3: DMA-based TX test --------
+    // -------- Test 3: DMA-based TX test --------
     USART_WriteString(&usart, "\r\n=== DMA TX test ===\r\n");
-    // Wait for polling output to drain so the shift register is free
-    while (!(usart.regs->ISR & USART_ISR_TC));
-    usart.regs->ICR = USART_ICR_TCCF;
     USART_WriteDMA(&usart, &dmaTx, dma_tx_buf, (uint16_t)(sizeof(dma_tx_buf) - 1U));
-    while (!USART_IsTXDMAComplete(&dmaTx));
-    DMA_Stop(&dmaTx);
-    USART_DisableTXDMA(&usart);
+    USART_DisableTXDMA(&usart, &dmaTx);
     USART_WriteString(&usart, "DMA TX complete!\r\n");
 
-    // -------- Phase 4: DMA-based RX test --------
+    // -------- Test 4: DMA-based RX test --------
     USART_WriteString(&usart, "\r\n=== DMA RX test ===\r\n");
     USART_WriteString(&usart, "Send exactly 8 bytes...\r\n");
     USART_ReadDMA(&usart, &dmaRx, dma_rx_buf, (uint16_t)sizeof(dma_rx_buf));
-    while (!USART_IsRXDMAComplete(&dmaRx));
-    DMA_Stop(&dmaRx);
-    USART_DisableRXDMA(&usart);
+    USART_DisableRXDMA(&usart, &dmaRx);
+
     USART_WriteString(&usart, "Received: ");
     for (uint8_t i = 0; i < (uint8_t)sizeof(dma_rx_buf); i++) {
         USART_WriteChar(&usart, (char)dma_rx_buf[i]);
     }
     USART_WriteString(&usart, "\r\nDMA RX complete!\r\n");
 
-    // -------- Phase 5: Interrupt-based RX echo --------
+    // -------- Test 5: Interrupt-based RX echo --------
     USART_WriteString(&usart, "\r\n=== Interrupt RX echo test ===\r\n");
     USART_WriteString(&usart, "Type characters to see them echoed (interrupt-driven).\r\n");
-
     USART_EnableRXInterrupt(&usart, uart_rx_cb);
 
     while (1) {

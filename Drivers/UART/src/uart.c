@@ -258,7 +258,8 @@ void USART_EnableTXDMA(USART_HandleType *huart) {
     huart->regs->CR3 |= USART_CR3_DMAT;
 }
 
-void USART_DisableTXDMA(USART_HandleType *huart) {
+void USART_DisableTXDMA(USART_HandleType *huart, DMA_HandleType *dma) {
+    DMA_Stop(dma);
     huart->regs->CR3 &= ~USART_CR3_DMAT;
 }
 
@@ -266,51 +267,38 @@ void USART_EnableRXDMA(USART_HandleType *huart) {
     huart->regs->CR3 |= USART_CR3_DMAR;
 }
 
-void USART_DisableRXDMA(USART_HandleType *huart) {
+void USART_DisableRXDMA(USART_HandleType *huart, DMA_HandleType *dma) {
+    DMA_Stop(dma);
     huart->regs->CR3 &= ~USART_CR3_DMAR;
-}
-
-DMA_StatusType USART_HandleTXDMA(USART_HandleType *huart) {
-    // Placeholder for handling TX DMA completion or errors
-    // In a real implementation, this would check DMA status flags and clear them
-    return DMA_OK;
 }
 
 LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma,
                                  const uint8_t *buf, uint16_t len) {
     LPDMA_StatusType st;
+    if (huart == NULL || dma == NULL || buf == NULL || len == 0U) { return LPDMA_ERROR; }
 
-    if (huart == NULL || dma == NULL || buf == NULL || len == 0U) {
-        return LPDMA_ERROR;
-    }
+    /* Wait for shift register to drain before handing TX to DMA */
+    while (!(huart->regs->ISR & USART_ISR_TC)) { }
+    huart->regs->ICR = USART_ICR_TCCF;
 
-    /* DMA_ConfigTransfer adds SINC automatically for MEMORY_TO_PERIPH direction.
-     * dst is fixed at TDR (no DINC), byte width on both sides.
-     * TR2 = REQSEL only — hardware-triggered by USART2 TXE, no SWREQ. */
     st = DMA_ConfigTransfer(dma,
                             (uintptr_t)buf,
                             (uintptr_t)&huart->regs->TDR,
                             len,
                             (LPDMA_TR1_SDW_LOG2_8 | LPDMA_TR1_DDW_LOG2_8),
                             LPDMA_REQSEL_USART2_TX);
-    if (st != LPDMA_OK) {
-        return st;
-    }
-
+    if (st != LPDMA_OK) { return st; }
     huart->regs->CR3 |= USART_CR3_DMAT;
-    return DMA_Start(dma);
-}
-
-uint8_t USART_IsTXDMAComplete(DMA_HandleType *dma) {
-    return DMA_IsTransferComplete(dma);
+    st = DMA_Start(dma);
+    if (st != LPDMA_OK) { return st; }
+    while (!DMA_IsTransferComplete(dma)) { }
+    return LPDMA_OK;
 }
 
 LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma,
                                 uint8_t *buf, uint16_t len) {
     LPDMA_StatusType st;
     if (huart == NULL || dma == NULL || buf == NULL || len == 0U) { return LPDMA_ERROR; }
-    /* DMA_ConfigTransfer adds DINC automatically for PERIPH_TO_MEMORY direction.
-     * src is fixed at RDR (no SINC), byte width on both sides. */
     st = DMA_ConfigTransfer(dma,
                             (uintptr_t)&huart->regs->RDR,
                             (uintptr_t)buf,
@@ -319,11 +307,10 @@ LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma,
                             LPDMA_REQSEL_USART2_RX);
     if (st != LPDMA_OK) { return st; }
     huart->regs->CR3 |= USART_CR3_DMAR;
-    return DMA_Start(dma);
-}
-
-uint8_t USART_IsRXDMAComplete(DMA_HandleType *dma) {
-    return DMA_IsTransferComplete(dma);
+    st = DMA_Start(dma);
+    if (st != LPDMA_OK) { return st; }
+    while (!DMA_IsTransferComplete(dma)) { }
+    return LPDMA_OK;
 }
 
 

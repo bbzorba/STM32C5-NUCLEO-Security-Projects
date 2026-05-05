@@ -1,10 +1,6 @@
 #include "../inc/dma.h"
 #include "../../GPIO/inc/gpio.h"  /* RCC_TypeDef / RCC */
 
-volatile uint32_t g_dma_debug_point = 0U;
-
-#define DMA_DEBUG_POINT(id) do { g_dma_debug_point = (id); } while (0)
-
 static uint8_t DMA_DecodeChannel(DMA_HandleType *handle) {
     uintptr_t addr;
     uintptr_t base;
@@ -38,30 +34,24 @@ static uint8_t DMA_DecodeChannel(DMA_HandleType *handle) {
 }
 
 void DMA_Constructor(DMA_HandleType *handle, LPDMA_ChannelType *channel, LPDMA_DirectionType direction) {
-    DMA_DEBUG_POINT(0x10U);
     if (handle == NULL) {
-        DMA_DEBUG_POINT(0x1FU);
         return;
     }
-
     handle->channel = channel;
     handle->controllerBase = 0U;
     handle->channelIndex = 0U;
     handle->status = LPDMA_OK;
     handle->direction = direction;
-    DMA_DEBUG_POINT(0x11U);
+    DMA_Init(handle);
 }
 
 LPDMA_StatusType DMA_Init(DMA_HandleType *LPDMA_handle) {
-    DMA_DEBUG_POINT(0x20U);
     if(LPDMA_handle == NULL || LPDMA_handle->channel == NULL) {
-        DMA_DEBUG_POINT(0x2FU);
         return LPDMA_ERROR;
     }
 
     if (!DMA_DecodeChannel(LPDMA_handle)) {
         LPDMA_handle->status = LPDMA_ERROR;
-        DMA_DEBUG_POINT(0x2EU);
         return LPDMA_ERROR;
     }
 
@@ -87,14 +77,11 @@ LPDMA_StatusType DMA_Init(DMA_HandleType *LPDMA_handle) {
     LPDMA_handle->channel->LLR = 0U;
 
     LPDMA_handle->status = LPDMA_OK;
-    DMA_DEBUG_POINT(0x21U);
     return LPDMA_OK;
 }
 
 LPDMA_StatusType DMA_ConfigTransfer(DMA_HandleType *LPDMA_handle, uintptr_t src, uintptr_t dst, uint16_t bytes, uint32_t tr1Config, uint32_t tr2Config) {
-    DMA_DEBUG_POINT(0x30U);
     if (LPDMA_handle == NULL || LPDMA_handle->channel == NULL || bytes == 0U) {
-        DMA_DEBUG_POINT(0x3FU);
         return LPDMA_ERROR;
     }
 
@@ -111,14 +98,11 @@ LPDMA_StatusType DMA_ConfigTransfer(DMA_HandleType *LPDMA_handle, uintptr_t src,
     LPDMA_handle->channel->BR1 = (uint32_t)bytes;
     LPDMA_handle->channel->TR1 = tr1Config;
     LPDMA_handle->channel->TR2 = tr2Config;
-    DMA_DEBUG_POINT(0x31U);
     return LPDMA_OK;
 }
 
 LPDMA_StatusType DMA_Start(DMA_HandleType *LPDMA_handle) {
-    DMA_DEBUG_POINT(0x40U);
     if (LPDMA_handle == NULL || LPDMA_handle->channel == NULL) {
-        DMA_DEBUG_POINT(0x4FU);
         return LPDMA_ERROR;
     }
 
@@ -131,37 +115,26 @@ LPDMA_StatusType DMA_Start(DMA_HandleType *LPDMA_handle) {
     LPDMA_handle->channel->CR |= LPDMA_CCR_EN;
 
     LPDMA_handle->status = LPDMA_BUSY;
-    DMA_DEBUG_POINT(0x41U);
     return LPDMA_OK;
 }
 
 LPDMA_StatusType DMA_Stop(DMA_HandleType *LPDMA_handle) {
-    DMA_DEBUG_POINT(0x50U);
     if (LPDMA_handle == NULL || LPDMA_handle->channel == NULL) {
-        DMA_DEBUG_POINT(0x5FU);
         return LPDMA_ERROR;
     }
-
     LPDMA_handle->channel->CR &= ~LPDMA_CCR_EN;
     LPDMA_handle->status = LPDMA_OK;
-    DMA_DEBUG_POINT(0x51U);
     return LPDMA_OK;
 }
 
 uint8_t DMA_IsTransferComplete(DMA_HandleType *LPDMA_handle) {
-    DMA_DEBUG_POINT(0x60U);
     if (LPDMA_handle == NULL || LPDMA_handle->channel == NULL) {
-        DMA_DEBUG_POINT(0x6FU);
         return 0U;
     }
-
     if ((LPDMA_handle->channel->SR & LPDMA_SR_TCF) != 0U) {
         LPDMA_handle->status = LPDMA_OK;
-        DMA_DEBUG_POINT(0x61U);
         return 1U;
     }
-
-    DMA_DEBUG_POINT(0x62U);
     return 0U;
 }
 

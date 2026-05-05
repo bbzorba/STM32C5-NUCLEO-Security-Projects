@@ -115,12 +115,6 @@ typedef enum {
     __9600,
 } UART_BaudRateType;
 
-typedef enum {
-    DMA_OK = 0,
-    DMA_ERROR,
-    DMA_BUSY
-} DMA_StatusType;
-
 typedef void (*USART_Callback_t)(char c);
 
 typedef struct {
@@ -149,19 +143,12 @@ void USART_DisableRXInterrupt(USART_HandleType *huart);
 void USART_IRQHandler(USART_HandleType *huart);
 
 // DMA API
-/* DMA-accelerated TX/RX.
- * TX: `dma` init with LPDMA_MEMORY_TO_PERIPH. Poll IsTXDMAComplete(), then DMA_Stop() + DisableTXDMA().
- * RX: `dma` init with LPDMA_PERIPH_TO_MEMORY. Poll IsRXDMAComplete(), then DMA_Stop() + DisableRXDMA(). */
- void USART_EnableTXDMA(USART_HandleType *huart);
-void USART_DisableTXDMA(USART_HandleType *huart);
+void USART_EnableTXDMA(USART_HandleType *huart);
+void USART_DisableTXDMA(USART_HandleType *huart, DMA_HandleType *dma);  /* stops DMA then clears DMAT */
 void USART_EnableRXDMA(USART_HandleType *huart);
-void USART_DisableRXDMA(USART_HandleType *huart);
-LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma,
-                                 const uint8_t *buf, uint16_t len);
-uint8_t          USART_IsTXDMAComplete(DMA_HandleType *dma);
-LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma,
-                                uint8_t *buf, uint16_t len);
-uint8_t          USART_IsRXDMAComplete(DMA_HandleType *dma);
+void USART_DisableRXDMA(USART_HandleType *huart, DMA_HandleType *dma);  /* stops DMA then clears DMAR */
+LPDMA_StatusType USART_WriteDMA(USART_HandleType *huart, DMA_HandleType *dma, const uint8_t *buf, uint16_t len);  /* blocking */
+LPDMA_StatusType USART_ReadDMA(USART_HandleType *huart, DMA_HandleType *dma, uint8_t *buf, uint16_t len);         /* blocking */
 
 // High-level (object-style) API
 void USART_constructor(USART_HandleType *huart, USART_ManualType *regs, UART_COMType _comtype, UART_BaudRateType _baudrate);
