@@ -134,5 +134,6 @@ void USART_WriteString(USART_HandleType *huart, const char *str);
 void USART_ReadString(USART_HandleType *huart, char *buffer, size_t maxLength);
 void uart_write_hex8(USART_HandleType *huart, uint8_t byte);
 void uart_write_hex32(USART_HandleType *huart, uint32_t word);
-
+void print_hex(USART_HandleType *huart,const uint8_t *buf, size_t len);
+void print_dec(USART_HandleType *huart, uint32_t n);
 #endif // __UART_H

@@ -173,5 +173,8 @@ void UART5_IRQHandler(void)  { dispatch(UART5_IRQn);  }
 void USART6_IRQHandler(void) { dispatch(USART6_IRQn); }
 void UART7_IRQHandler(void)  { dispatch(UART7_IRQn);  }
 
+/* ── RNG IRQ handler ─────────────────────────────────────────────────── */
+void RNG_IRQHandler(void) { dispatch(RNG_IRQn); }
+
 /* ── HASH IRQ handler ────────────────────────────────────────────────── */
 void HASH_IRQHandler(void) { dispatch(HASH_IRQn); }

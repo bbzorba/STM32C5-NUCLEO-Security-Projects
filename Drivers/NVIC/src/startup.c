@@ -62,6 +62,7 @@ extern void HASH_IRQHandler(void);
 extern void USART6_IRQHandler(void);
 extern void UART7_IRQHandler(void);
 extern void ADC3_IRQHandler(void);
+extern void RNG_IRQHandler(void);
 
 /*
  * VECTOR_TABLE_CONTENT — shared entries for both IAR and GCC tables.
@@ -129,8 +130,10 @@ extern void ADC3_IRQHandler(void);
     [16 + 55] = UART5_IRQHandler,                                    \
     [16 + 96] = USART6_IRQHandler,                                   \
     [16 + 97] = UART7_IRQHandler,                                    \
+    /* RNG (IRQn 70) */                                             \
+    [16 + 64] = RNG_IRQHandler,                                     \
     /* HASH (IRQn 69) */                                             \
-    [16 + 69] = HASH_IRQHandler
+    [16 + 69] = HASH_IRQHandler,                                    \
 
 /* ── IAR Compiler (iccarm) ─────────────────────────────────────────────── */
 #if defined(__ICCARM__)

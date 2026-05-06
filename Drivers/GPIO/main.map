@@ -52,8 +52,6 @@ Discarded input sections
  .text          0x00000000        0x0 Drivers/GPIO/src/main.o
  .data          0x00000000        0x0 Drivers/GPIO/src/main.o
  .bss           0x00000000        0x0 Drivers/GPIO/src/main.o
- .text.delay_fn
-                0x00000000       0x1c Drivers/GPIO/src/main.o
  .text          0x00000000        0x0 Drivers/GPIO/src/startup.o
  .data          0x00000000        0x0 Drivers/GPIO/src/startup.o
  .bss           0x00000000        0x0 Drivers/GPIO/src/startup.o
@@ -113,6 +111,8 @@ Discarded input sections
  .text.USART6_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.UART7_IRQHandler
+                0x00000000       0x14 Drivers/NVIC/src/nvic.o
+ .text.RNG_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.HASH_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
@@ -210,7 +210,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .isr_vector    0x08000000      0x240 Drivers/GPIO/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000240      0x540
+.text           0x08000240      0x54c
  *(.text*)
  .text.GPIO_TogglePin
                 0x08000240        0xc Drivers/GPIO/src/gpio.o
@@ -224,113 +224,115 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .text.GPIO_constructor
                 0x08000414        0x8 Drivers/GPIO/src/gpio.o
                 0x08000414                GPIO_constructor
+ .text.delay    0x0800041c       0x1c Drivers/GPIO/src/gpio.o
+                0x0800041c                delay
  .text.btn_callback
-                0x0800041c       0x1c Drivers/GPIO/src/main.o
+                0x08000438       0x1c Drivers/GPIO/src/main.o
  .text.startup.main
-                0x08000438       0x8c Drivers/GPIO/src/main.o
-                0x08000438                main
+                0x08000454       0x7c Drivers/GPIO/src/main.o
+                0x08000454                main
  .text.Default_Handler
-                0x080004c4        0x4 Drivers/GPIO/src/startup.o
-                0x080004c4                Default_Handler
+                0x080004d0        0x4 Drivers/GPIO/src/startup.o
+                0x080004d0                Default_Handler
  .text.Reset_Handler
-                0x080004c8       0x5c Drivers/GPIO/src/startup.o
-                0x080004c8                Reset_Handler
+                0x080004d4       0x5c Drivers/GPIO/src/startup.o
+                0x080004d4                Reset_Handler
  .text.NVIC_RegisterHandler
-                0x08000524       0x54 Drivers/NVIC/src/nvic.o
-                0x08000524                NVIC_RegisterHandler
+                0x08000530       0x54 Drivers/NVIC/src/nvic.o
+                0x08000530                NVIC_RegisterHandler
  .text.NVIC_EXTI_Enable
-                0x08000578       0xa4 Drivers/NVIC/src/nvic.o
-                0x08000578                NVIC_EXTI_Enable
+                0x08000584       0xa4 Drivers/NVIC/src/nvic.o
+                0x08000584                NVIC_EXTI_Enable
  .text.NVIC_EXTI_ClearPending
-                0x0800061c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800061c                NVIC_EXTI_ClearPending
+                0x08000628       0x14 Drivers/NVIC/src/nvic.o
+                0x08000628                NVIC_EXTI_ClearPending
  .text.EXTI0_IRQHandler
-                0x08000630       0x10 Drivers/NVIC/src/nvic.o
-                0x08000630                EXTI0_IRQHandler
+                0x0800063c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800063c                EXTI0_IRQHandler
  .text.EXTI1_IRQHandler
-                0x08000640       0x10 Drivers/NVIC/src/nvic.o
-                0x08000640                EXTI1_IRQHandler
+                0x0800064c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800064c                EXTI1_IRQHandler
  .text.EXTI2_IRQHandler
-                0x08000650       0x10 Drivers/NVIC/src/nvic.o
-                0x08000650                EXTI2_IRQHandler
+                0x0800065c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800065c                EXTI2_IRQHandler
  .text.EXTI3_IRQHandler
-                0x08000660       0x10 Drivers/NVIC/src/nvic.o
-                0x08000660                EXTI3_IRQHandler
+                0x0800066c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800066c                EXTI3_IRQHandler
  .text.EXTI4_IRQHandler
-                0x08000670       0x10 Drivers/NVIC/src/nvic.o
-                0x08000670                EXTI4_IRQHandler
+                0x0800067c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800067c                EXTI4_IRQHandler
  .text.EXTI5_IRQHandler
-                0x08000680       0x10 Drivers/NVIC/src/nvic.o
-                0x08000680                EXTI5_IRQHandler
+                0x0800068c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800068c                EXTI5_IRQHandler
  .text.EXTI6_IRQHandler
-                0x08000690       0x10 Drivers/NVIC/src/nvic.o
-                0x08000690                EXTI6_IRQHandler
+                0x0800069c       0x10 Drivers/NVIC/src/nvic.o
+                0x0800069c                EXTI6_IRQHandler
  .text.EXTI7_IRQHandler
-                0x080006a0       0x10 Drivers/NVIC/src/nvic.o
-                0x080006a0                EXTI7_IRQHandler
+                0x080006ac       0x10 Drivers/NVIC/src/nvic.o
+                0x080006ac                EXTI7_IRQHandler
  .text.EXTI8_IRQHandler
-                0x080006b0       0x10 Drivers/NVIC/src/nvic.o
-                0x080006b0                EXTI8_IRQHandler
+                0x080006bc       0x10 Drivers/NVIC/src/nvic.o
+                0x080006bc                EXTI8_IRQHandler
  .text.EXTI9_IRQHandler
-                0x080006c0       0x14 Drivers/NVIC/src/nvic.o
-                0x080006c0                EXTI9_IRQHandler
+                0x080006cc       0x14 Drivers/NVIC/src/nvic.o
+                0x080006cc                EXTI9_IRQHandler
  .text.EXTI10_IRQHandler
-                0x080006d4       0x14 Drivers/NVIC/src/nvic.o
-                0x080006d4                EXTI10_IRQHandler
+                0x080006e0       0x14 Drivers/NVIC/src/nvic.o
+                0x080006e0                EXTI10_IRQHandler
  .text.EXTI11_IRQHandler
-                0x080006e8       0x14 Drivers/NVIC/src/nvic.o
-                0x080006e8                EXTI11_IRQHandler
+                0x080006f4       0x14 Drivers/NVIC/src/nvic.o
+                0x080006f4                EXTI11_IRQHandler
  .text.EXTI12_IRQHandler
-                0x080006fc       0x14 Drivers/NVIC/src/nvic.o
-                0x080006fc                EXTI12_IRQHandler
+                0x08000708       0x14 Drivers/NVIC/src/nvic.o
+                0x08000708                EXTI12_IRQHandler
  .text.EXTI13_IRQHandler
-                0x08000710       0x14 Drivers/NVIC/src/nvic.o
-                0x08000710                EXTI13_IRQHandler
+                0x0800071c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800071c                EXTI13_IRQHandler
  .text.EXTI14_IRQHandler
-                0x08000724       0x14 Drivers/NVIC/src/nvic.o
-                0x08000724                EXTI14_IRQHandler
+                0x08000730       0x14 Drivers/NVIC/src/nvic.o
+                0x08000730                EXTI14_IRQHandler
  .text.EXTI15_IRQHandler
-                0x08000738       0x14 Drivers/NVIC/src/nvic.o
-                0x08000738                EXTI15_IRQHandler
- .text.memcpy   0x0800074c       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                0x0800074c                memcpy
- .text.memset   0x08000766       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
-                0x08000766                memset
+                0x08000744       0x14 Drivers/NVIC/src/nvic.o
+                0x08000744                EXTI15_IRQHandler
+ .text.memcpy   0x08000758       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x08000758                memcpy
+ .text.memset   0x08000772       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x08000772                memset
  *(.rodata*)
  *(.glue_7)
- .glue_7        0x08000776        0x0 linker stubs
+ .glue_7        0x08000782        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000776        0x0 linker stubs
+ .glue_7t       0x08000782        0x0 linker stubs
  *(.init)
- *fill*         0x08000776        0x2 
- .init          0x08000778        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000778                _init
+ *fill*         0x08000782        0x2 
+ .init          0x08000784        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000784                _init
  *(.fini)
- .fini          0x0800077c        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x0800077c                _fini
+ .fini          0x08000788        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000788                _fini
 
-.vfp11_veneer   0x08000780        0x0
- .vfp11_veneer  0x08000780        0x0 linker stubs
+.vfp11_veneer   0x0800078c        0x0
+ .vfp11_veneer  0x0800078c        0x0 linker stubs
 
-.v4_bx          0x08000780        0x0
- .v4_bx         0x08000780        0x0 linker stubs
+.v4_bx          0x0800078c        0x0
+ .v4_bx         0x0800078c        0x0 linker stubs
 
-.iplt           0x08000780        0x0
- .iplt          0x08000780        0x0 Drivers/GPIO/src/gpio.o
+.iplt           0x0800078c        0x0
+ .iplt          0x0800078c        0x0 Drivers/GPIO/src/gpio.o
 
-.rel.dyn        0x08000780        0x0
- .rel.iplt      0x08000780        0x0 Drivers/GPIO/src/gpio.o
+.rel.dyn        0x0800078c        0x0
+ .rel.iplt      0x0800078c        0x0 Drivers/GPIO/src/gpio.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000780        0x0
-                0x08000780                __exidx_start = .
+.ARM.exidx      0x0800078c        0x0
+                0x0800078c                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000780                __exidx_end = .
-                0x08000780                __etext = .
+                0x0800078c                __exidx_end = .
+                0x0800078c                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000780
+.data           0x20000000        0x4 load address 0x0800078c
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
@@ -338,10 +340,10 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000784
+.igot.plt       0x20000004        0x0 load address 0x08000790
  .igot.plt      0x20000004        0x0 Drivers/GPIO/src/gpio.o
 
-.bss            0x20000004      0x404 load address 0x08000784
+.bss            0x20000004      0x404 load address 0x08000790
                 0x20000004                __bss_start__ = .
  *(.bss*)
  .bss.s_led     0x20000004        0x4 Drivers/GPIO/src/main.o
@@ -352,7 +354,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000408                end = .
                 0x20000408                __end__ = .
 
-.stack          0x20000408      0x400 load address 0x08000b88
+.stack          0x20000408      0x400 load address 0x08000b94
                 0x20000408                . = ALIGN (0x8)
                 0x20000408                _stack = .
                 0x20000808                . = (. + 0x400)
@@ -384,59 +386,59 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/GPIO/src/startup.o
  .comment       0x00000049       0x4a Drivers/NVIC/src/nvic.o
 
-.debug_info     0x00000000     0x1be2
- .debug_info    0x00000000      0x6a3 Drivers/GPIO/src/gpio.o
- .debug_info    0x000006a3      0x41c Drivers/GPIO/src/main.o
- .debug_info    0x00000abf      0x1ce Drivers/GPIO/src/startup.o
- .debug_info    0x00000c8d      0xf55 Drivers/NVIC/src/nvic.o
+.debug_info     0x00000000     0x1bd4
+ .debug_info    0x00000000      0x6c6 Drivers/GPIO/src/gpio.o
+ .debug_info    0x000006c6      0x3ac Drivers/GPIO/src/main.o
+ .debug_info    0x00000a72      0x1ce Drivers/GPIO/src/startup.o
+ .debug_info    0x00000c40      0xf94 Drivers/NVIC/src/nvic.o
 
-.debug_abbrev   0x00000000      0x782
+.debug_abbrev   0x00000000      0x6fb
  .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
- .debug_abbrev  0x0000019f      0x20b Drivers/GPIO/src/main.o
- .debug_abbrev  0x000003aa      0x147 Drivers/GPIO/src/startup.o
- .debug_abbrev  0x000004f1      0x291 Drivers/NVIC/src/nvic.o
+ .debug_abbrev  0x0000019f      0x184 Drivers/GPIO/src/main.o
+ .debug_abbrev  0x00000323      0x147 Drivers/GPIO/src/startup.o
+ .debug_abbrev  0x0000046a      0x291 Drivers/NVIC/src/nvic.o
 
-.debug_loc      0x00000000      0x92b
+.debug_loc      0x00000000      0x911
  .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
- .debug_loc     0x00000371       0x3f Drivers/GPIO/src/main.o
- .debug_loc     0x000003b0      0x57b Drivers/NVIC/src/nvic.o
+ .debug_loc     0x00000371       0x25 Drivers/GPIO/src/main.o
+ .debug_loc     0x00000396      0x57b Drivers/NVIC/src/nvic.o
 
-.debug_aranges  0x00000000      0x250
+.debug_aranges  0x00000000      0x258
  .debug_aranges
-                0x00000000       0x68 Drivers/GPIO/src/gpio.o
+                0x00000000       0x70 Drivers/GPIO/src/gpio.o
  .debug_aranges
-                0x00000068       0x30 Drivers/GPIO/src/main.o
+                0x00000070       0x28 Drivers/GPIO/src/main.o
  .debug_aranges
                 0x00000098       0x30 Drivers/GPIO/src/startup.o
  .debug_aranges
-                0x000000c8      0x188 Drivers/NVIC/src/nvic.o
+                0x000000c8      0x190 Drivers/NVIC/src/nvic.o
 
-.debug_ranges   0x00000000      0x2f0
- .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000058       0x58 Drivers/GPIO/src/main.o
- .debug_ranges  0x000000b0       0x20 Drivers/GPIO/src/startup.o
- .debug_ranges  0x000000d0      0x220 Drivers/NVIC/src/nvic.o
+.debug_ranges   0x00000000      0x2c0
+ .debug_ranges  0x00000000       0x60 Drivers/GPIO/src/gpio.o
+ .debug_ranges  0x00000060       0x18 Drivers/GPIO/src/main.o
+ .debug_ranges  0x00000078       0x20 Drivers/GPIO/src/startup.o
+ .debug_ranges  0x00000098      0x228 Drivers/NVIC/src/nvic.o
 
 .debug_line     0x00000000     0x14bc
- .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
- .debug_line    0x000004bf      0x279 Drivers/GPIO/src/main.o
- .debug_line    0x00000738      0x1c5 Drivers/GPIO/src/startup.o
- .debug_line    0x000008fd      0xbbf Drivers/NVIC/src/nvic.o
+ .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
+ .debug_line    0x00000503      0x205 Drivers/GPIO/src/main.o
+ .debug_line    0x00000708      0x1c5 Drivers/GPIO/src/startup.o
+ .debug_line    0x000008cd      0xbef Drivers/NVIC/src/nvic.o
 
-.debug_str      0x00000000      0xc36
- .debug_str     0x00000000      0x3b9 Drivers/GPIO/src/gpio.o
-                                0x411 (size before relaxing)
- .debug_str     0x000003b9       0xb5 Drivers/GPIO/src/main.o
-                                0x2c7 (size before relaxing)
- .debug_str     0x0000046e       0xd7 Drivers/GPIO/src/startup.o
+.debug_str      0x00000000      0xc45
+ .debug_str     0x00000000      0x3bf Drivers/GPIO/src/gpio.o
+                                0x417 (size before relaxing)
+ .debug_str     0x000003bf       0xa6 Drivers/GPIO/src/main.o
+                                0x2be (size before relaxing)
+ .debug_str     0x00000465       0xd7 Drivers/GPIO/src/startup.o
                                 0x25c (size before relaxing)
- .debug_str     0x00000545      0x6f1 Drivers/NVIC/src/nvic.o
-                                0x8de (size before relaxing)
+ .debug_str     0x0000053c      0x709 Drivers/NVIC/src/nvic.o
+                                0x8f6 (size before relaxing)
 
-.debug_frame    0x00000000      0x4f8
- .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
- .debug_frame   0x000000dc       0x60 Drivers/GPIO/src/main.o
+.debug_frame    0x00000000      0x508
+ .debug_frame   0x00000000       0xf4 Drivers/GPIO/src/gpio.o
+ .debug_frame   0x000000f4       0x48 Drivers/GPIO/src/main.o
  .debug_frame   0x0000013c       0x48 Drivers/GPIO/src/startup.o
- .debug_frame   0x00000184      0x32c Drivers/NVIC/src/nvic.o
- .debug_frame   0x000004b0       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x000004d8       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+ .debug_frame   0x00000184      0x33c Drivers/NVIC/src/nvic.o
+ .debug_frame   0x000004c0       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x000004e8       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

@@ -423,5 +423,6 @@ void GPIO_SetBit(GPIO_HandleTypeDef *GPIOx, uint32_t pin);
 void GPIO_ResetBit(GPIO_HandleTypeDef *GPIOx, uint32_t pin);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void delay(volatile uint32_t n);
 
 #endif // __GPIO_H

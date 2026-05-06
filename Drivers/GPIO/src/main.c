@@ -18,10 +18,6 @@
 #define TEST_PHASE 2          /* 1 = polling, 2 = interrupt */
 #endif
 
-void delay_fn(volatile int count) {
-    for (volatile int i = 0; i < count; i++);
-}
-
 /* ── Phase 2 interrupt callback ────────────────────────────────────────────
  *
  * HOW TO USE NVIC_EXTI_Enable IN YOUR OWN CODE:
@@ -81,7 +77,7 @@ int main(void) {
         if (!(GPIO_C->IDR & GPIO_PIN_13)) {
             GPIO_TogglePin(&ld1, GPIO_PIN_5);
             while (!(GPIO_C->IDR & GPIO_PIN_13));   /* wait for release */
-            delay_fn(20000);                         /* debounce */
+            delay(20000);                         /* debounce */
         }
     }
 
@@ -97,7 +93,7 @@ int main(void) {
 
     /* Blink once to signal "interrupt mode active" */
     GPIO_TogglePin(&ld1, GPIO_PIN_5);
-    delay_fn(400000);
+    delay(400000);
     GPIO_TogglePin(&ld1, GPIO_PIN_5);
 
     while (1) {

@@ -378,4 +378,21 @@ void uart_write_hex32(USART_HandleType *huart, uint32_t word) {
     uart_write_hex8(huart, (word >> 8) & 0xFF);
     uart_write_hex8(huart, word & 0xFF);
 }
+
+void print_hex(USART_HandleType *huart,const uint8_t *buf, size_t len)
+{
+    static const char hex[] = "0123456789abcdef";
+    for (size_t i = 0; i < len; i++) {
+        USART_WriteChar(huart, hex[(buf[i] >> 4) & 0xF]);
+        USART_WriteChar(huart, hex[ buf[i]       & 0xF]);
+    }
+}
+
+void print_dec(USART_HandleType *huart, uint32_t n) {
+    char buf[12];
+    uint8_t i = 0U;
+    if (n == 0U) { USART_WriteChar(huart, '0'); return; }
+    while (n > 0U) { buf[i++] = (char)('0' + (n % 10U)); n /= 10U; }
+    while (i > 0U) { USART_WriteChar(huart, buf[--i]); }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////

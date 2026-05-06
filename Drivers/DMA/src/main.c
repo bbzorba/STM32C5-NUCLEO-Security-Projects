@@ -4,21 +4,21 @@
 /* -----------------------------------------------------------------------
  * Hardware handles (file-scope so test functions can reach them)
  * ----------------------------------------------------------------------- */
-static USART_HandleType uart;
-static DMA_HandleType   dma_mem;   /* channel 1 — mem-to-mem tests  */
-static DMA_HandleType   dma_uart;  /* channel 0 — UART DMA TX tests  */
+USART_HandleType huart;
+DMA_HandleType   dma_mem;   /* channel 1 — mem-to-mem tests  */
+DMA_HandleType   dma_uart;  /* channel 0 — UART DMA TX tests  */
 
 /* -----------------------------------------------------------------------
  * Buffers for mem-to-mem tests
  * ----------------------------------------------------------------------- */
 #define BIG_BUF_SIZE 1024U
-static uint8_t src_buf[BIG_BUF_SIZE];
-static uint8_t dst_buf[BIG_BUF_SIZE];
+uint8_t src_buf[BIG_BUF_SIZE];
+uint8_t dst_buf[BIG_BUF_SIZE];
 
 /* ----------------------------------------------------------------------- */
 static void pass_fail(uint8_t ok)
 {
-    USART_WriteString(&uart, ok ? "PASS\r\n" : "FAIL\r\n");
+    USART_WriteString(&huart, ok ? "PASS\r\n" : "FAIL\r\n");
 }
 
 /* ----------------------------------------------------------------------- */
@@ -121,10 +121,10 @@ static const uint8_t uart_dma_str[] = "[UART-DMA] Hello via DMA TX!\r\n";
 
 static uint8_t test_uart_dma_tx(void)
 {
-    LPDMA_StatusType st = USART_WriteDMA(&uart, &dma_uart,
+    LPDMA_StatusType st = USART_WriteDMA(&huart, &dma_uart,
                                          uart_dma_str,
                                          (uint16_t)(sizeof(uart_dma_str) - 1U));
-    USART_DisableTXDMA(&uart);
+    USART_DisableTXDMA(&huart);
     return (st == LPDMA_OK) ? 1U : 0U;
 }
 
@@ -133,24 +133,24 @@ static uint8_t test_uart_dma_tx(void)
  * ----------------------------------------------------------------------- */
 int main(void)
 {
-    USART_constructor(&uart, USART_2, TX_ONLY, __115200);
+    USART_constructor(&huart, USART_2, TX_ONLY, __115200);
     DMA_Constructor(&dma_mem,  LPDMA1_Channel1, LPDMA_MEMORY_TO_MEMORY);
     DMA_Constructor(&dma_uart, LPDMA1_Channel0, LPDMA_MEMORY_TO_PERIPH);
 
-    USART_WriteString(&uart, "\r\n=== DMA Tests ===\r\n");
+    USART_WriteString(&huart, "\r\n=== DMA Tests ===\r\n");
 
-    USART_WriteString(&uart, "[1] mem-to-mem polling (1kB): ");
+    USART_WriteString(&huart, "[1] mem-to-mem polling (1kB): ");
     pass_fail(test_memcpy_polling());
 
-    USART_WriteString(&uart, "[2] mem-to-mem interrupt (1kB): ");
+    USART_WriteString(&huart, "[2] mem-to-mem interrupt (1kB): ");
     pass_fail(test_memcpy_interrupt());
 
-    USART_WriteString(&uart, "[3] word-width copy (1kB): ");
+    USART_WriteString(&huart, "[3] word-width copy (1kB): ");
     pass_fail(test_memcpy_word_width());
 
-    USART_WriteString(&uart, "[4] UART DMA TX: ");
+    USART_WriteString(&huart, "[4] UART DMA TX: ");
     pass_fail(test_uart_dma_tx());
 
-    USART_WriteString(&uart, "=== Done ===\r\n");
+    USART_WriteString(&huart, "=== Done ===\r\n");
     while (1) { }
 }

@@ -1,14 +1,15 @@
 # Makefile for STM32 NUCLEO C562RE development board
 
 #DONE
-#PROJECT_DIR = Drivers/UART
-#PROJECT_DIR = Drivers/GPIO
-PROJECT_DIR = Drivers/FDCAN
-#PROJECT_DIR = Drivers/AES
-#PROJECT_DIR = Drivers/HASH
-#PROJECT_DIR = Drivers/CRC
 #PROJECT_DIR = Drivers/DMA
 #PROJECT_DIR = Drivers/NVIC
+#PROJECT_DIR = Drivers/GPIO
+#PROJECT_DIR = Drivers/UART
+#PROJECT_DIR = Drivers/FDCAN
+#PROJECT_DIR = Drivers/HASH
+#PROJECT_DIR = Drivers/CRC
+#PROJECT_DIR = Drivers/AES
+PROJECT_DIR = Drivers/RNG
 
 #TBD
 #PROJECT_DIR = Projects/Memory_Protection

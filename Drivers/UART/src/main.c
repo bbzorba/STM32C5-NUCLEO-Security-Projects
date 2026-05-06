@@ -77,9 +77,3 @@ int main(void) {
         delay(1000000);
     }
 }
-
-void delay(volatile uint32_t count) {
-    while(count--) {
-        __asm__("nop");
-    }
-}

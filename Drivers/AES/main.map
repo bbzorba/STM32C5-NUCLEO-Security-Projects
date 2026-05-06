@@ -83,16 +83,17 @@ Discarded input sections
                 0x00000000      0x114 Drivers/GPIO/src/gpio.o
  .text.GPIO_constructor
                 0x00000000        0x8 Drivers/GPIO/src/gpio.o
- .debug_info    0x00000000      0x6a3 Drivers/GPIO/src/gpio.o
+ .text.delay    0x00000000       0x1c Drivers/GPIO/src/gpio.o
+ .debug_info    0x00000000      0x6c6 Drivers/GPIO/src/gpio.o
  .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
  .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
  .debug_aranges
-                0x00000000       0x68 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
- .debug_str     0x00000000      0x411 Drivers/GPIO/src/gpio.o
+                0x00000000       0x70 Drivers/GPIO/src/gpio.o
+ .debug_ranges  0x00000000       0x60 Drivers/GPIO/src/gpio.o
+ .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
+ .debug_str     0x00000000      0x417 Drivers/GPIO/src/gpio.o
  .comment       0x00000000       0x4a Drivers/GPIO/src/gpio.o
- .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
+ .debug_frame   0x00000000       0xf4 Drivers/GPIO/src/gpio.o
  .ARM.attributes
                 0x00000000       0x34 Drivers/GPIO/src/gpio.o
  .text          0x00000000        0x0 Drivers/NVIC/src/nvic.o
@@ -154,6 +155,8 @@ Discarded input sections
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.UART7_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
+ .text.RNG_IRQHandler
+                0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.HASH_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text          0x00000000        0x0 Drivers/UART/src/uart.o
@@ -174,11 +177,11 @@ Discarded input sections
  .text.USART_EnableTXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableTXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_EnableRXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableRXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_WriteDMA
                 0x00000000       0x5c Drivers/UART/src/uart.o
  .text.USART_ReadDMA
@@ -203,6 +206,11 @@ Discarded input sections
                 0x00000000       0x4c Drivers/UART/src/uart.o
  .text.uart_write_hex32
                 0x00000000       0x2c Drivers/UART/src/uart.o
+ .text.print_hex
+                0x00000000       0x40 Drivers/UART/src/uart.o
+ .text.print_dec
+                0x00000000       0x74 Drivers/UART/src/uart.o
+ .rodata.hex.0  0x00000000       0x11 Drivers/UART/src/uart.o
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
@@ -468,7 +476,8 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
 .bss            0x20000004      0x40c load address 0x080012f4
                 0x20000004                __bss_start__ = .
  *(.bss*)
- .bss.g_uart    0x20000004        0xc Drivers/AES/src/main.o
+ .bss.huart     0x20000004        0xc Drivers/AES/src/main.o
+                0x20000004                huart
  .bss.s_table   0x20000010      0x400 Drivers/NVIC/src/nvic.o
  *(COMMON)
                 0x20000410                __bss_end__ = .
@@ -514,30 +523,30 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/NVIC/src/nvic.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x42b2
+.debug_info     0x00000000     0x44c1
  .debug_info    0x00000000      0xa08 Drivers/AES/src/aes.o
  .debug_info    0x00000a08      0x9a8 Drivers/AES/src/main.o
  .debug_info    0x000013b0      0xa15 Drivers/AES/src/modes_of_op.o
  .debug_info    0x00001dc5      0x1ce Drivers/AES/src/startup.o
- .debug_info    0x00001f93      0xf55 Drivers/NVIC/src/nvic.o
- .debug_info    0x00002ee8     0x13ca Drivers/UART/src/uart.o
+ .debug_info    0x00001f93      0xf94 Drivers/NVIC/src/nvic.o
+ .debug_info    0x00002f27     0x159a Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0xeae
+.debug_abbrev   0x00000000      0xed2
  .debug_abbrev  0x00000000      0x2b7 Drivers/AES/src/aes.o
- .debug_abbrev  0x000002b7      0x1ba Drivers/AES/src/main.o
- .debug_abbrev  0x00000471      0x1ea Drivers/AES/src/modes_of_op.o
- .debug_abbrev  0x0000065b      0x147 Drivers/AES/src/startup.o
- .debug_abbrev  0x000007a2      0x291 Drivers/NVIC/src/nvic.o
- .debug_abbrev  0x00000a33      0x47b Drivers/UART/src/uart.o
+ .debug_abbrev  0x000002b7      0x1cd Drivers/AES/src/main.o
+ .debug_abbrev  0x00000484      0x1ea Drivers/AES/src/modes_of_op.o
+ .debug_abbrev  0x0000066e      0x147 Drivers/AES/src/startup.o
+ .debug_abbrev  0x000007b5      0x291 Drivers/NVIC/src/nvic.o
+ .debug_abbrev  0x00000a46      0x48c Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000     0x209c
+.debug_loc      0x00000000     0x2301
  .debug_loc     0x00000000      0x697 Drivers/AES/src/aes.o
  .debug_loc     0x00000697       0x64 Drivers/AES/src/main.o
  .debug_loc     0x000006fb      0x74e Drivers/AES/src/modes_of_op.o
  .debug_loc     0x00000e49      0x57b Drivers/NVIC/src/nvic.o
- .debug_loc     0x000013c4      0xcd8 Drivers/UART/src/uart.o
+ .debug_loc     0x000013c4      0xf3d Drivers/UART/src/uart.o
 
-.debug_aranges  0x00000000      0x320
+.debug_aranges  0x00000000      0x338
  .debug_aranges
                 0x00000000       0x38 Drivers/AES/src/aes.o
  .debug_aranges
@@ -547,46 +556,46 @@ LOAD linker stubs
  .debug_aranges
                 0x000000a0       0x30 Drivers/AES/src/startup.o
  .debug_aranges
-                0x000000d0      0x188 Drivers/NVIC/src/nvic.o
+                0x000000d0      0x190 Drivers/NVIC/src/nvic.o
  .debug_aranges
-                0x00000258       0xc8 Drivers/UART/src/uart.o
+                0x00000260       0xd8 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x808
+.debug_ranges   0x00000000      0x908
  .debug_ranges  0x00000000      0x290 Drivers/AES/src/aes.o
  .debug_ranges  0x00000290       0x90 Drivers/AES/src/main.o
  .debug_ranges  0x00000320       0xf8 Drivers/AES/src/modes_of_op.o
  .debug_ranges  0x00000418       0x20 Drivers/AES/src/startup.o
- .debug_ranges  0x00000438      0x220 Drivers/NVIC/src/nvic.o
- .debug_ranges  0x00000658      0x1b0 Drivers/UART/src/uart.o
+ .debug_ranges  0x00000438      0x228 Drivers/NVIC/src/nvic.o
+ .debug_ranges  0x00000660      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x2884
+.debug_line     0x00000000     0x2a6a
  .debug_line    0x00000000      0x697 Drivers/AES/src/aes.o
  .debug_line    0x00000697      0x2a6 Drivers/AES/src/main.o
  .debug_line    0x0000093d      0x358 Drivers/AES/src/modes_of_op.o
  .debug_line    0x00000c95      0x1c4 Drivers/AES/src/startup.o
- .debug_line    0x00000e59      0xbbf Drivers/NVIC/src/nvic.o
- .debug_line    0x00001a18      0xe6c Drivers/UART/src/uart.o
+ .debug_line    0x00000e59      0xbef Drivers/NVIC/src/nvic.o
+ .debug_line    0x00001a48     0x1022 Drivers/UART/src/uart.o
 
-.debug_str      0x00000000     0x10db
+.debug_str      0x00000000     0x10f7
  .debug_str     0x00000000      0x3ab Drivers/AES/src/aes.o
                                 0x3f0 (size before relaxing)
- .debug_str     0x000003ab      0x18c Drivers/AES/src/main.o
-                                0x346 (size before relaxing)
- .debug_str     0x00000537       0x3e Drivers/AES/src/modes_of_op.o
+ .debug_str     0x000003ab      0x18b Drivers/AES/src/main.o
+                                0x345 (size before relaxing)
+ .debug_str     0x00000536       0x3e Drivers/AES/src/modes_of_op.o
                                 0x31a (size before relaxing)
- .debug_str     0x00000575       0xd6 Drivers/AES/src/startup.o
+ .debug_str     0x00000574       0xd6 Drivers/AES/src/startup.o
                                 0x25b (size before relaxing)
- .debug_str     0x0000064b      0x730 Drivers/NVIC/src/nvic.o
-                                0x8de (size before relaxing)
- .debug_str     0x00000d7b      0x360 Drivers/UART/src/uart.o
-                                0x97d (size before relaxing)
+ .debug_str     0x0000064a      0x748 Drivers/NVIC/src/nvic.o
+                                0x8f6 (size before relaxing)
+ .debug_str     0x00000d92      0x365 Drivers/UART/src/uart.o
+                                0x991 (size before relaxing)
 
-.debug_frame    0x00000000      0x794
+.debug_frame    0x00000000      0x7d0
  .debug_frame   0x00000000       0x7c Drivers/AES/src/aes.o
  .debug_frame   0x0000007c       0x44 Drivers/AES/src/main.o
  .debug_frame   0x000000c0       0xc4 Drivers/AES/src/modes_of_op.o
  .debug_frame   0x00000184       0x48 Drivers/AES/src/startup.o
- .debug_frame   0x000001cc      0x32c Drivers/NVIC/src/nvic.o
- .debug_frame   0x000004f8      0x254 Drivers/UART/src/uart.o
- .debug_frame   0x0000074c       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x00000774       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+ .debug_frame   0x000001cc      0x33c Drivers/NVIC/src/nvic.o
+ .debug_frame   0x00000508      0x280 Drivers/UART/src/uart.o
+ .debug_frame   0x00000788       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x000007b0       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

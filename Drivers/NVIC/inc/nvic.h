@@ -70,6 +70,8 @@ typedef enum IRQn
     USART3_IRQn = 53,
     UART4_IRQn  = 54,
     UART5_IRQn  = 55,
+    /* RNG */
+    RNG_IRQn            = 64,
     /* HASH */
     HASH_IRQn            = 69,
     /* Extended USART/UART */

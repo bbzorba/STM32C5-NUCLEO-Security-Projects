@@ -55,14 +55,14 @@ Discarded input sections
                 0x00000000       0x20 Drivers/DMA/src/dma.o
  .text.DMA_DisableTCInterrupt
                 0x00000000       0x10 Drivers/DMA/src/dma.o
- .debug_info    0x00000000      0x8a5 Drivers/DMA/src/dma.o
+ .debug_info    0x00000000      0x8bd Drivers/DMA/src/dma.o
  .debug_abbrev  0x00000000      0x261 Drivers/DMA/src/dma.o
  .debug_loc     0x00000000      0x382 Drivers/DMA/src/dma.o
  .debug_aranges
                 0x00000000       0x60 Drivers/DMA/src/dma.o
  .debug_ranges  0x00000000       0x78 Drivers/DMA/src/dma.o
  .debug_line    0x00000000      0x54a Drivers/DMA/src/dma.o
- .debug_str     0x00000000      0x759 Drivers/DMA/src/dma.o
+ .debug_str     0x00000000      0x760 Drivers/DMA/src/dma.o
  .comment       0x00000000       0x4a Drivers/DMA/src/dma.o
  .debug_frame   0x00000000       0xd4 Drivers/DMA/src/dma.o
  .ARM.attributes
@@ -90,18 +90,6 @@ Discarded input sections
                 0x00000000      0x114 Drivers/GPIO/src/gpio.o
  .text.GPIO_constructor
                 0x00000000        0x8 Drivers/GPIO/src/gpio.o
- .debug_info    0x00000000      0x6a3 Drivers/GPIO/src/gpio.o
- .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
- .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
- .debug_aranges
-                0x00000000       0x68 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
- .debug_str     0x00000000      0x411 Drivers/GPIO/src/gpio.o
- .comment       0x00000000       0x4a Drivers/GPIO/src/gpio.o
- .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
- .ARM.attributes
-                0x00000000       0x34 Drivers/GPIO/src/gpio.o
  .text          0x00000000        0x0 Drivers/NVIC/src/main.o
  .data          0x00000000        0x0 Drivers/NVIC/src/main.o
  .bss           0x00000000        0x0 Drivers/NVIC/src/main.o
@@ -135,11 +123,11 @@ Discarded input sections
  .text.USART_EnableTXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableTXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_EnableRXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableRXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_WriteDMA
                 0x00000000       0x5c Drivers/UART/src/uart.o
  .text.USART_ReadDMA
@@ -152,6 +140,8 @@ Discarded input sections
                 0x00000000       0x2e Drivers/UART/src/uart.o
  .text.GetPortName
                 0x00000000       0x64 Drivers/UART/src/uart.o
+ .text.USART_WriteChar
+                0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadChar
                 0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadString
@@ -162,6 +152,9 @@ Discarded input sections
                 0x00000000       0x4c Drivers/UART/src/uart.o
  .text.uart_write_hex32
                 0x00000000       0x2c Drivers/UART/src/uart.o
+ .text.print_hex
+                0x00000000       0x40 Drivers/UART/src/uart.o
+ .rodata.hex.0  0x00000000       0x11 Drivers/UART/src/uart.o
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
@@ -258,210 +251,215 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .isr_vector    0x08000000      0x240 Drivers/NVIC/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000240      0xb14
+.text           0x08000240      0xb3c
  *(.text*)
+ .text.delay    0x08000240       0x1c Drivers/GPIO/src/gpio.o
+                0x08000240                delay
  .text.button_callback
-                0x08000240       0xa4 Drivers/NVIC/src/main.o
+                0x0800025c       0x4c Drivers/NVIC/src/main.o
  .text.startup.main
-                0x080002e4       0xd4 Drivers/NVIC/src/main.o
-                0x080002e4                main
+                0x080002a8       0xc0 Drivers/NVIC/src/main.o
+                0x080002a8                main
  .text.NVIC_RegisterHandler
-                0x080003b8       0x54 Drivers/NVIC/src/nvic.o
-                0x080003b8                NVIC_RegisterHandler
+                0x08000368       0x54 Drivers/NVIC/src/nvic.o
+                0x08000368                NVIC_RegisterHandler
  .text.NVIC_EXTI_Enable
-                0x0800040c       0xa4 Drivers/NVIC/src/nvic.o
-                0x0800040c                NVIC_EXTI_Enable
+                0x080003bc       0xa4 Drivers/NVIC/src/nvic.o
+                0x080003bc                NVIC_EXTI_Enable
  .text.NVIC_EXTI_ClearPending
-                0x080004b0       0x14 Drivers/NVIC/src/nvic.o
-                0x080004b0                NVIC_EXTI_ClearPending
+                0x08000460       0x14 Drivers/NVIC/src/nvic.o
+                0x08000460                NVIC_EXTI_ClearPending
  .text.EXTI0_IRQHandler
-                0x080004c4       0x10 Drivers/NVIC/src/nvic.o
-                0x080004c4                EXTI0_IRQHandler
+                0x08000474       0x10 Drivers/NVIC/src/nvic.o
+                0x08000474                EXTI0_IRQHandler
  .text.EXTI1_IRQHandler
-                0x080004d4       0x10 Drivers/NVIC/src/nvic.o
-                0x080004d4                EXTI1_IRQHandler
+                0x08000484       0x10 Drivers/NVIC/src/nvic.o
+                0x08000484                EXTI1_IRQHandler
  .text.EXTI2_IRQHandler
-                0x080004e4       0x10 Drivers/NVIC/src/nvic.o
-                0x080004e4                EXTI2_IRQHandler
+                0x08000494       0x10 Drivers/NVIC/src/nvic.o
+                0x08000494                EXTI2_IRQHandler
  .text.EXTI3_IRQHandler
-                0x080004f4       0x10 Drivers/NVIC/src/nvic.o
-                0x080004f4                EXTI3_IRQHandler
+                0x080004a4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004a4                EXTI3_IRQHandler
  .text.EXTI4_IRQHandler
-                0x08000504       0x10 Drivers/NVIC/src/nvic.o
-                0x08000504                EXTI4_IRQHandler
+                0x080004b4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004b4                EXTI4_IRQHandler
  .text.EXTI5_IRQHandler
-                0x08000514       0x10 Drivers/NVIC/src/nvic.o
-                0x08000514                EXTI5_IRQHandler
+                0x080004c4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004c4                EXTI5_IRQHandler
  .text.EXTI6_IRQHandler
-                0x08000524       0x10 Drivers/NVIC/src/nvic.o
-                0x08000524                EXTI6_IRQHandler
+                0x080004d4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004d4                EXTI6_IRQHandler
  .text.EXTI7_IRQHandler
-                0x08000534       0x10 Drivers/NVIC/src/nvic.o
-                0x08000534                EXTI7_IRQHandler
+                0x080004e4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004e4                EXTI7_IRQHandler
  .text.EXTI8_IRQHandler
-                0x08000544       0x10 Drivers/NVIC/src/nvic.o
-                0x08000544                EXTI8_IRQHandler
+                0x080004f4       0x10 Drivers/NVIC/src/nvic.o
+                0x080004f4                EXTI8_IRQHandler
  .text.EXTI9_IRQHandler
-                0x08000554       0x14 Drivers/NVIC/src/nvic.o
-                0x08000554                EXTI9_IRQHandler
+                0x08000504       0x14 Drivers/NVIC/src/nvic.o
+                0x08000504                EXTI9_IRQHandler
  .text.EXTI10_IRQHandler
-                0x08000568       0x14 Drivers/NVIC/src/nvic.o
-                0x08000568                EXTI10_IRQHandler
+                0x08000518       0x14 Drivers/NVIC/src/nvic.o
+                0x08000518                EXTI10_IRQHandler
  .text.EXTI11_IRQHandler
-                0x0800057c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800057c                EXTI11_IRQHandler
+                0x0800052c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800052c                EXTI11_IRQHandler
  .text.EXTI12_IRQHandler
-                0x08000590       0x14 Drivers/NVIC/src/nvic.o
-                0x08000590                EXTI12_IRQHandler
+                0x08000540       0x14 Drivers/NVIC/src/nvic.o
+                0x08000540                EXTI12_IRQHandler
  .text.EXTI13_IRQHandler
-                0x080005a4       0x14 Drivers/NVIC/src/nvic.o
-                0x080005a4                EXTI13_IRQHandler
+                0x08000554       0x14 Drivers/NVIC/src/nvic.o
+                0x08000554                EXTI13_IRQHandler
  .text.EXTI14_IRQHandler
-                0x080005b8       0x14 Drivers/NVIC/src/nvic.o
-                0x080005b8                EXTI14_IRQHandler
+                0x08000568       0x14 Drivers/NVIC/src/nvic.o
+                0x08000568                EXTI14_IRQHandler
  .text.EXTI15_IRQHandler
-                0x080005cc       0x14 Drivers/NVIC/src/nvic.o
-                0x080005cc                EXTI15_IRQHandler
+                0x0800057c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800057c                EXTI15_IRQHandler
  .text.LPDMA1_Channel0_IRQHandler
-                0x080005e0       0x14 Drivers/NVIC/src/nvic.o
-                0x080005e0                LPDMA1_Channel0_IRQHandler
+                0x08000590       0x14 Drivers/NVIC/src/nvic.o
+                0x08000590                LPDMA1_Channel0_IRQHandler
  .text.LPDMA1_Channel1_IRQHandler
-                0x080005f4       0x14 Drivers/NVIC/src/nvic.o
-                0x080005f4                LPDMA1_Channel1_IRQHandler
+                0x080005a4       0x14 Drivers/NVIC/src/nvic.o
+                0x080005a4                LPDMA1_Channel1_IRQHandler
  .text.LPDMA1_Channel2_IRQHandler
-                0x08000608       0x14 Drivers/NVIC/src/nvic.o
-                0x08000608                LPDMA1_Channel2_IRQHandler
+                0x080005b8       0x14 Drivers/NVIC/src/nvic.o
+                0x080005b8                LPDMA1_Channel2_IRQHandler
  .text.LPDMA1_Channel3_IRQHandler
-                0x0800061c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800061c                LPDMA1_Channel3_IRQHandler
+                0x080005cc       0x14 Drivers/NVIC/src/nvic.o
+                0x080005cc                LPDMA1_Channel3_IRQHandler
  .text.LPDMA1_Channel4_IRQHandler
-                0x08000630       0x14 Drivers/NVIC/src/nvic.o
-                0x08000630                LPDMA1_Channel4_IRQHandler
+                0x080005e0       0x14 Drivers/NVIC/src/nvic.o
+                0x080005e0                LPDMA1_Channel4_IRQHandler
  .text.LPDMA1_Channel5_IRQHandler
-                0x08000644       0x14 Drivers/NVIC/src/nvic.o
-                0x08000644                LPDMA1_Channel5_IRQHandler
+                0x080005f4       0x14 Drivers/NVIC/src/nvic.o
+                0x080005f4                LPDMA1_Channel5_IRQHandler
  .text.LPDMA1_Channel6_IRQHandler
-                0x08000658       0x14 Drivers/NVIC/src/nvic.o
-                0x08000658                LPDMA1_Channel6_IRQHandler
+                0x08000608       0x14 Drivers/NVIC/src/nvic.o
+                0x08000608                LPDMA1_Channel6_IRQHandler
  .text.LPDMA1_Channel7_IRQHandler
-                0x0800066c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800066c                LPDMA1_Channel7_IRQHandler
+                0x0800061c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800061c                LPDMA1_Channel7_IRQHandler
  .text.IWDG1_IRQHandler
-                0x08000680       0x14 Drivers/NVIC/src/nvic.o
-                0x08000680                IWDG1_IRQHandler
+                0x08000630       0x14 Drivers/NVIC/src/nvic.o
+                0x08000630                IWDG1_IRQHandler
  .text.ADC1_IRQHandler
-                0x08000694       0x14 Drivers/NVIC/src/nvic.o
-                0x08000694                ADC1_IRQHandler
+                0x08000644       0x14 Drivers/NVIC/src/nvic.o
+                0x08000644                ADC1_IRQHandler
  .text.ADC2_IRQHandler
-                0x080006a8       0x14 Drivers/NVIC/src/nvic.o
-                0x080006a8                ADC2_IRQHandler
+                0x08000658       0x14 Drivers/NVIC/src/nvic.o
+                0x08000658                ADC2_IRQHandler
  .text.ADC3_IRQHandler
-                0x080006bc       0x14 Drivers/NVIC/src/nvic.o
-                0x080006bc                ADC3_IRQHandler
+                0x0800066c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800066c                ADC3_IRQHandler
  .text.FDCAN1_IT0_IRQHandler
-                0x080006d0       0x14 Drivers/NVIC/src/nvic.o
-                0x080006d0                FDCAN1_IT0_IRQHandler
+                0x08000680       0x14 Drivers/NVIC/src/nvic.o
+                0x08000680                FDCAN1_IT0_IRQHandler
  .text.FDCAN1_IT1_IRQHandler
-                0x080006e4       0x14 Drivers/NVIC/src/nvic.o
-                0x080006e4                FDCAN1_IT1_IRQHandler
+                0x08000694       0x14 Drivers/NVIC/src/nvic.o
+                0x08000694                FDCAN1_IT1_IRQHandler
  .text.SPI1_IRQHandler
-                0x080006f8       0x14 Drivers/NVIC/src/nvic.o
-                0x080006f8                SPI1_IRQHandler
+                0x080006a8       0x14 Drivers/NVIC/src/nvic.o
+                0x080006a8                SPI1_IRQHandler
  .text.SPI2_IRQHandler
-                0x0800070c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800070c                SPI2_IRQHandler
+                0x080006bc       0x14 Drivers/NVIC/src/nvic.o
+                0x080006bc                SPI2_IRQHandler
  .text.SPI3_IRQHandler
-                0x08000720       0x14 Drivers/NVIC/src/nvic.o
-                0x08000720                SPI3_IRQHandler
+                0x080006d0       0x14 Drivers/NVIC/src/nvic.o
+                0x080006d0                SPI3_IRQHandler
  .text.USART1_IRQHandler
-                0x08000734       0x14 Drivers/NVIC/src/nvic.o
-                0x08000734                USART1_IRQHandler
+                0x080006e4       0x14 Drivers/NVIC/src/nvic.o
+                0x080006e4                USART1_IRQHandler
  .text.USART2_IRQHandler
-                0x08000748       0x14 Drivers/NVIC/src/nvic.o
-                0x08000748                USART2_IRQHandler
+                0x080006f8       0x14 Drivers/NVIC/src/nvic.o
+                0x080006f8                USART2_IRQHandler
  .text.USART3_IRQHandler
-                0x0800075c       0x14 Drivers/NVIC/src/nvic.o
-                0x0800075c                USART3_IRQHandler
+                0x0800070c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800070c                USART3_IRQHandler
  .text.UART4_IRQHandler
-                0x08000770       0x14 Drivers/NVIC/src/nvic.o
-                0x08000770                UART4_IRQHandler
+                0x08000720       0x14 Drivers/NVIC/src/nvic.o
+                0x08000720                UART4_IRQHandler
  .text.UART5_IRQHandler
-                0x08000784       0x14 Drivers/NVIC/src/nvic.o
-                0x08000784                UART5_IRQHandler
+                0x08000734       0x14 Drivers/NVIC/src/nvic.o
+                0x08000734                UART5_IRQHandler
  .text.USART6_IRQHandler
-                0x08000798       0x14 Drivers/NVIC/src/nvic.o
-                0x08000798                USART6_IRQHandler
+                0x08000748       0x14 Drivers/NVIC/src/nvic.o
+                0x08000748                USART6_IRQHandler
  .text.UART7_IRQHandler
-                0x080007ac       0x14 Drivers/NVIC/src/nvic.o
-                0x080007ac                UART7_IRQHandler
+                0x0800075c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800075c                UART7_IRQHandler
+ .text.RNG_IRQHandler
+                0x08000770       0x14 Drivers/NVIC/src/nvic.o
+                0x08000770                RNG_IRQHandler
  .text.HASH_IRQHandler
-                0x080007c0       0x14 Drivers/NVIC/src/nvic.o
-                0x080007c0                HASH_IRQHandler
+                0x08000784       0x14 Drivers/NVIC/src/nvic.o
+                0x08000784                HASH_IRQHandler
  .text.Default_Handler
-                0x080007d4        0x4 Drivers/NVIC/src/startup.o
-                0x080007d4                Default_Handler
+                0x08000798        0x4 Drivers/NVIC/src/startup.o
+                0x08000798                Default_Handler
  .text.Reset_Handler
-                0x080007d8       0x5c Drivers/NVIC/src/startup.o
-                0x080007d8                Reset_Handler
+                0x0800079c       0x5c Drivers/NVIC/src/startup.o
+                0x0800079c                Reset_Handler
  .text.uart_irq_dispatch
-                0x08000834       0x24 Drivers/UART/src/uart.o
+                0x080007f8       0x24 Drivers/UART/src/uart.o
  .text.USART_Init
-                0x08000858      0x3ec Drivers/UART/src/uart.o
-                0x08000858                USART_Init
+                0x0800081c      0x3ec Drivers/UART/src/uart.o
+                0x0800081c                USART_Init
  .text.USART_constructor
-                0x08000c44        0xc Drivers/UART/src/uart.o
-                0x08000c44                USART_constructor
- .text.USART_WriteChar
-                0x08000c50       0x10 Drivers/UART/src/uart.o
-                0x08000c50                USART_WriteChar
+                0x08000c08        0xc Drivers/UART/src/uart.o
+                0x08000c08                USART_constructor
  .text.USART_WriteString
-                0x08000c60       0x30 Drivers/UART/src/uart.o
-                0x08000c60                USART_WriteString
- .text.memcpy   0x08000c90       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                0x08000c90                memcpy
- .text.memset   0x08000caa       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
-                0x08000caa                memset
+                0x08000c14       0x30 Drivers/UART/src/uart.o
+                0x08000c14                USART_WriteString
+ .text.print_dec
+                0x08000c44       0x74 Drivers/UART/src/uart.o
+                0x08000c44                print_dec
+ .text.memcpy   0x08000cb8       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x08000cb8                memcpy
+ .text.memset   0x08000cd2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x08000cd2                memset
  *(.rodata*)
- *fill*         0x08000cba        0x2 
+ *fill*         0x08000ce2        0x2 
  .rodata.button_callback.str1.4
-                0x08000cbc       0x18 Drivers/NVIC/src/main.o
+                0x08000ce4       0x18 Drivers/NVIC/src/main.o
                                  0x1b (size before relaxing)
  .rodata.main.str1.4
-                0x08000cd4       0x76 Drivers/NVIC/src/main.o
+                0x08000cfc       0x76 Drivers/NVIC/src/main.o
  *(.glue_7)
- .glue_7        0x08000d4a        0x0 linker stubs
+ .glue_7        0x08000d72        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000d4a        0x0 linker stubs
+ .glue_7t       0x08000d72        0x0 linker stubs
  *(.init)
- *fill*         0x08000d4a        0x2 
- .init          0x08000d4c        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d4c                _init
+ *fill*         0x08000d72        0x2 
+ .init          0x08000d74        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000d74                _init
  *(.fini)
- .fini          0x08000d50        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d50                _fini
+ .fini          0x08000d78        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000d78                _fini
 
-.vfp11_veneer   0x08000d54        0x0
- .vfp11_veneer  0x08000d54        0x0 linker stubs
+.vfp11_veneer   0x08000d7c        0x0
+ .vfp11_veneer  0x08000d7c        0x0 linker stubs
 
-.v4_bx          0x08000d54        0x0
- .v4_bx         0x08000d54        0x0 linker stubs
+.v4_bx          0x08000d7c        0x0
+ .v4_bx         0x08000d7c        0x0 linker stubs
 
-.iplt           0x08000d54        0x0
- .iplt          0x08000d54        0x0 Drivers/NVIC/src/main.o
+.iplt           0x08000d7c        0x0
+ .iplt          0x08000d7c        0x0 Drivers/NVIC/src/main.o
 
-.rel.dyn        0x08000d54        0x0
- .rel.iplt      0x08000d54        0x0 Drivers/NVIC/src/main.o
+.rel.dyn        0x08000d7c        0x0
+ .rel.iplt      0x08000d7c        0x0 Drivers/NVIC/src/main.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000d54        0x0
-                0x08000d54                __exidx_start = .
+.ARM.exidx      0x08000d7c        0x0
+                0x08000d7c                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000d54                __exidx_end = .
-                0x08000d54                __etext = .
+                0x08000d7c                __exidx_end = .
+                0x08000d7c                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000d54
+.data           0x20000000        0x4 load address 0x08000d7c
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
@@ -469,10 +467,10 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000d58
+.igot.plt       0x20000004        0x0 load address 0x08000d80
  .igot.plt      0x20000004        0x0 Drivers/NVIC/src/main.o
 
-.bss            0x20000004      0x410 load address 0x08000d58
+.bss            0x20000004      0x410 load address 0x08000d80
                 0x20000004                __bss_start__ = .
  *(.bss*)
  .bss.g_press_count
@@ -485,7 +483,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000414                end = .
                 0x20000414                __end__ = .
 
-.stack          0x20000414      0x404 load address 0x08001168
+.stack          0x20000414      0x404 load address 0x08001190
                 0x20000418                . = ALIGN (0x8)
  *fill*         0x20000414        0x4 
                 0x20000418                _stack = .
@@ -499,78 +497,91 @@ LOAD linker stubs
  .ARM.attributes
                 0x00000000       0x22 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
  .ARM.attributes
-                0x00000022       0x34 Drivers/NVIC/src/main.o
+                0x00000022       0x34 Drivers/GPIO/src/gpio.o
  .ARM.attributes
-                0x00000056       0x34 Drivers/NVIC/src/nvic.o
+                0x00000056       0x34 Drivers/NVIC/src/main.o
  .ARM.attributes
-                0x0000008a       0x34 Drivers/NVIC/src/startup.o
+                0x0000008a       0x34 Drivers/NVIC/src/nvic.o
  .ARM.attributes
-                0x000000be       0x34 Drivers/UART/src/uart.o
+                0x000000be       0x34 Drivers/NVIC/src/startup.o
  .ARM.attributes
-                0x000000f2       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x000000f2       0x34 Drivers/UART/src/uart.o
  .ARM.attributes
-                0x00000124       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x00000126       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .ARM.attributes
+                0x00000158       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
 
 .comment        0x00000000       0x49
- .comment       0x00000000       0x49 Drivers/NVIC/src/main.o
+ .comment       0x00000000       0x49 Drivers/GPIO/src/gpio.o
                                  0x4a (size before relaxing)
+ .comment       0x00000049       0x4a Drivers/NVIC/src/main.o
  .comment       0x00000049       0x4a Drivers/NVIC/src/nvic.o
  .comment       0x00000049       0x4a Drivers/NVIC/src/startup.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x2c30
- .debug_info    0x00000000      0x743 Drivers/NVIC/src/main.o
- .debug_info    0x00000743      0xf55 Drivers/NVIC/src/nvic.o
- .debug_info    0x00001698      0x1ce Drivers/NVIC/src/startup.o
- .debug_info    0x00001866     0x13ca Drivers/UART/src/uart.o
+.debug_info     0x00000000     0x343b
+ .debug_info    0x00000000      0x6c6 Drivers/GPIO/src/gpio.o
+ .debug_info    0x000006c6      0x679 Drivers/NVIC/src/main.o
+ .debug_info    0x00000d3f      0xf94 Drivers/NVIC/src/nvic.o
+ .debug_info    0x00001cd3      0x1ce Drivers/NVIC/src/startup.o
+ .debug_info    0x00001ea1     0x159a Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0xa84
- .debug_abbrev  0x00000000      0x231 Drivers/NVIC/src/main.o
- .debug_abbrev  0x00000231      0x291 Drivers/NVIC/src/nvic.o
- .debug_abbrev  0x000004c2      0x147 Drivers/NVIC/src/startup.o
- .debug_abbrev  0x00000609      0x47b Drivers/UART/src/uart.o
+.debug_abbrev   0x00000000      0xbb7
+ .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
+ .debug_abbrev  0x0000019f      0x1b4 Drivers/NVIC/src/main.o
+ .debug_abbrev  0x00000353      0x291 Drivers/NVIC/src/nvic.o
+ .debug_abbrev  0x000005e4      0x147 Drivers/NVIC/src/startup.o
+ .debug_abbrev  0x0000072b      0x48c Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000     0x130e
- .debug_loc     0x00000000       0xbb Drivers/NVIC/src/main.o
- .debug_loc     0x000000bb      0x57b Drivers/NVIC/src/nvic.o
- .debug_loc     0x00000636      0xcd8 Drivers/UART/src/uart.o
+.debug_loc      0x00000000     0x184e
+ .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
+ .debug_loc     0x00000371       0x25 Drivers/NVIC/src/main.o
+ .debug_loc     0x00000396      0x57b Drivers/NVIC/src/nvic.o
+ .debug_loc     0x00000911      0xf3d Drivers/UART/src/uart.o
 
-.debug_aranges  0x00000000      0x2a8
+.debug_aranges  0x00000000      0x330
  .debug_aranges
-                0x00000000       0x28 Drivers/NVIC/src/main.o
+                0x00000000       0x70 Drivers/GPIO/src/gpio.o
  .debug_aranges
-                0x00000028      0x188 Drivers/NVIC/src/nvic.o
+                0x00000070       0x28 Drivers/NVIC/src/main.o
  .debug_aranges
-                0x000001b0       0x30 Drivers/NVIC/src/startup.o
+                0x00000098      0x190 Drivers/NVIC/src/nvic.o
  .debug_aranges
-                0x000001e0       0xc8 Drivers/UART/src/uart.o
+                0x00000228       0x30 Drivers/NVIC/src/startup.o
+ .debug_aranges
+                0x00000258       0xd8 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x420
- .debug_ranges  0x00000000       0x30 Drivers/NVIC/src/main.o
- .debug_ranges  0x00000030      0x220 Drivers/NVIC/src/nvic.o
- .debug_ranges  0x00000250       0x20 Drivers/NVIC/src/startup.o
- .debug_ranges  0x00000270      0x1b0 Drivers/UART/src/uart.o
+.debug_ranges   0x00000000      0x568
+ .debug_ranges  0x00000000       0x60 Drivers/GPIO/src/gpio.o
+ .debug_ranges  0x00000060       0x18 Drivers/NVIC/src/main.o
+ .debug_ranges  0x00000078      0x228 Drivers/NVIC/src/nvic.o
+ .debug_ranges  0x000002a0       0x20 Drivers/NVIC/src/startup.o
+ .debug_ranges  0x000002c0      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x1eff
- .debug_line    0x00000000      0x30a Drivers/NVIC/src/main.o
- .debug_line    0x0000030a      0xbbf Drivers/NVIC/src/nvic.o
- .debug_line    0x00000ec9      0x1ca Drivers/NVIC/src/startup.o
- .debug_line    0x00001093      0xe6c Drivers/UART/src/uart.o
+.debug_line     0x00000000     0x255a
+ .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
+ .debug_line    0x00000503      0x27c Drivers/NVIC/src/main.o
+ .debug_line    0x0000077f      0xbef Drivers/NVIC/src/nvic.o
+ .debug_line    0x0000136e      0x1ca Drivers/NVIC/src/startup.o
+ .debug_line    0x00001538     0x1022 Drivers/UART/src/uart.o
 
-.debug_str      0x00000000      0xeae
- .debug_str     0x00000000      0x3e2 Drivers/NVIC/src/main.o
-                                0x435 (size before relaxing)
- .debug_str     0x000003e2      0x6de Drivers/NVIC/src/nvic.o
-                                0x8de (size before relaxing)
- .debug_str     0x00000ac0       0xd7 Drivers/NVIC/src/startup.o
+.debug_str      0x00000000     0x101e
+ .debug_str     0x00000000      0x3bf Drivers/GPIO/src/gpio.o
+                                0x417 (size before relaxing)
+ .debug_str     0x000003bf      0x172 Drivers/NVIC/src/main.o
+                                0x413 (size before relaxing)
+ .debug_str     0x00000531      0x700 Drivers/NVIC/src/nvic.o
+                                0x8f6 (size before relaxing)
+ .debug_str     0x00000c31       0xd7 Drivers/NVIC/src/startup.o
                                 0x25c (size before relaxing)
- .debug_str     0x00000b97      0x317 Drivers/UART/src/uart.o
-                                0x97d (size before relaxing)
+ .debug_str     0x00000d08      0x316 Drivers/UART/src/uart.o
+                                0x991 (size before relaxing)
 
-.debug_frame    0x00000000      0x660
- .debug_frame   0x00000000       0x50 Drivers/NVIC/src/main.o
- .debug_frame   0x00000050      0x32c Drivers/NVIC/src/nvic.o
- .debug_frame   0x0000037c       0x48 Drivers/NVIC/src/startup.o
- .debug_frame   0x000003c4      0x254 Drivers/UART/src/uart.o
- .debug_frame   0x00000618       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x00000640       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+.debug_frame    0x00000000      0x78c
+ .debug_frame   0x00000000       0xf4 Drivers/GPIO/src/gpio.o
+ .debug_frame   0x000000f4       0x4c Drivers/NVIC/src/main.o
+ .debug_frame   0x00000140      0x33c Drivers/NVIC/src/nvic.o
+ .debug_frame   0x0000047c       0x48 Drivers/NVIC/src/startup.o
+ .debug_frame   0x000004c4      0x280 Drivers/UART/src/uart.o
+ .debug_frame   0x00000744       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x0000076c       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

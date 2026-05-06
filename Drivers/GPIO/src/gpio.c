@@ -126,3 +126,7 @@ void __RCC_GPIO_CLK_ENABLE(GPIO_HandleTypeDef *GPIOx) {
     __IO uint32_t tmpreg = RCC->AHB2ENR;
     (void)tmpreg;
 }
+
+void delay(volatile uint32_t n) {
+    while (n--) { __asm volatile ("nop"); }
+}

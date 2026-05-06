@@ -26,18 +26,6 @@
 static USART_HandleType huart;
 static volatile uint32_t g_press_count = 0U;
 
-static void delay(volatile uint32_t n) {
-    while (n--) { __asm volatile ("nop"); }
-}
-
-static void print_dec(uint32_t n) {
-    char buf[12];
-    uint8_t i = 0U;
-    if (n == 0U) { USART_WriteChar(&huart, '0'); return; }
-    while (n > 0U) { buf[i++] = (char)('0' + (n % 10U)); n /= 10U; }
-    while (i > 0U) { USART_WriteChar(&huart, buf[--i]); }
-}
-
 /* EXTI13 callback: invoked by nvic.c dispatch on each button press */
 static void button_callback(void *arg)
 {
@@ -46,7 +34,7 @@ static void button_callback(void *arg)
     GPIO_A->ODR ^= (1U << 5);     /* toggle green LED on PA5 */
     g_press_count++;
     USART_WriteString(&huart, "Button pressed! Count: ");
-    print_dec(g_press_count);
+    print_dec(&huart, g_press_count);
     USART_WriteString(&huart, "\r\n");
 }
 

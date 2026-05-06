@@ -2,16 +2,7 @@
 #include "../inc/hash.h"
 #include "../../UART/inc/uart.h"
 
-static USART_HandleType g_uart;
-
-static void print_hex(const uint8_t *buf, size_t len)
-{
-    static const char hex[] = "0123456789abcdef";
-    for (size_t i = 0; i < len; i++) {
-        USART_WriteChar(&g_uart, hex[(buf[i] >> 4) & 0xF]);
-        USART_WriteChar(&g_uart, hex[ buf[i]       & 0xF]);
-    }
-}
+static USART_HandleType huart;
 
 typedef HASH_StatusTypeDef (*HashStartFn)(HASH_HandleTypeDef *);
 typedef HASH_StatusTypeDef (*HashFinalFn)(HASH_HandleTypeDef *, uint8_t *);
@@ -29,17 +20,17 @@ static void run_test(const char *label, const char *msg,
     HASH_SHA256_Update(&hhash, (const uint8_t *)msg, strlen(msg));
     final_fn(&hhash, digest);
 
-    USART_WriteString(&g_uart, label);
-    print_hex(digest, digest_len);
-    USART_WriteString(&g_uart, "\r\nExpected Output = ");
-    USART_WriteString(&g_uart, expected);
-    USART_WriteString(&g_uart, "\r\n\n");
+    USART_WriteString(&huart, label);
+    print_hex(&huart, digest, digest_len);
+    USART_WriteString(&huart, "\r\nExpected Output = ");
+    USART_WriteString(&huart, expected);
+    USART_WriteString(&huart, "\r\n\n");
 }
 
 int main(void)
 {
-    USART_constructor(&g_uart, USART_2, TX_ONLY, __115200);
-    USART_WriteString(&g_uart, "\r\n=== Hash Tests ===\r\n\n");
+    USART_constructor(&huart, USART_2, TX_ONLY, __115200);
+    USART_WriteString(&huart, "\r\n=== Hash Tests ===\r\n\n");
 
     run_test("SHA-1  (\"abc\") = ",
              "abc", HASH_SHA1_Start, HASH_SHA1_Final, 20,

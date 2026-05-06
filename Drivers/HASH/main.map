@@ -59,16 +59,17 @@ Discarded input sections
                 0x00000000      0x114 Drivers/GPIO/src/gpio.o
  .text.GPIO_constructor
                 0x00000000        0x8 Drivers/GPIO/src/gpio.o
- .debug_info    0x00000000      0x6a3 Drivers/GPIO/src/gpio.o
+ .text.delay    0x00000000       0x1c Drivers/GPIO/src/gpio.o
+ .debug_info    0x00000000      0x6c6 Drivers/GPIO/src/gpio.o
  .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
  .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
  .debug_aranges
-                0x00000000       0x68 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
- .debug_str     0x00000000      0x411 Drivers/GPIO/src/gpio.o
+                0x00000000       0x70 Drivers/GPIO/src/gpio.o
+ .debug_ranges  0x00000000       0x60 Drivers/GPIO/src/gpio.o
+ .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
+ .debug_str     0x00000000      0x417 Drivers/GPIO/src/gpio.o
  .comment       0x00000000       0x4a Drivers/GPIO/src/gpio.o
- .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
+ .debug_frame   0x00000000       0xf4 Drivers/GPIO/src/gpio.o
  .ARM.attributes
                 0x00000000       0x34 Drivers/GPIO/src/gpio.o
  .text          0x00000000        0x0 Drivers/HASH/src/hash.o
@@ -141,6 +142,8 @@ Discarded input sections
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.UART7_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
+ .text.RNG_IRQHandler
+                0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text          0x00000000        0x0 Drivers/UART/src/uart.o
  .data          0x00000000        0x0 Drivers/UART/src/uart.o
  .bss           0x00000000        0x0 Drivers/UART/src/uart.o
@@ -159,11 +162,11 @@ Discarded input sections
  .text.USART_EnableTXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableTXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_EnableRXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableRXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_WriteDMA
                 0x00000000       0x5c Drivers/UART/src/uart.o
  .text.USART_ReadDMA
@@ -176,6 +179,8 @@ Discarded input sections
                 0x00000000       0x2e Drivers/UART/src/uart.o
  .text.GetPortName
                 0x00000000       0x64 Drivers/UART/src/uart.o
+ .text.USART_WriteChar
+                0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadChar
                 0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadString
@@ -186,6 +191,8 @@ Discarded input sections
                 0x00000000       0x4c Drivers/UART/src/uart.o
  .text.uart_write_hex32
                 0x00000000       0x2c Drivers/UART/src/uart.o
+ .text.print_dec
+                0x00000000       0x74 Drivers/UART/src/uart.o
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
@@ -284,7 +291,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
  .isr_vector    0x08000000      0x240 Drivers/HASH/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000240      0xb3c
+.text           0x08000240      0xb48
  *(.text*)
  .text.hash_final
                 0x08000240       0x60 Drivers/HASH/src/hash.o
@@ -313,134 +320,134 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x080003c4       0x60 Drivers/HASH/src/hash.o
                 0x080003c4                HASH_SHA256_Final
  .text.run_test
-                0x08000424       0x90 Drivers/HASH/src/main.o
+                0x08000424       0x6c Drivers/HASH/src/main.o
  .text.startup.main
-                0x080004b4       0xb4 Drivers/HASH/src/main.o
-                0x080004b4                main
+                0x08000490       0xb4 Drivers/HASH/src/main.o
+                0x08000490                main
  .text.Default_Handler
-                0x08000568        0x4 Drivers/HASH/src/startup.o
-                0x08000568                Default_Handler
+                0x08000544        0x4 Drivers/HASH/src/startup.o
+                0x08000544                Default_Handler
  .text.Reset_Handler
-                0x0800056c       0x5c Drivers/HASH/src/startup.o
-                0x0800056c                Reset_Handler
+                0x08000548       0x5c Drivers/HASH/src/startup.o
+                0x08000548                Reset_Handler
  .text.NVIC_RegisterHandler
-                0x080005c8       0x54 Drivers/NVIC/src/nvic.o
-                0x080005c8                NVIC_RegisterHandler
+                0x080005a4       0x54 Drivers/NVIC/src/nvic.o
+                0x080005a4                NVIC_RegisterHandler
  .text.EXTI0_IRQHandler
-                0x0800061c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800061c                EXTI0_IRQHandler
+                0x080005f8       0x10 Drivers/NVIC/src/nvic.o
+                0x080005f8                EXTI0_IRQHandler
  .text.EXTI1_IRQHandler
-                0x0800062c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800062c                EXTI1_IRQHandler
+                0x08000608       0x10 Drivers/NVIC/src/nvic.o
+                0x08000608                EXTI1_IRQHandler
  .text.EXTI2_IRQHandler
-                0x0800063c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800063c                EXTI2_IRQHandler
+                0x08000618       0x10 Drivers/NVIC/src/nvic.o
+                0x08000618                EXTI2_IRQHandler
  .text.EXTI3_IRQHandler
-                0x0800064c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800064c                EXTI3_IRQHandler
+                0x08000628       0x10 Drivers/NVIC/src/nvic.o
+                0x08000628                EXTI3_IRQHandler
  .text.EXTI4_IRQHandler
-                0x0800065c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800065c                EXTI4_IRQHandler
+                0x08000638       0x10 Drivers/NVIC/src/nvic.o
+                0x08000638                EXTI4_IRQHandler
  .text.EXTI5_IRQHandler
-                0x0800066c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800066c                EXTI5_IRQHandler
+                0x08000648       0x10 Drivers/NVIC/src/nvic.o
+                0x08000648                EXTI5_IRQHandler
  .text.EXTI6_IRQHandler
-                0x0800067c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800067c                EXTI6_IRQHandler
+                0x08000658       0x10 Drivers/NVIC/src/nvic.o
+                0x08000658                EXTI6_IRQHandler
  .text.EXTI7_IRQHandler
-                0x0800068c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800068c                EXTI7_IRQHandler
+                0x08000668       0x10 Drivers/NVIC/src/nvic.o
+                0x08000668                EXTI7_IRQHandler
  .text.EXTI8_IRQHandler
-                0x0800069c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800069c                EXTI8_IRQHandler
+                0x08000678       0x10 Drivers/NVIC/src/nvic.o
+                0x08000678                EXTI8_IRQHandler
  .text.EXTI9_IRQHandler
-                0x080006ac       0x14 Drivers/NVIC/src/nvic.o
-                0x080006ac                EXTI9_IRQHandler
+                0x08000688       0x14 Drivers/NVIC/src/nvic.o
+                0x08000688                EXTI9_IRQHandler
  .text.EXTI10_IRQHandler
-                0x080006c0       0x14 Drivers/NVIC/src/nvic.o
-                0x080006c0                EXTI10_IRQHandler
+                0x0800069c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800069c                EXTI10_IRQHandler
  .text.EXTI11_IRQHandler
-                0x080006d4       0x14 Drivers/NVIC/src/nvic.o
-                0x080006d4                EXTI11_IRQHandler
+                0x080006b0       0x14 Drivers/NVIC/src/nvic.o
+                0x080006b0                EXTI11_IRQHandler
  .text.EXTI12_IRQHandler
-                0x080006e8       0x14 Drivers/NVIC/src/nvic.o
-                0x080006e8                EXTI12_IRQHandler
+                0x080006c4       0x14 Drivers/NVIC/src/nvic.o
+                0x080006c4                EXTI12_IRQHandler
  .text.EXTI13_IRQHandler
-                0x080006fc       0x14 Drivers/NVIC/src/nvic.o
-                0x080006fc                EXTI13_IRQHandler
+                0x080006d8       0x14 Drivers/NVIC/src/nvic.o
+                0x080006d8                EXTI13_IRQHandler
  .text.EXTI14_IRQHandler
-                0x08000710       0x14 Drivers/NVIC/src/nvic.o
-                0x08000710                EXTI14_IRQHandler
+                0x080006ec       0x14 Drivers/NVIC/src/nvic.o
+                0x080006ec                EXTI14_IRQHandler
  .text.EXTI15_IRQHandler
-                0x08000724       0x14 Drivers/NVIC/src/nvic.o
-                0x08000724                EXTI15_IRQHandler
+                0x08000700       0x14 Drivers/NVIC/src/nvic.o
+                0x08000700                EXTI15_IRQHandler
  .text.HASH_IRQHandler
-                0x08000738       0x14 Drivers/NVIC/src/nvic.o
-                0x08000738                HASH_IRQHandler
+                0x08000714       0x14 Drivers/NVIC/src/nvic.o
+                0x08000714                HASH_IRQHandler
  .text.uart_irq_dispatch
-                0x0800074c       0x24 Drivers/UART/src/uart.o
+                0x08000728       0x24 Drivers/UART/src/uart.o
  .text.USART_Init
-                0x08000770      0x3ec Drivers/UART/src/uart.o
-                0x08000770                USART_Init
+                0x0800074c      0x3ec Drivers/UART/src/uart.o
+                0x0800074c                USART_Init
  .text.USART_constructor
-                0x08000b5c        0xc Drivers/UART/src/uart.o
-                0x08000b5c                USART_constructor
- .text.USART_WriteChar
-                0x08000b68       0x10 Drivers/UART/src/uart.o
-                0x08000b68                USART_WriteChar
+                0x08000b38        0xc Drivers/UART/src/uart.o
+                0x08000b38                USART_constructor
  .text.USART_WriteString
-                0x08000b78       0x30 Drivers/UART/src/uart.o
-                0x08000b78                USART_WriteString
- .text.memcpy   0x08000ba8       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                0x08000ba8                memcpy
- .text.memset   0x08000bc2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
-                0x08000bc2                memset
- .text          0x08000bd2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
-                0x08000bd2                strlen
+                0x08000b44       0x30 Drivers/UART/src/uart.o
+                0x08000b44                USART_WriteString
+ .text.print_hex
+                0x08000b74       0x40 Drivers/UART/src/uart.o
+                0x08000b74                print_hex
+ .text.memcpy   0x08000bb4       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x08000bb4                memcpy
+ .text.memset   0x08000bce       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x08000bce                memset
+ .text          0x08000bde       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
+                0x08000bde                strlen
  *(.rodata*)
- *fill*         0x08000be2        0x2 
+ *fill*         0x08000bee        0x2 
  .rodata.run_test.str1.4
-                0x08000be4       0x15 Drivers/HASH/src/main.o
+                0x08000bf0       0x15 Drivers/HASH/src/main.o
                                  0x1c (size before relaxing)
- *fill*         0x08000bf9        0x3 
+ *fill*         0x08000c05        0x3 
  .rodata.main.str1.4
-                0x08000bfc      0x161 Drivers/HASH/src/main.o
- *fill*         0x08000d5d        0x3 
- .rodata.hex.0  0x08000d60       0x11 Drivers/HASH/src/main.o
+                0x08000c08      0x161 Drivers/HASH/src/main.o
+ *fill*         0x08000d69        0x3 
+ .rodata.hex.0  0x08000d6c       0x11 Drivers/UART/src/uart.o
  *(.glue_7)
- .glue_7        0x08000d71        0x0 linker stubs
+ .glue_7        0x08000d7d        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000d71        0x0 linker stubs
+ .glue_7t       0x08000d7d        0x0 linker stubs
  *(.init)
- *fill*         0x08000d71        0x3 
- .init          0x08000d74        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d74                _init
+ *fill*         0x08000d7d        0x3 
+ .init          0x08000d80        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000d80                _init
  *(.fini)
- .fini          0x08000d78        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d78                _fini
+ .fini          0x08000d84        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08000d84                _fini
 
-.vfp11_veneer   0x08000d7c        0x0
- .vfp11_veneer  0x08000d7c        0x0 linker stubs
+.vfp11_veneer   0x08000d88        0x0
+ .vfp11_veneer  0x08000d88        0x0 linker stubs
 
-.v4_bx          0x08000d7c        0x0
- .v4_bx         0x08000d7c        0x0 linker stubs
+.v4_bx          0x08000d88        0x0
+ .v4_bx         0x08000d88        0x0 linker stubs
 
-.iplt           0x08000d7c        0x0
- .iplt          0x08000d7c        0x0 Drivers/HASH/src/hash.o
+.iplt           0x08000d88        0x0
+ .iplt          0x08000d88        0x0 Drivers/HASH/src/hash.o
 
-.rel.dyn        0x08000d7c        0x0
- .rel.iplt      0x08000d7c        0x0 Drivers/HASH/src/hash.o
+.rel.dyn        0x08000d88        0x0
+ .rel.iplt      0x08000d88        0x0 Drivers/HASH/src/hash.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000d7c        0x0
-                0x08000d7c                __exidx_start = .
+.ARM.exidx      0x08000d88        0x0
+                0x08000d88                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000d7c                __exidx_end = .
-                0x08000d7c                __etext = .
+                0x08000d88                __exidx_end = .
+                0x08000d88                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000d7c
+.data           0x20000000        0x4 load address 0x08000d88
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
@@ -448,13 +455,13 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000000                SystemCoreClock
                 0x20000004                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000d80
+.igot.plt       0x20000004        0x0 load address 0x08000d8c
  .igot.plt      0x20000004        0x0 Drivers/HASH/src/hash.o
 
-.bss            0x20000004      0x40c load address 0x08000d80
+.bss            0x20000004      0x40c load address 0x08000d8c
                 0x20000004                __bss_start__ = .
  *(.bss*)
- .bss.g_uart    0x20000004        0xc Drivers/HASH/src/main.o
+ .bss.huart     0x20000004        0xc Drivers/HASH/src/main.o
  .bss.s_table   0x20000010      0x400 Drivers/NVIC/src/nvic.o
  *(COMMON)
                 0x20000410                __bss_end__ = .
@@ -462,7 +469,7 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
                 0x20000410                end = .
                 0x20000410                __end__ = .
 
-.stack          0x20000410      0x400 load address 0x0800118c
+.stack          0x20000410      0x400 load address 0x08001198
                 0x20000410                . = ALIGN (0x8)
                 0x20000410                _stack = .
                 0x20000810                . = (. + 0x400)
@@ -499,27 +506,27 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/NVIC/src/nvic.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x33dd
+.debug_info     0x00000000     0x3538
  .debug_info    0x00000000      0x795 Drivers/HASH/src/hash.o
- .debug_info    0x00000795      0x75b Drivers/HASH/src/main.o
- .debug_info    0x00000ef0      0x1ce Drivers/HASH/src/startup.o
- .debug_info    0x000010be      0xf55 Drivers/NVIC/src/nvic.o
- .debug_info    0x00002013     0x13ca Drivers/UART/src/uart.o
+ .debug_info    0x00000795      0x6a7 Drivers/HASH/src/main.o
+ .debug_info    0x00000e3c      0x1ce Drivers/HASH/src/startup.o
+ .debug_info    0x0000100a      0xf94 Drivers/NVIC/src/nvic.o
+ .debug_info    0x00001f9e     0x159a Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0xc6a
+.debug_abbrev   0x00000000      0xbf6
  .debug_abbrev  0x00000000      0x212 Drivers/HASH/src/hash.o
- .debug_abbrev  0x00000212      0x205 Drivers/HASH/src/main.o
- .debug_abbrev  0x00000417      0x147 Drivers/HASH/src/startup.o
- .debug_abbrev  0x0000055e      0x291 Drivers/NVIC/src/nvic.o
- .debug_abbrev  0x000007ef      0x47b Drivers/UART/src/uart.o
+ .debug_abbrev  0x00000212      0x180 Drivers/HASH/src/main.o
+ .debug_abbrev  0x00000392      0x147 Drivers/HASH/src/startup.o
+ .debug_abbrev  0x000004d9      0x291 Drivers/NVIC/src/nvic.o
+ .debug_abbrev  0x0000076a      0x48c Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000     0x1920
+.debug_loc      0x00000000     0x1af9
  .debug_loc     0x00000000      0x531 Drivers/HASH/src/hash.o
- .debug_loc     0x00000531      0x19c Drivers/HASH/src/main.o
- .debug_loc     0x000006cd      0x57b Drivers/NVIC/src/nvic.o
- .debug_loc     0x00000c48      0xcd8 Drivers/UART/src/uart.o
+ .debug_loc     0x00000531      0x110 Drivers/HASH/src/main.o
+ .debug_loc     0x00000641      0x57b Drivers/NVIC/src/nvic.o
+ .debug_loc     0x00000bbc      0xf3d Drivers/UART/src/uart.o
 
-.debug_aranges  0x00000000      0x308
+.debug_aranges  0x00000000      0x320
  .debug_aranges
                 0x00000000       0x60 Drivers/HASH/src/hash.o
  .debug_aranges
@@ -527,41 +534,41 @@ LOAD linker stubs
  .debug_aranges
                 0x00000088       0x30 Drivers/HASH/src/startup.o
  .debug_aranges
-                0x000000b8      0x188 Drivers/NVIC/src/nvic.o
+                0x000000b8      0x190 Drivers/NVIC/src/nvic.o
  .debug_aranges
-                0x00000240       0xc8 Drivers/UART/src/uart.o
+                0x00000248       0xd8 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x580
+.debug_ranges   0x00000000      0x668
  .debug_ranges  0x00000000      0x160 Drivers/HASH/src/hash.o
- .debug_ranges  0x00000160       0x30 Drivers/HASH/src/main.o
- .debug_ranges  0x00000190       0x20 Drivers/HASH/src/startup.o
- .debug_ranges  0x000001b0      0x220 Drivers/NVIC/src/nvic.o
- .debug_ranges  0x000003d0      0x1b0 Drivers/UART/src/uart.o
+ .debug_ranges  0x00000160       0x18 Drivers/HASH/src/main.o
+ .debug_ranges  0x00000178       0x20 Drivers/HASH/src/startup.o
+ .debug_ranges  0x00000198      0x228 Drivers/NVIC/src/nvic.o
+ .debug_ranges  0x000003c0      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x267b
+.debug_line     0x00000000     0x2819
  .debug_line    0x00000000      0x792 Drivers/HASH/src/hash.o
- .debug_line    0x00000792      0x2f9 Drivers/HASH/src/main.o
- .debug_line    0x00000a8b      0x1c5 Drivers/HASH/src/startup.o
- .debug_line    0x00000c50      0xbbf Drivers/NVIC/src/nvic.o
- .debug_line    0x0000180f      0xe6c Drivers/UART/src/uart.o
+ .debug_line    0x00000792      0x2b1 Drivers/HASH/src/main.o
+ .debug_line    0x00000a43      0x1c5 Drivers/HASH/src/startup.o
+ .debug_line    0x00000c08      0xbef Drivers/NVIC/src/nvic.o
+ .debug_line    0x000017f7     0x1022 Drivers/UART/src/uart.o
 
-.debug_str      0x00000000     0x1031
+.debug_str      0x00000000     0x1043
  .debug_str     0x00000000      0x373 Drivers/HASH/src/hash.o
                                 0x3be (size before relaxing)
- .debug_str     0x00000373      0x161 Drivers/HASH/src/main.o
-                                0x38b (size before relaxing)
- .debug_str     0x000004d4       0xd7 Drivers/HASH/src/startup.o
+ .debug_str     0x00000373      0x150 Drivers/HASH/src/main.o
+                                0x37a (size before relaxing)
+ .debug_str     0x000004c3       0xd7 Drivers/HASH/src/startup.o
                                 0x25c (size before relaxing)
- .debug_str     0x000005ab      0x738 Drivers/NVIC/src/nvic.o
-                                0x8de (size before relaxing)
- .debug_str     0x00000ce3      0x34e Drivers/UART/src/uart.o
-                                0x97d (size before relaxing)
+ .debug_str     0x0000059a      0x750 Drivers/NVIC/src/nvic.o
+                                0x8f6 (size before relaxing)
+ .debug_str     0x00000cea      0x359 Drivers/UART/src/uart.o
+                                0x991 (size before relaxing)
 
-.debug_frame    0x00000000      0x744
+.debug_frame    0x00000000      0x77c
  .debug_frame   0x00000000       0xe0 Drivers/HASH/src/hash.o
- .debug_frame   0x000000e0       0x54 Drivers/HASH/src/main.o
- .debug_frame   0x00000134       0x48 Drivers/HASH/src/startup.o
- .debug_frame   0x0000017c      0x32c Drivers/NVIC/src/nvic.o
- .debug_frame   0x000004a8      0x254 Drivers/UART/src/uart.o
- .debug_frame   0x000006fc       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x00000724       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+ .debug_frame   0x000000e0       0x50 Drivers/HASH/src/main.o
+ .debug_frame   0x00000130       0x48 Drivers/HASH/src/startup.o
+ .debug_frame   0x00000178      0x33c Drivers/NVIC/src/nvic.o
+ .debug_frame   0x000004b4      0x280 Drivers/UART/src/uart.o
+ .debug_frame   0x00000734       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x0000075c       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)

@@ -2,7 +2,7 @@
 #include "../inc/aes.h"
 #include "../../UART/inc/uart.h"
 
-static USART_HandleType g_uart;
+USART_HandleType huart;
 
 /* ── Shared NIST SP 800-38A test vectors ─────────────────────────────── */
 static const uint8_t KEY128[16] = {
@@ -29,8 +29,8 @@ static const uint8_t NONCE[16] = {               /* CTR initial counter */
 
 static void pass_fail(const char *lbl, int ok)
 {
-    USART_WriteString(&g_uart, lbl);
-    USART_WriteString(&g_uart, ok ? ": PASS\r\n" : ": FAIL\r\n");
+    USART_WriteString(&huart, lbl);
+    USART_WriteString(&huart, ok ? ": PASS\r\n" : ": FAIL\r\n");
 }
 
 /* ── ECB (F.1.1 / F.1.5) ─────────────────────────────────────────────── */
@@ -45,7 +45,7 @@ static void test_ecb(void)
 
     uint8_t ct[16], dt[16];
 
-    USART_WriteString(&g_uart, "\r\n--- ECB ---\r\n");
+    USART_WriteString(&huart, "\r\n--- ECB ---\r\n");
 
     AES_ECB_Encrypt(KEY128, AES_KEYSIZE_128, plaintext, ct, 16);
     pass_fail("  ECB-128 enc", memcmp(ct, exp128, 16) == 0);
@@ -70,7 +70,7 @@ static void test_cbc(void)
 
     uint8_t ct[16], dt[16];
 
-    USART_WriteString(&g_uart, "\r\n--- CBC ---\r\n");
+    USART_WriteString(&huart, "\r\n--- CBC ---\r\n");
 
     AES_CBC_Encrypt(KEY128, AES_KEYSIZE_128, IV, plaintext, ct, 16);
     pass_fail("  CBC-128 enc", memcmp(ct, exp128, 16) == 0);
@@ -95,7 +95,7 @@ static void test_ctr(void)
 
     uint8_t ct[16], dt[16];
 
-    USART_WriteString(&g_uart, "\r\n--- CTR ---\r\n");
+    USART_WriteString(&huart, "\r\n--- CTR ---\r\n");
 
     AES_CTR_Crypt(KEY128, AES_KEYSIZE_128, NONCE, plaintext, ct, 16);
     pass_fail("  CTR-128 enc", memcmp(ct, exp128, 16) == 0);
@@ -111,13 +111,13 @@ static void test_ctr(void)
 
 int main(void)
 {
-    USART_constructor(&g_uart, USART_2, TX_ONLY, __115200);
-    USART_WriteString(&g_uart, "\r\n=== AES Tests (NIST SP 800-38A) ===\r\n");
+    USART_constructor(&huart, USART_2, TX_ONLY, __115200);
+    USART_WriteString(&huart, "\r\n=== AES Tests (NIST SP 800-38A) ===\r\n");
 
     test_ecb();
     test_cbc();
     test_ctr();
 
-    USART_WriteString(&g_uart, "\r\n--- Done ---\r\n");
+    USART_WriteString(&huart, "\r\n--- Done ---\r\n");
     while (1) {}
 }

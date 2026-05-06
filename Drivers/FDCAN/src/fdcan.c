@@ -22,11 +22,6 @@ static int s_gpio_initialized = 0;
 static volatile uint8_t s_irq_msg_received = 0;
 static CAN_MsgType      s_irq_rx_msg;
 
-static void delay(volatile uint32_t count)
-{
-    while (count--) { __asm__("nop"); }
-}
-
 /* Initialise LD1 (PA5) and B1 button (PC13) using the GPIO driver */
 static void CAN_GPIO_Init(void)
 {
