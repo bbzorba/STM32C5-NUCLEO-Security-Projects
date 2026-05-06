@@ -7,11 +7,37 @@ c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (__libc_init_array)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                              Drivers/HASH/src/startup.o (memcpy)
+                              Drivers/RNG/src/startup.o (memcpy)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o (memset)
-c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
-                              Drivers/HASH/src/main.o (strlen)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+                              Drivers/RNG/src/main.o (snprintf)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o) (_svfprintf_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (_printf_i)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (memchr)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (memmove)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (_free_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (_malloc_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o) (_realloc_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o) (_sbrk_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o) (__malloc_lock)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o) (_malloc_usable_size_r)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o) (errno)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o) (__retarget_lock_acquire_recursive)
+c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
+                              c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o) (_sbrk)
 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
                               c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o) (_exit)
 
@@ -59,34 +85,22 @@ Discarded input sections
                 0x00000000      0x114 Drivers/GPIO/src/gpio.o
  .text.GPIO_constructor
                 0x00000000        0x8 Drivers/GPIO/src/gpio.o
- .debug_info    0x00000000      0x6a3 Drivers/GPIO/src/gpio.o
+ .text.delay    0x00000000       0x1c Drivers/GPIO/src/gpio.o
+ .debug_info    0x00000000      0x6c6 Drivers/GPIO/src/gpio.o
  .debug_abbrev  0x00000000      0x19f Drivers/GPIO/src/gpio.o
  .debug_loc     0x00000000      0x371 Drivers/GPIO/src/gpio.o
  .debug_aranges
-                0x00000000       0x68 Drivers/GPIO/src/gpio.o
- .debug_ranges  0x00000000       0x58 Drivers/GPIO/src/gpio.o
- .debug_line    0x00000000      0x4bf Drivers/GPIO/src/gpio.o
- .debug_str     0x00000000      0x411 Drivers/GPIO/src/gpio.o
+                0x00000000       0x70 Drivers/GPIO/src/gpio.o
+ .debug_ranges  0x00000000       0x60 Drivers/GPIO/src/gpio.o
+ .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
+ .debug_str     0x00000000      0x417 Drivers/GPIO/src/gpio.o
  .comment       0x00000000       0x4a Drivers/GPIO/src/gpio.o
- .debug_frame   0x00000000       0xdc Drivers/GPIO/src/gpio.o
+ .debug_frame   0x00000000       0xf4 Drivers/GPIO/src/gpio.o
  .ARM.attributes
                 0x00000000       0x34 Drivers/GPIO/src/gpio.o
- .text          0x00000000        0x0 Drivers/HASH/src/hash.o
- .data          0x00000000        0x0 Drivers/HASH/src/hash.o
- .bss           0x00000000        0x0 Drivers/HASH/src/hash.o
- .text          0x00000000        0x0 Drivers/HASH/src/main.o
- .data          0x00000000        0x0 Drivers/HASH/src/main.o
- .bss           0x00000000        0x0 Drivers/HASH/src/main.o
- .text          0x00000000        0x0 Drivers/HASH/src/startup.o
- .data          0x00000000        0x0 Drivers/HASH/src/startup.o
- .bss           0x00000000        0x0 Drivers/HASH/src/startup.o
- .text.SystemInit
-                0x00000000       0x10 Drivers/HASH/src/startup.o
  .text          0x00000000        0x0 Drivers/NVIC/src/nvic.o
  .data          0x00000000        0x0 Drivers/NVIC/src/nvic.o
  .bss           0x00000000        0x0 Drivers/NVIC/src/nvic.o
- .text.NVIC_UnregisterHandler
-                0x00000000       0x3c Drivers/NVIC/src/nvic.o
  .text.NVIC_EXTI_Enable
                 0x00000000       0xa4 Drivers/NVIC/src/nvic.o
  .text.NVIC_EXTI_Disable
@@ -141,6 +155,19 @@ Discarded input sections
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
  .text.UART7_IRQHandler
                 0x00000000       0x14 Drivers/NVIC/src/nvic.o
+ .text.HASH_IRQHandler
+                0x00000000       0x14 Drivers/NVIC/src/nvic.o
+ .text          0x00000000        0x0 Drivers/RNG/src/main.o
+ .data          0x00000000        0x0 Drivers/RNG/src/main.o
+ .bss           0x00000000        0x0 Drivers/RNG/src/main.o
+ .text          0x00000000        0x0 Drivers/RNG/src/rng.o
+ .data          0x00000000        0x0 Drivers/RNG/src/rng.o
+ .bss           0x00000000        0x0 Drivers/RNG/src/rng.o
+ .text          0x00000000        0x0 Drivers/RNG/src/startup.o
+ .data          0x00000000        0x0 Drivers/RNG/src/startup.o
+ .bss           0x00000000        0x0 Drivers/RNG/src/startup.o
+ .text.SystemInit
+                0x00000000       0x10 Drivers/RNG/src/startup.o
  .text          0x00000000        0x0 Drivers/UART/src/uart.o
  .data          0x00000000        0x0 Drivers/UART/src/uart.o
  .bss           0x00000000        0x0 Drivers/UART/src/uart.o
@@ -159,11 +186,11 @@ Discarded input sections
  .text.USART_EnableTXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableTXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_EnableRXDMA
                 0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_DisableRXDMA
-                0x00000000       0x18 Drivers/UART/src/uart.o
+                0x00000000        0xc Drivers/UART/src/uart.o
  .text.USART_WriteDMA
                 0x00000000       0x5c Drivers/UART/src/uart.o
  .text.USART_ReadDMA
@@ -176,16 +203,17 @@ Discarded input sections
                 0x00000000       0x2e Drivers/UART/src/uart.o
  .text.GetPortName
                 0x00000000       0x64 Drivers/UART/src/uart.o
+ .text.USART_WriteChar
+                0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadChar
                 0x00000000       0x10 Drivers/UART/src/uart.o
  .text.USART_ReadString
                 0x00000000       0x60 Drivers/UART/src/uart.o
- .rodata.uart_write_hex8.str1.4
-                0x00000000       0x11 Drivers/UART/src/uart.o
- .text.uart_write_hex8
-                0x00000000       0x4c Drivers/UART/src/uart.o
- .text.uart_write_hex32
-                0x00000000       0x2c Drivers/UART/src/uart.o
+ .text.print_hex
+                0x00000000       0x40 Drivers/UART/src/uart.o
+ .text.print_dec
+                0x00000000       0x74 Drivers/UART/src/uart.o
+ .rodata.hex.0  0x00000000       0x11 Drivers/UART/src/uart.o
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-exit.o)
@@ -196,14 +224,8 @@ Discarded input sections
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
- .data._impure_ptr
-                0x00000000        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
- .data.impure_data
-                0x00000000       0x60 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
  .rodata._global_impure_ptr
                 0x00000000        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
- .ARM.attributes
-                0x00000000       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-init.o)
@@ -218,8 +240,88 @@ Discarded input sections
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
- .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
- .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .text._snprintf_r
+                0x00000000       0x5e c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .text.__ssprint_r
+                0x00000000       0xf6 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .text.cleanup_glue
+                0x00000000       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .text._reclaim_reent
+                0x00000000       0xb8 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_init
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_init_recursive
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_close
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_close_recursive
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_acquire
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_try_acquire
+                0x00000000        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_try_acquire_recursive
+                0x00000000        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text.__retarget_lock_release
+                0x00000000        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___arc4random_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___at_quick_exit_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___atexit_recursive_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___dd_hash_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___env_recursive_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___sfp_recursive_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___sinit_recursive_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .bss.__lock___tz_mutex
+                0x00000000        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
+ .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
+ .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
  .text          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .data          0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
  .bss           0x00000000        0x0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(_exit.o)
@@ -255,10 +357,10 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crtbegin.o
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp/crt0.o
 LOAD Drivers/GPIO/src/gpio.o
-LOAD Drivers/HASH/src/hash.o
-LOAD Drivers/HASH/src/main.o
-LOAD Drivers/HASH/src/startup.o
 LOAD Drivers/NVIC/src/nvic.o
+LOAD Drivers/RNG/src/main.o
+LOAD Drivers/RNG/src/rng.o
+LOAD Drivers/RNG/src/startup.o
 LOAD Drivers/UART/src/uart.o
 START GROUP
 LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp\libgcc.a
@@ -281,193 +383,258 @@ LOAD c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc
 
 .isr_vector     0x08000000      0x240
  *(.isr_vector)
- .isr_vector    0x08000000      0x240 Drivers/HASH/src/startup.o
+ .isr_vector    0x08000000      0x240 Drivers/RNG/src/startup.o
                 0x08000000                vector_table
 
-.text           0x08000240      0xb3c
+.text           0x08000240     0x1410
  *(.text*)
- .text.hash_final
-                0x08000240       0x60 Drivers/HASH/src/hash.o
- .text.HASH_Constructor
-                0x080002a0       0x28 Drivers/HASH/src/hash.o
-                0x080002a0                HASH_Constructor
- .text.HASH_SHA1_Start
-                0x080002c8       0x1c Drivers/HASH/src/hash.o
-                0x080002c8                HASH_SHA1_Start
- .text.HASH_SHA1_Final
-                0x080002e4        0x8 Drivers/HASH/src/hash.o
-                0x080002e4                HASH_SHA1_Final
- .text.HASH_SHA224_Start
-                0x080002ec       0x20 Drivers/HASH/src/hash.o
-                0x080002ec                HASH_SHA224_Start
- .text.HASH_SHA224_Final
-                0x0800030c        0x8 Drivers/HASH/src/hash.o
-                0x0800030c                HASH_SHA224_Final
- .text.HASH_SHA256_Start
-                0x08000314       0x20 Drivers/HASH/src/hash.o
-                0x08000314                HASH_SHA256_Start
- .text.HASH_SHA256_Update
-                0x08000334       0x90 Drivers/HASH/src/hash.o
-                0x08000334                HASH_SHA256_Update
- .text.HASH_SHA256_Final
-                0x080003c4       0x60 Drivers/HASH/src/hash.o
-                0x080003c4                HASH_SHA256_Final
- .text.run_test
-                0x08000424       0x90 Drivers/HASH/src/main.o
- .text.startup.main
-                0x080004b4       0xb4 Drivers/HASH/src/main.o
-                0x080004b4                main
- .text.Default_Handler
-                0x08000568        0x4 Drivers/HASH/src/startup.o
-                0x08000568                Default_Handler
- .text.Reset_Handler
-                0x0800056c       0x5c Drivers/HASH/src/startup.o
-                0x0800056c                Reset_Handler
  .text.NVIC_RegisterHandler
-                0x080005c8       0x54 Drivers/NVIC/src/nvic.o
-                0x080005c8                NVIC_RegisterHandler
+                0x08000240       0x54 Drivers/NVIC/src/nvic.o
+                0x08000240                NVIC_RegisterHandler
+ .text.NVIC_UnregisterHandler
+                0x08000294       0x3c Drivers/NVIC/src/nvic.o
+                0x08000294                NVIC_UnregisterHandler
  .text.EXTI0_IRQHandler
-                0x0800061c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800061c                EXTI0_IRQHandler
+                0x080002d0       0x10 Drivers/NVIC/src/nvic.o
+                0x080002d0                EXTI0_IRQHandler
  .text.EXTI1_IRQHandler
-                0x0800062c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800062c                EXTI1_IRQHandler
+                0x080002e0       0x10 Drivers/NVIC/src/nvic.o
+                0x080002e0                EXTI1_IRQHandler
  .text.EXTI2_IRQHandler
-                0x0800063c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800063c                EXTI2_IRQHandler
+                0x080002f0       0x10 Drivers/NVIC/src/nvic.o
+                0x080002f0                EXTI2_IRQHandler
  .text.EXTI3_IRQHandler
-                0x0800064c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800064c                EXTI3_IRQHandler
+                0x08000300       0x10 Drivers/NVIC/src/nvic.o
+                0x08000300                EXTI3_IRQHandler
  .text.EXTI4_IRQHandler
-                0x0800065c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800065c                EXTI4_IRQHandler
+                0x08000310       0x10 Drivers/NVIC/src/nvic.o
+                0x08000310                EXTI4_IRQHandler
  .text.EXTI5_IRQHandler
-                0x0800066c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800066c                EXTI5_IRQHandler
+                0x08000320       0x10 Drivers/NVIC/src/nvic.o
+                0x08000320                EXTI5_IRQHandler
  .text.EXTI6_IRQHandler
-                0x0800067c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800067c                EXTI6_IRQHandler
+                0x08000330       0x10 Drivers/NVIC/src/nvic.o
+                0x08000330                EXTI6_IRQHandler
  .text.EXTI7_IRQHandler
-                0x0800068c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800068c                EXTI7_IRQHandler
+                0x08000340       0x10 Drivers/NVIC/src/nvic.o
+                0x08000340                EXTI7_IRQHandler
  .text.EXTI8_IRQHandler
-                0x0800069c       0x10 Drivers/NVIC/src/nvic.o
-                0x0800069c                EXTI8_IRQHandler
+                0x08000350       0x10 Drivers/NVIC/src/nvic.o
+                0x08000350                EXTI8_IRQHandler
  .text.EXTI9_IRQHandler
-                0x080006ac       0x14 Drivers/NVIC/src/nvic.o
-                0x080006ac                EXTI9_IRQHandler
+                0x08000360       0x14 Drivers/NVIC/src/nvic.o
+                0x08000360                EXTI9_IRQHandler
  .text.EXTI10_IRQHandler
-                0x080006c0       0x14 Drivers/NVIC/src/nvic.o
-                0x080006c0                EXTI10_IRQHandler
+                0x08000374       0x14 Drivers/NVIC/src/nvic.o
+                0x08000374                EXTI10_IRQHandler
  .text.EXTI11_IRQHandler
-                0x080006d4       0x14 Drivers/NVIC/src/nvic.o
-                0x080006d4                EXTI11_IRQHandler
+                0x08000388       0x14 Drivers/NVIC/src/nvic.o
+                0x08000388                EXTI11_IRQHandler
  .text.EXTI12_IRQHandler
-                0x080006e8       0x14 Drivers/NVIC/src/nvic.o
-                0x080006e8                EXTI12_IRQHandler
+                0x0800039c       0x14 Drivers/NVIC/src/nvic.o
+                0x0800039c                EXTI12_IRQHandler
  .text.EXTI13_IRQHandler
-                0x080006fc       0x14 Drivers/NVIC/src/nvic.o
-                0x080006fc                EXTI13_IRQHandler
+                0x080003b0       0x14 Drivers/NVIC/src/nvic.o
+                0x080003b0                EXTI13_IRQHandler
  .text.EXTI14_IRQHandler
-                0x08000710       0x14 Drivers/NVIC/src/nvic.o
-                0x08000710                EXTI14_IRQHandler
+                0x080003c4       0x14 Drivers/NVIC/src/nvic.o
+                0x080003c4                EXTI14_IRQHandler
  .text.EXTI15_IRQHandler
-                0x08000724       0x14 Drivers/NVIC/src/nvic.o
-                0x08000724                EXTI15_IRQHandler
- .text.HASH_IRQHandler
-                0x08000738       0x14 Drivers/NVIC/src/nvic.o
-                0x08000738                HASH_IRQHandler
+                0x080003d8       0x14 Drivers/NVIC/src/nvic.o
+                0x080003d8                EXTI15_IRQHandler
+ .text.RNG_IRQHandler
+                0x080003ec       0x14 Drivers/NVIC/src/nvic.o
+                0x080003ec                RNG_IRQHandler
+ .text.startup.main
+                0x08000400      0x174 Drivers/RNG/src/main.o
+                0x08000400                main
+ .text.rng_irq_handler
+                0x08000574       0x70 Drivers/RNG/src/rng.o
+ .text.RNG_Constructor
+                0x080005e4       0x3c Drivers/RNG/src/rng.o
+                0x080005e4                RNG_Constructor
+ .text.RNG_Enable
+                0x08000620       0x18 Drivers/RNG/src/rng.o
+                0x08000620                RNG_Enable
+ .text.RNG_Disable
+                0x08000638        0xc Drivers/RNG/src/rng.o
+                0x08000638                RNG_Disable
+ .text.RNG_Generate
+                0x08000644       0x68 Drivers/RNG/src/rng.o
+                0x08000644                RNG_Generate
+ .text.RNG_Generate_IT
+                0x080006ac       0x50 Drivers/RNG/src/rng.o
+                0x080006ac                RNG_Generate_IT
+ .text.Default_Handler
+                0x080006fc        0x4 Drivers/RNG/src/startup.o
+                0x080006fc                Default_Handler
+ .text.Reset_Handler
+                0x08000700       0x5c Drivers/RNG/src/startup.o
+                0x08000700                Reset_Handler
  .text.uart_irq_dispatch
-                0x0800074c       0x24 Drivers/UART/src/uart.o
+                0x0800075c       0x24 Drivers/UART/src/uart.o
  .text.USART_Init
-                0x08000770      0x3ec Drivers/UART/src/uart.o
-                0x08000770                USART_Init
+                0x08000780      0x3ec Drivers/UART/src/uart.o
+                0x08000780                USART_Init
  .text.USART_constructor
-                0x08000b5c        0xc Drivers/UART/src/uart.o
-                0x08000b5c                USART_constructor
- .text.USART_WriteChar
-                0x08000b68       0x10 Drivers/UART/src/uart.o
-                0x08000b68                USART_WriteChar
+                0x08000b6c        0xc Drivers/UART/src/uart.o
+                0x08000b6c                USART_constructor
  .text.USART_WriteString
                 0x08000b78       0x30 Drivers/UART/src/uart.o
                 0x08000b78                USART_WriteString
- .text.memcpy   0x08000ba8       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
-                0x08000ba8                memcpy
- .text.memset   0x08000bc2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
-                0x08000bc2                memset
- .text          0x08000bd2       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
-                0x08000bd2                strlen
+ .text.uart_write_hex8
+                0x08000ba8       0x4c Drivers/UART/src/uart.o
+                0x08000ba8                uart_write_hex8
+ .text.uart_write_hex32
+                0x08000bf4       0x2c Drivers/UART/src/uart.o
+                0x08000bf4                uart_write_hex32
+ .text.memcpy   0x08000c20       0x1a c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x08000c20                memcpy
+ .text.memset   0x08000c3a       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x08000c3a                memset
+ *fill*         0x08000c4a        0x2 
+ .text.snprintf
+                0x08000c4c       0x68 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+                0x08000c4c                sniprintf
+                0x08000c4c                snprintf
+ .text.__ssputs_r
+                0x08000cb4       0xb6 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+                0x08000cb4                __ssputs_r
+ *fill*         0x08000d6a        0x2 
+ .text._svfprintf_r
+                0x08000d6c      0x200 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+                0x08000d6c                _svfiprintf_r
+                0x08000d6c                _svfprintf_r
+ .text._printf_common
+                0x08000f6c       0xe0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+                0x08000f6c                _printf_common
+ .text._printf_i
+                0x0800104c      0x24c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+                0x0800104c                _printf_i
+ .text.memchr   0x08001298       0x1c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+                0x08001298                memchr
+ .text.memmove  0x080012b4       0x34 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+                0x080012b4                memmove
+ .text._free_r  0x080012e8       0x94 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+                0x080012e8                _free_r
+ .text.sbrk_aligned
+                0x0800137c       0x40 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .text._malloc_r
+                0x080013bc       0xe8 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+                0x080013bc                _malloc_r
+ .text._realloc_r
+                0x080014a4       0x5e c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+                0x080014a4                _realloc_r
+ *fill*         0x08001502        0x2 
+ .text._sbrk_r  0x08001504       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+                0x08001504                _sbrk_r
+ .text.__malloc_lock
+                0x08001524        0xc c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+                0x08001524                __malloc_lock
+ .text.__malloc_unlock
+                0x08001530        0xc c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+                0x08001530                __malloc_unlock
+ .text._malloc_usable_size_r
+                0x0800153c       0x10 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+                0x0800153c                _malloc_usable_size_r
+ .text.__retarget_lock_acquire_recursive
+                0x0800154c        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+                0x0800154c                __retarget_lock_acquire_recursive
+ .text.__retarget_lock_release_recursive
+                0x0800154e        0x2 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+                0x0800154e                __retarget_lock_release_recursive
+ .text._sbrk    0x08001550       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
+                0x08001550                _sbrk
  *(.rodata*)
- *fill*         0x08000be2        0x2 
- .rodata.run_test.str1.4
-                0x08000be4       0x15 Drivers/HASH/src/main.o
-                                 0x1c (size before relaxing)
- *fill*         0x08000bf9        0x3 
  .rodata.main.str1.4
-                0x08000bfc      0x161 Drivers/HASH/src/main.o
- *fill*         0x08000d5d        0x3 
- .rodata.hex.0  0x08000d60       0x11 Drivers/HASH/src/main.o
+                0x08001570       0x93 Drivers/RNG/src/main.o
+                                 0x97 (size before relaxing)
+ *fill*         0x08001603        0x1 
+ .rodata.uart_write_hex8.str1.4
+                0x08001604       0x11 Drivers/UART/src/uart.o
+ .rodata._svfprintf_r.str1.1
+                0x08001615       0x11 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .rodata._printf_i.str1.1
+                0x08001626       0x22 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
  *(.glue_7)
- .glue_7        0x08000d71        0x0 linker stubs
+ .glue_7        0x08001648        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08000d71        0x0 linker stubs
+ .glue_7t       0x08001648        0x0 linker stubs
  *(.init)
- *fill*         0x08000d71        0x3 
- .init          0x08000d74        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d74                _init
+ .init          0x08001648        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x08001648                _init
  *(.fini)
- .fini          0x08000d78        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
-                0x08000d78                _fini
+ .fini          0x0800164c        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
+                0x0800164c                _fini
 
-.vfp11_veneer   0x08000d7c        0x0
- .vfp11_veneer  0x08000d7c        0x0 linker stubs
+.vfp11_veneer   0x08001650        0x0
+ .vfp11_veneer  0x08001650        0x0 linker stubs
 
-.v4_bx          0x08000d7c        0x0
- .v4_bx         0x08000d7c        0x0 linker stubs
+.v4_bx          0x08001650        0x0
+ .v4_bx         0x08001650        0x0 linker stubs
 
-.iplt           0x08000d7c        0x0
- .iplt          0x08000d7c        0x0 Drivers/HASH/src/hash.o
+.iplt           0x08001650        0x0
+ .iplt          0x08001650        0x0 Drivers/NVIC/src/nvic.o
 
-.rel.dyn        0x08000d7c        0x0
- .rel.iplt      0x08000d7c        0x0 Drivers/HASH/src/hash.o
+.rel.dyn        0x08001650        0x0
+ .rel.iplt      0x08001650        0x0 Drivers/NVIC/src/nvic.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x08000d7c        0x0
-                0x08000d7c                __exidx_start = .
+.ARM.exidx      0x08001650        0x0
+                0x08001650                __exidx_start = .
  *(.ARM.exidx*)
-                0x08000d7c                __exidx_end = .
-                0x08000d7c                __etext = .
+                0x08001650                __exidx_end = .
+                0x08001650                __etext = .
 
-.data           0x20000000        0x4 load address 0x08000d7c
+.data           0x20000000       0x68 load address 0x08001650
                 0x20000000                __data_start__ = .
  *(.data*)
  .data.SystemCoreClock
-                0x20000000        0x4 Drivers/HASH/src/startup.o
+                0x20000000        0x4 Drivers/RNG/src/startup.o
                 0x20000000                SystemCoreClock
-                0x20000004                __data_end__ = .
+ .data._impure_ptr
+                0x20000004        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
+                0x20000004                _impure_ptr
+ .data.impure_data
+                0x20000008       0x60 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
+                0x20000068                __data_end__ = .
 
-.igot.plt       0x20000004        0x0 load address 0x08000d80
- .igot.plt      0x20000004        0x0 Drivers/HASH/src/hash.o
+.igot.plt       0x20000068        0x0 load address 0x080016b8
+ .igot.plt      0x20000068        0x0 Drivers/NVIC/src/nvic.o
 
-.bss            0x20000004      0x40c load address 0x08000d80
-                0x20000004                __bss_start__ = .
+.bss            0x20000068      0x420 load address 0x080016b8
+                0x20000068                __bss_start__ = .
  *(.bss*)
- .bss.g_uart    0x20000004        0xc Drivers/HASH/src/main.o
- .bss.s_table   0x20000010      0x400 Drivers/NVIC/src/nvic.o
+ .bss.s_table   0x20000068      0x400 Drivers/NVIC/src/nvic.o
+ .bss.huart     0x20000468        0xc Drivers/RNG/src/main.o
+ .bss.__malloc_free_list
+                0x20000474        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+                0x20000474                __malloc_free_list
+ .bss.__malloc_sbrk_start
+                0x20000478        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+                0x20000478                __malloc_sbrk_start
+ .bss.errno     0x2000047c        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+                0x2000047c                errno
+ .bss.__lock___malloc_recursive_mutex
+                0x20000480        0x1 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+                0x20000480                __lock___malloc_recursive_mutex
+ *fill*         0x20000481        0x3 
+ .bss.heap_end.0
+                0x20000484        0x4 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
  *(COMMON)
-                0x20000410                __bss_end__ = .
-                0x20000410                _end = .
-                0x20000410                end = .
-                0x20000410                __end__ = .
+                0x20000488                __bss_end__ = .
+                0x20000488                _end = .
+                0x20000488                end = .
+                0x20000488                __end__ = .
 
-.stack          0x20000410      0x400 load address 0x0800118c
-                0x20000410                . = ALIGN (0x8)
-                0x20000410                _stack = .
-                0x20000810                . = (. + 0x400)
- *fill*         0x20000410      0x400 
-OUTPUT(Drivers/HASH/main.elf elf32-littlearm)
+.stack          0x20000488      0x400 load address 0x08001ad8
+                0x20000488                . = ALIGN (0x8)
+                0x20000488                _stack = .
+                0x20000888                . = (. + 0x400)
+ *fill*         0x20000488      0x400 
+OUTPUT(Drivers/RNG/main.elf elf32-littlearm)
 LOAD linker stubs
 
 .ARM.attributes
@@ -475,93 +642,135 @@ LOAD linker stubs
  .ARM.attributes
                 0x00000000       0x22 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/thumb/v8-m.main/nofp/crti.o
  .ARM.attributes
-                0x00000022       0x34 Drivers/HASH/src/hash.o
+                0x00000022       0x34 Drivers/NVIC/src/nvic.o
  .ARM.attributes
-                0x00000056       0x34 Drivers/HASH/src/main.o
+                0x00000056       0x34 Drivers/RNG/src/main.o
  .ARM.attributes
-                0x0000008a       0x34 Drivers/HASH/src/startup.o
+                0x0000008a       0x34 Drivers/RNG/src/rng.o
  .ARM.attributes
-                0x000000be       0x34 Drivers/NVIC/src/nvic.o
+                0x000000be       0x34 Drivers/RNG/src/startup.o
  .ARM.attributes
                 0x000000f2       0x34 Drivers/UART/src/uart.o
  .ARM.attributes
-                0x00000126       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+                0x00000126       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-impure.o)
  .ARM.attributes
-                0x00000158       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+                0x00000158       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
  .ARM.attributes
-                0x0000018a       0x17 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-strlen.o)
+                0x0000018a       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+ .ARM.attributes
+                0x000001bc       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .ARM.attributes
+                0x000001ee       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .ARM.attributes
+                0x00000220       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+ .ARM.attributes
+                0x00000252       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+ .ARM.attributes
+                0x00000284       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+ .ARM.attributes
+                0x000002b6       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+ .ARM.attributes
+                0x000002e8       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .ARM.attributes
+                0x0000031a       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+ .ARM.attributes
+                0x0000034c       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+ .ARM.attributes
+                0x0000037e       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+ .ARM.attributes
+                0x000003b0       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+ .ARM.attributes
+                0x000003e2       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .ARM.attributes
+                0x00000414       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .ARM.attributes
+                0x00000446       0x32 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)
 
 .comment        0x00000000       0x49
- .comment       0x00000000       0x49 Drivers/HASH/src/hash.o
+ .comment       0x00000000       0x49 Drivers/NVIC/src/nvic.o
                                  0x4a (size before relaxing)
- .comment       0x00000049       0x4a Drivers/HASH/src/main.o
- .comment       0x00000049       0x4a Drivers/HASH/src/startup.o
- .comment       0x00000049       0x4a Drivers/NVIC/src/nvic.o
+ .comment       0x00000049       0x4a Drivers/RNG/src/main.o
+ .comment       0x00000049       0x4a Drivers/RNG/src/rng.o
+ .comment       0x00000049       0x4a Drivers/RNG/src/startup.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x33dd
- .debug_info    0x00000000      0x795 Drivers/HASH/src/hash.o
- .debug_info    0x00000795      0x75b Drivers/HASH/src/main.o
- .debug_info    0x00000ef0      0x1ce Drivers/HASH/src/startup.o
- .debug_info    0x000010be      0xf55 Drivers/NVIC/src/nvic.o
- .debug_info    0x00002013     0x13ca Drivers/UART/src/uart.o
+.debug_info     0x00000000     0x35b9
+ .debug_info    0x00000000      0xf94 Drivers/NVIC/src/nvic.o
+ .debug_info    0x00000f94      0x7a2 Drivers/RNG/src/main.o
+ .debug_info    0x00001736      0x71b Drivers/RNG/src/rng.o
+ .debug_info    0x00001e51      0x1ce Drivers/RNG/src/startup.o
+ .debug_info    0x0000201f     0x159a Drivers/UART/src/uart.o
 
-.debug_abbrev   0x00000000      0xc6a
- .debug_abbrev  0x00000000      0x212 Drivers/HASH/src/hash.o
- .debug_abbrev  0x00000212      0x205 Drivers/HASH/src/main.o
- .debug_abbrev  0x00000417      0x147 Drivers/HASH/src/startup.o
- .debug_abbrev  0x0000055e      0x291 Drivers/NVIC/src/nvic.o
- .debug_abbrev  0x000007ef      0x47b Drivers/UART/src/uart.o
+.debug_abbrev   0x00000000      0xbd1
+ .debug_abbrev  0x00000000      0x291 Drivers/NVIC/src/nvic.o
+ .debug_abbrev  0x00000291      0x159 Drivers/RNG/src/main.o
+ .debug_abbrev  0x000003ea      0x214 Drivers/RNG/src/rng.o
+ .debug_abbrev  0x000005fe      0x147 Drivers/RNG/src/startup.o
+ .debug_abbrev  0x00000745      0x48c Drivers/UART/src/uart.o
 
-.debug_loc      0x00000000     0x1920
- .debug_loc     0x00000000      0x531 Drivers/HASH/src/hash.o
- .debug_loc     0x00000531      0x19c Drivers/HASH/src/main.o
- .debug_loc     0x000006cd      0x57b Drivers/NVIC/src/nvic.o
- .debug_loc     0x00000c48      0xcd8 Drivers/UART/src/uart.o
+.debug_loc      0x00000000     0x189c
+ .debug_loc     0x00000000      0x57b Drivers/NVIC/src/nvic.o
+ .debug_loc     0x0000057b       0xa4 Drivers/RNG/src/main.o
+ .debug_loc     0x0000061f      0x340 Drivers/RNG/src/rng.o
+ .debug_loc     0x0000095f      0xf3d Drivers/UART/src/uart.o
 
-.debug_aranges  0x00000000      0x308
+.debug_aranges  0x00000000      0x300
  .debug_aranges
-                0x00000000       0x60 Drivers/HASH/src/hash.o
+                0x00000000      0x190 Drivers/NVIC/src/nvic.o
  .debug_aranges
-                0x00000060       0x28 Drivers/HASH/src/main.o
+                0x00000190       0x20 Drivers/RNG/src/main.o
  .debug_aranges
-                0x00000088       0x30 Drivers/HASH/src/startup.o
+                0x000001b0       0x48 Drivers/RNG/src/rng.o
  .debug_aranges
-                0x000000b8      0x188 Drivers/NVIC/src/nvic.o
+                0x000001f8       0x30 Drivers/RNG/src/startup.o
  .debug_aranges
-                0x00000240       0xc8 Drivers/UART/src/uart.o
+                0x00000228       0xd8 Drivers/UART/src/uart.o
 
-.debug_ranges   0x00000000      0x580
- .debug_ranges  0x00000000      0x160 Drivers/HASH/src/hash.o
- .debug_ranges  0x00000160       0x30 Drivers/HASH/src/main.o
- .debug_ranges  0x00000190       0x20 Drivers/HASH/src/startup.o
- .debug_ranges  0x000001b0      0x220 Drivers/NVIC/src/nvic.o
- .debug_ranges  0x000003d0      0x1b0 Drivers/UART/src/uart.o
+.debug_ranges   0x00000000      0x568
+ .debug_ranges  0x00000000      0x228 Drivers/NVIC/src/nvic.o
+ .debug_ranges  0x00000228       0x10 Drivers/RNG/src/main.o
+ .debug_ranges  0x00000238       0x68 Drivers/RNG/src/rng.o
+ .debug_ranges  0x000002a0       0x20 Drivers/RNG/src/startup.o
+ .debug_ranges  0x000002c0      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x267b
- .debug_line    0x00000000      0x792 Drivers/HASH/src/hash.o
- .debug_line    0x00000792      0x2f9 Drivers/HASH/src/main.o
- .debug_line    0x00000a8b      0x1c5 Drivers/HASH/src/startup.o
- .debug_line    0x00000c50      0xbbf Drivers/NVIC/src/nvic.o
- .debug_line    0x0000180f      0xe6c Drivers/UART/src/uart.o
+.debug_line     0x00000000     0x2629
+ .debug_line    0x00000000      0xbef Drivers/NVIC/src/nvic.o
+ .debug_line    0x00000bef      0x358 Drivers/RNG/src/main.o
+ .debug_line    0x00000f47      0x4fc Drivers/RNG/src/rng.o
+ .debug_line    0x00001443      0x1c4 Drivers/RNG/src/startup.o
+ .debug_line    0x00001607     0x1022 Drivers/UART/src/uart.o
 
-.debug_str      0x00000000     0x1031
- .debug_str     0x00000000      0x373 Drivers/HASH/src/hash.o
-                                0x3be (size before relaxing)
- .debug_str     0x00000373      0x161 Drivers/HASH/src/main.o
-                                0x38b (size before relaxing)
- .debug_str     0x000004d4       0xd7 Drivers/HASH/src/startup.o
-                                0x25c (size before relaxing)
- .debug_str     0x000005ab      0x738 Drivers/NVIC/src/nvic.o
-                                0x8de (size before relaxing)
- .debug_str     0x00000ce3      0x34e Drivers/UART/src/uart.o
-                                0x97d (size before relaxing)
+.debug_str      0x00000000      0xfc3
+ .debug_str     0x00000000      0x893 Drivers/NVIC/src/nvic.o
+                                0x8f6 (size before relaxing)
+ .debug_str     0x00000893      0x1fc Drivers/RNG/src/main.o
+                                0x391 (size before relaxing)
+ .debug_str     0x00000a8f      0x11f Drivers/RNG/src/rng.o
+                                0x655 (size before relaxing)
+ .debug_str     0x00000bae       0xd6 Drivers/RNG/src/startup.o
+                                0x25b (size before relaxing)
+ .debug_str     0x00000c84      0x33f Drivers/UART/src/uart.o
+                                0x991 (size before relaxing)
 
-.debug_frame    0x00000000      0x744
- .debug_frame   0x00000000       0xe0 Drivers/HASH/src/hash.o
- .debug_frame   0x000000e0       0x54 Drivers/HASH/src/main.o
- .debug_frame   0x00000134       0x48 Drivers/HASH/src/startup.o
- .debug_frame   0x0000017c      0x32c Drivers/NVIC/src/nvic.o
- .debug_frame   0x000004a8      0x254 Drivers/UART/src/uart.o
- .debug_frame   0x000006fc       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
- .debug_frame   0x00000724       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+.debug_frame    0x00000000      0xb44
+ .debug_frame   0x00000000      0x33c Drivers/NVIC/src/nvic.o
+ .debug_frame   0x0000033c       0x34 Drivers/RNG/src/main.o
+ .debug_frame   0x00000370       0xa0 Drivers/RNG/src/rng.o
+ .debug_frame   0x00000410       0x48 Drivers/RNG/src/startup.o
+ .debug_frame   0x00000458      0x280 Drivers/UART/src/uart.o
+ .debug_frame   0x000006d8       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memcpy-stub.o)
+ .debug_frame   0x00000700       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memset.o)
+ .debug_frame   0x00000720       0x7c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-snprintf.o)
+ .debug_frame   0x0000079c       0x90 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-svfprintf.o)
+ .debug_frame   0x0000082c       0x60 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-vfprintf_i.o)
+ .debug_frame   0x0000088c       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memchr-stub.o)
+ .debug_frame   0x000008b4       0x28 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-memmove.o)
+ .debug_frame   0x000008dc       0x38 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-freer.o)
+ .debug_frame   0x00000914       0x4c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-mallocr.o)
+ .debug_frame   0x00000960       0x3c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-reallocr.o)
+ .debug_frame   0x0000099c       0x2c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-sbrkr.o)
+ .debug_frame   0x000009c8       0x30 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-mlock.o)
+ .debug_frame   0x000009f8       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-nano-msizer.o)
+ .debug_frame   0x00000a18       0x5c c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-reent.o)
+ .debug_frame   0x00000a74       0xb0 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libg_nano.a(lib_a-lock.o)
+ .debug_frame   0x00000b24       0x20 c:/program files (x86)/gnu arm embedded toolchain/10 2021.10/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v8-m.main/nofp\libnosys.a(sbrk.o)

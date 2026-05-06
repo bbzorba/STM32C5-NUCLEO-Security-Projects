@@ -7,7 +7,7 @@ typedef void (*isr_handler_t)(void);
 #endif
 uint32_t SystemCoreClock = 48000000UL;
 void SystemInit(void) { SystemCoreClock = 48000000UL; }
-/* HASH project: EXTI (GPIO interrupts) + HASH completion IRQ. */
+/* RNG project: EXTI (GPIO interrupts) + RNG ready IRQ (IRQn 64). */
 extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
 extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
 extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
@@ -16,7 +16,7 @@ extern void EXTI8_IRQHandler(void);  extern void EXTI9_IRQHandler(void);
 extern void EXTI10_IRQHandler(void); extern void EXTI11_IRQHandler(void);
 extern void EXTI12_IRQHandler(void); extern void EXTI13_IRQHandler(void);
 extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
-extern void HASH_IRQHandler(void);
+extern void RNG_IRQHandler(void);
 #define VECTOR_TABLE_CONTENT                                              \
     [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                          \
     [2]  = Default_Handler, [3]  = Default_Handler,                      \
@@ -32,7 +32,8 @@ extern void HASH_IRQHandler(void);
     [16 + 17] = EXTI10_IRQHandler, [16 + 18] = EXTI11_IRQHandler,       \
     [16 + 19] = EXTI12_IRQHandler, [16 + 20] = EXTI13_IRQHandler,       \
     [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,       \
-    [16 + 69] = TRNG_IRQHandler
+    [16 + 64] = RNG_IRQHandler
+
 #if defined(__ICCARM__)
 extern void *CSTACK$$Limit;
 #define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
@@ -55,4 +56,5 @@ void Reset_Handler(void) {
     SystemInit(); main(); while (1);
 }
 #endif
+
 void Default_Handler(void) { while (1); }

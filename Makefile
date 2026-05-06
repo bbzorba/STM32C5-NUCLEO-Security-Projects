@@ -17,7 +17,6 @@ PROJECT_DIR = Drivers/RNG
 #PROJECT_DIR = Projects/Secure_Firmware_Update
 #PROJECT_DIR = Projects/TrustZone
 #PROJECT_DIR = Projects/Crypto
-#PROJECT_DIR = Drivers/bxCAN_cpp
 
 CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
@@ -247,6 +246,15 @@ SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(DMA_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/DMA/inc
+endif
+
+# Project-specific wiring for RNG: needs GPIO and UART drivers
+RNG_SRC_C := Drivers/RNG/src/rng.c
+ifeq ($(PROJECT_DIR),Drivers/RNG)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/RNG/inc
 endif
 
 # nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
