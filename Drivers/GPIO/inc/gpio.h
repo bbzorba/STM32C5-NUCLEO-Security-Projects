@@ -357,6 +357,7 @@ typedef struct
     __IO uint32_t APB3ENR;        /* 0x0A8  RCC APB3 peripheral clock enable register       */
          uint32_t RESERVED7[11]; /* 0x0AC–0x0D4 (includes LPENR registers, unused)         */
     __IO uint32_t CCIPR1;         /* 0x0D8  RCC peripherals independent clock config reg 1  */
+    __IO uint32_t CCIPR2;         /* 0x0DC  RCC peripherals independent clock config reg 2  */
 } RCC_TypeDef;
 
 /* GPIO initialization structure */

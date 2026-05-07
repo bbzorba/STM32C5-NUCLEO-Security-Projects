@@ -25,8 +25,9 @@ typedef struct {
 /* Final SHA-256 digest output: 8 × 32-bit words at offset 0x310 */
 #define HASH_HR_OUT  ((volatile uint32_t *)(HASH_BASE + 0x310U))
 
-/* RCC clock enable for HASH */
-#define RCC_AHB2ENR_HASHEN  (1U << 17)
+/* RCC clock enable and reset for HASH (AHB2ENR/AHB2RSTR bit 17) */
+#define RCC_AHB2ENR_HASHEN   (1U << 17)
+#define RCC_AHB2RSTR_HASHEN  (1U << 17)
 
 /* CR bits */
 #define HASH_CR_INIT        (1U << 2)   /* Reset engine (self-clearing)    */

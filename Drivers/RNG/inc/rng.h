@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "string.h"
 #include "../../GPIO/inc/gpio.h"   /* RCC_TypeDef / RCC */
 #include "../../NVIC/inc/nvic.h"
+#include "../../UART/inc/uart.h"
 
 #define __IO volatile
 
@@ -15,6 +17,12 @@
 #define RCC_AHB2ENR_RNGEN   (1U << 18)
 /* RCC peripheral reset for RNG (AHB2RSTR bit 18) */
 #define RCC_AHB2RSTR_RNGEN  (1U << 18)
+
+/* RCC_CCIPR2: CK48 clock source selection (bits 25:24)
+ * CK48 feeds the RNG entropy clock (must be > fHCLK/32 to avoid CECS).
+ * Select hsi_div_3_ck = HSIDIV3 = HSIS/3 = 16 MHz — on by default (HSIDIV3ON=1 at reset). */
+#define RCC_CCIPR2_CK48SEL_MASK      (3U << 24)
+#define RCC_CCIPR2_CK48SEL_HSI_DIV3  (2U << 24)
 
 /* RNG CR register bits */
 #define RNG_CR_RNGEN    (1U << 2)   /* Enable RNG */
@@ -49,19 +57,19 @@ typedef enum {
 } RNG_StatusTypeDef;
 
 typedef struct {
-    RNG_ManualType    *Instance;
-    RNG_StatusTypeDef  status;
+    RNG_ManualType            *Instance;
+    volatile RNG_StatusTypeDef status;  /* volatile: written by ISR, polled by Generate_IT */
     /* State used by RNG_Generate_IT */
-    uint8_t           *it_buf;
-    size_t             it_len;
-    size_t             it_idx;
+    uint8_t                   *it_buf;
+    size_t                     it_len;
+    size_t                     it_idx;
 } RNG_HandleTypeDef;
 
 /***************** Public API *****************/
 void RNG_Constructor(RNG_HandleTypeDef *hrng);
 void RNG_Enable(RNG_HandleTypeDef *hrng);
+void RNG_Disable(RNG_HandleTypeDef *hrng);
 RNG_StatusTypeDef RNG_Generate(RNG_HandleTypeDef *hrng, uint8_t *buffer, size_t length);
 RNG_StatusTypeDef RNG_Generate_IT(RNG_HandleTypeDef *hrng, uint8_t *buffer, size_t length);
-void RNG_Disable(RNG_HandleTypeDef *hrng);
 
 #endif /* __RNG_H */

@@ -2,7 +2,10 @@
 
 void HASH_Constructor(HASH_HandleTypeDef *hhash)
 {
-    RCC->AHB2ENR |= RCC_AHB2ENR_HASHEN;
+    /* Enable clock, then reset to clear any stuck state from previous sessions */
+    RCC->AHB2ENR  |=  RCC_AHB2ENR_HASHEN;
+    RCC->AHB2RSTR |=  RCC_AHB2RSTR_HASHEN;
+    RCC->AHB2RSTR &= ~RCC_AHB2RSTR_HASHEN;
     hhash->Instance = HASH_PERIPH;
     hhash->state    = HASH_OK;
     hhash->msg_len  = 0;

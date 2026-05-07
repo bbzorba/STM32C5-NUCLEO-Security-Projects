@@ -694,12 +694,12 @@ LOAD linker stubs
  .comment       0x00000049       0x4a Drivers/RNG/src/startup.o
  .comment       0x00000049       0x4a Drivers/UART/src/uart.o
 
-.debug_info     0x00000000     0x3491
+.debug_info     0x00000000     0x348a
  .debug_info    0x00000000      0xf94 Drivers/NVIC/src/nvic.o
  .debug_info    0x00000f94      0x6d0 Drivers/RNG/src/main.o
- .debug_info    0x00001664      0x6b7 Drivers/RNG/src/rng.o
- .debug_info    0x00001d1b      0x1ce Drivers/RNG/src/startup.o
- .debug_info    0x00001ee9     0x15a8 Drivers/UART/src/uart.o
+ .debug_info    0x00001664      0x6b0 Drivers/RNG/src/rng.o
+ .debug_info    0x00001d14      0x1ce Drivers/RNG/src/startup.o
+ .debug_info    0x00001ee2     0x15a8 Drivers/UART/src/uart.o
 
 .debug_abbrev   0x00000000      0xbbd
  .debug_abbrev  0x00000000      0x291 Drivers/NVIC/src/nvic.o
@@ -733,12 +733,12 @@ LOAD linker stubs
  .debug_ranges  0x00000290       0x20 Drivers/RNG/src/startup.o
  .debug_ranges  0x000002b0      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x25ae
+.debug_line     0x00000000     0x25a7
  .debug_line    0x00000000      0xbef Drivers/NVIC/src/nvic.o
- .debug_line    0x00000bef      0x328 Drivers/RNG/src/main.o
- .debug_line    0x00000f17      0x4b1 Drivers/RNG/src/rng.o
- .debug_line    0x000013c8      0x1c4 Drivers/RNG/src/startup.o
- .debug_line    0x0000158c     0x1022 Drivers/UART/src/uart.o
+ .debug_line    0x00000bef      0x321 Drivers/RNG/src/main.o
+ .debug_line    0x00000f10      0x4b1 Drivers/RNG/src/rng.o
+ .debug_line    0x000013c1      0x1c4 Drivers/RNG/src/startup.o
+ .debug_line    0x00001585     0x1022 Drivers/UART/src/uart.o
 
 .debug_str      0x00000000      0xfc5
  .debug_str     0x00000000      0x893 Drivers/NVIC/src/nvic.o
@@ -746,7 +746,7 @@ LOAD linker stubs
  .debug_str     0x00000893      0x1f7 Drivers/RNG/src/main.o
                                 0x38c (size before relaxing)
  .debug_str     0x00000a8a      0x121 Drivers/RNG/src/rng.o
-                                0x65c (size before relaxing)
+                                0x657 (size before relaxing)
  .debug_str     0x00000bab       0xd6 Drivers/RNG/src/startup.o
                                 0x25b (size before relaxing)
  .debug_str     0x00000c81      0x344 Drivers/UART/src/uart.o

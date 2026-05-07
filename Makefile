@@ -9,14 +9,14 @@
 #PROJECT_DIR = Drivers/HASH
 #PROJECT_DIR = Drivers/CRC
 #PROJECT_DIR = Drivers/AES
-PROJECT_DIR = Drivers/RNG
+#PROJECT_DIR = Drivers/RNG
+PROJECT_DIR = Projects/ECDSA
 
 #TBD
-#PROJECT_DIR = Projects/Memory_Protection
 #PROJECT_DIR = Projects/Secure_Boot
+#PROJECT_DIR = Projects/Memory_Protection
 #PROJECT_DIR = Projects/Secure_Firmware_Update
 #PROJECT_DIR = Projects/TrustZone
-#PROJECT_DIR = Projects/Crypto
 
 CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
@@ -255,6 +255,15 @@ SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/RNG/inc
+endif
+
+# Project-specific wiring for ECDSA: needs GPIO, UART, and HASH drivers
+HASH_SRC_C := Drivers/HASH/src/hash.c
+ifeq ($(strip $(PROJECT_DIR)),Projects/ECDSA)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
 endif
 
 # nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
@@ -538,6 +547,14 @@ ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/CRC))
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
+endif
+
+# Project-specific wiring for ECDSA: needs HASH, GPIO and UART drivers
+ifneq (,$(filter $(strip $(PROJECT_DIR)),Projects/ECDSA))
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
 endif
 
 # --------------------

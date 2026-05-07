@@ -1,6 +1,4 @@
-﻿#include <string.h>
-#include "../inc/rng.h"
-#include "../../UART/inc/uart.h"
+﻿#include "../inc/rng.h"
 
 static USART_HandleType huart;
 
@@ -12,12 +10,6 @@ int main(void)
     RNG_HandleTypeDef hrng;
     RNG_Constructor(&hrng);
     RNG_Enable(&hrng);
-    USART_WriteString(&huart, "CR=0x"); uart_write_hex32(&huart, hrng.Instance->CR);
-    USART_WriteString(&huart, " SR=0x"); uart_write_hex32(&huart, hrng.Instance->SR);
-    /* NSMR at base+0x30: should be 0x1FF (all oscillators unmasked) */
-    volatile uint32_t nsmr = *(volatile uint32_t*)(0x420C0800U + 0x30U);
-    USART_WriteString(&huart, " NSMR=0x"); uart_write_hex32(&huart, nsmr);
-    USART_WriteString(&huart, "\r\n");
 
     uint8_t random_data[16];
     if (RNG_Generate(&hrng, random_data, sizeof(random_data)) == RNG_OK) {
