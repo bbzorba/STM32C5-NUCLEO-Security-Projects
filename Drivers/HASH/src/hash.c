@@ -102,9 +102,14 @@ HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *
     size_t full_words = len / 4U;
     size_t rem        = len % 4U;
 
-    /* Feed full 32-bit words; poll DINIS before each write */
+    /* Feed full 32-bit words.
+     * DINIS=1 only when all 16 FIFO slots are free (block boundary).
+     * Writing DIN clears DINIS; it only returns to 1 after the engine
+     * consumes a complete 16-word block.  Poll only at block boundaries. */
     for (size_t i = 0; i < full_words; i++) {
-        while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        if ((i % 16U) == 0U) {
+            while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        }
         uint32_t w = ((uint32_t)data[i*4+0] << 24) |
                      ((uint32_t)data[i*4+1] << 16) |
                      ((uint32_t)data[i*4+2] <<  8) |
@@ -112,9 +117,12 @@ HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *
         hhash->Instance->DIN = w;
     }
 
-    /* Partial last word: set NBLW in STR BEFORE writing DIN */
+    /* Partial last word: set NBLW in STR BEFORE writing DIN.
+     * Poll DINIS only if we are at a fresh block boundary. */
     if (rem > 0) {
-        while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        if ((full_words % 16U) == 0U) {
+            while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        }
         hhash->Instance->STR = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
         uint32_t last = 0;
         for (size_t j = 0; j < rem; j++)

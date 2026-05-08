@@ -30,17 +30,13 @@ int main(void)
     ECDSA_HandleTypeDef hecdsa;
     ECDSA_Init(&hecdsa, &hhash, pub_x, pub_y);
 
-    const char *msg = "testtest"; /* 8 bytes = 2 full words, 0 remainder */
+    const char *msg = "hello secure world";
 
     /* First: print the SHA-256 hash of the message to show HASH driver works */
     uint8_t hash[32];
-    USART_WriteString(&huart, "[1] before Start\r\n");
     HASH_SHA256_Start(&hhash);
-    USART_WriteString(&huart, "[2] before Update\r\n");
     HASH_SHA256_Update(&hhash, (const uint8_t *)msg, strlen(msg));
-    USART_WriteString(&huart, "[3] before Final\r\n");
     HASH_SHA256_Final(&hhash, hash);
-    USART_WriteString(&huart, "[4] after Final\r\n");
     USART_WriteString(&huart, "SHA-256: ");
     for (size_t i = 0; i < 32; i++) {
         char byte_str[3];
