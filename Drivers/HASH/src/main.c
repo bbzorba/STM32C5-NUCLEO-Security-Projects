@@ -40,6 +40,10 @@ int main(void)
              "abc", HASH_SHA224_Start, HASH_SHA224_Final, 28,
              "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7");
 
+    run_test("SHA-224(whole alphabet) = ",
+             "abcdefghijklmnopqrstuvwxyz", HASH_SHA224_Start, HASH_SHA224_Final, 28,
+             "45a5f72c39c5cff2522eb3429799e49e5f44b356ef926bcf390dccc2");
+
     run_test("SHA-256(\"abc\") = ",
              "abc", HASH_SHA256_Start, HASH_SHA256_Final, 32,
              "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
