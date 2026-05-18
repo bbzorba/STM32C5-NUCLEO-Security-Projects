@@ -10,11 +10,11 @@
 #PROJECT_DIR = Drivers/CRC
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/RNG
-PROJECT_DIR = Projects/ECDSA
+#PROJECT_DIR = Projects/ECDSA
+PROJECT_DIR = Projects/FLASH
 
 #TBD
 #PROJECT_DIR = Projects/Secure_Boot
-#PROJECT_DIR = Projects/Memory_Protection
 #PROJECT_DIR = Projects/Secure_Firmware_Update
 #PROJECT_DIR = Projects/TrustZone
 
@@ -258,12 +258,47 @@ CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/RNG/inc
 endif
 
 # Project-specific wiring for ECDSA: needs GPIO, UART, and HASH drivers
-HASH_SRC_C := Drivers/HASH/src/hash.c
+HASH_SRC_C  := Drivers/HASH/src/hash.c
+ECDSA_SRC_C := Projects/ECDSA/src/ecdsa.c
 ifeq ($(strip $(PROJECT_DIR)),Projects/ECDSA)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
+endif
+
+# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, RNG, and ECDSA
+ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_Boot)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
+          -IDrivers/RNG/inc -IProjects/ECDSA/inc
+endif
+
+# Project-specific wiring for Dummy_Project: needs UART
+ifeq ($(strip $(PROJECT_DIR)),Projects/Dummy_Project)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/UART/inc
+endif
+
+# Project-specific wiring for Memory_Protection: needs GPIO, UART, HASH, RNG, and ECDSA (same as Secure_Boot)
+ifeq ($(strip $(PROJECT_DIR)),Projects/Memory_Protection)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
+          -IDrivers/RNG/inc -IProjects/ECDSA/inc
+endif
+
+# Project-specific wiring for FLASH: needs UART
+ifeq ($(strip $(PROJECT_DIR)),Projects/FLASH)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/UART/inc
 endif
 
 # nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.

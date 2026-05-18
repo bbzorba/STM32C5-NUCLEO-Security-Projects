@@ -4,10 +4,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
-#include "../../GPIO/inc/gpio.h"   /* RCC_TypeDef / RCC */
-#include "../../NVIC/inc/nvic.h"
-#include "../../UART/inc/uart.h"
-#include "../../HASH/inc/hash.h"   /* For hashing messages before signing */
+#include "../../../Drivers/GPIO/inc/gpio.h"   /* RCC_TypeDef / RCC */
+#include "../../../Drivers/NVIC/inc/nvic.h"
+#include "../../../Drivers/UART/inc/uart.h"
+#include "../../../Drivers/HASH/inc/hash.h"   /* For hashing messages before signing */
 
 #define ECC_BYTES 32
 
