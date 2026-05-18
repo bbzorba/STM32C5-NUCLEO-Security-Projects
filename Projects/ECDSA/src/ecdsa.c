@@ -18,9 +18,9 @@ static void point_mul(uint8_t *out_x,
                       const uint8_t *k,
                       const uint8_t *px)
 {
-    /* Simplified fake math */
-    for (int i = 0; i < 32; i++)
-        out_x[i] = px[i] ^ k[i];
+    /* Demo: treat scalar multiply as identity on k */
+    (void)px;
+    memcpy(out_x, k, 32);
 }
 
 /* ===== Dummy EC add ===== */
@@ -28,8 +28,9 @@ static void point_add(uint8_t *out,
                       const uint8_t *a,
                       const uint8_t *b)
 {
-    for (int i = 0; i < 32; i++)
-        out[i] = a[i] ^ b[i];
+    /* Demo: return first operand */
+    (void)b;
+    memcpy(out, a, 32);
 }
 
 

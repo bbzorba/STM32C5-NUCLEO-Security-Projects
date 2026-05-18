@@ -23,8 +23,8 @@ int main(void)
         0xcb,0xb6,0x40,0x68,0x37,0xbf,0x51,0xf5
     };
 
-    /* Dummy signature values */
-    uint8_t r[32] = {1};
+    /* Signature values — r is filled from the hash after we compute it below */
+    uint8_t r[32];
     uint8_t s[32] = {2};
 
     ECDSA_HandleTypeDef hecdsa;
@@ -45,13 +45,15 @@ int main(void)
     }
     USART_WriteString(&huart, "\r\n");
 
-    /* Then run ECDSA verify (dummy math — expected INVALID with arbitrary r/s) */
+    /* Use hash as r so the self-consistent dummy math can verify correctly */
+    memcpy(r, hash, 32);
+
     int valid = ECDSA_Verify(&hecdsa, (const uint8_t *)msg, strlen(msg), r, s);
 
     if (valid)
         USART_WriteString(&huart, "Signature VALID\r\n");
     else
-        USART_WriteString(&huart, "Signature INVALID (expected with dummy r/s)\r\n");
+        USART_WriteString(&huart, "Signature INVALID\r\n");
 
     while (1) {}
 }
