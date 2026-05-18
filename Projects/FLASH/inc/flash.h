@@ -14,26 +14,39 @@
 /* ==== FLASH REGISTERS ==== */
 typedef struct
 {
-    __IO uint32_t ACR;
-    __IO uint32_t PDKEYR;
-    __IO uint32_t KEYR;
-    __IO uint32_t OPTKEYR;
-    __IO uint32_t SR;
-    __IO uint32_t CR;
-    __IO uint32_t ECCR;
-    __IO uint32_t OPTR;
+    __IO uint32_t ACR;          /* 0x000 - Access control register   */
+    __IO uint32_t KEYR;         /* 0x004 - Flash key register        */
+         uint32_t RESERVED0;   /* 0x008                              */
+    __IO uint32_t OPTKEYR;      /* 0x00C - Option key register       */
+         uint32_t RESERVED1[2];/* 0x010-0x014                        */
+    __IO uint32_t OPSR;         /* 0x018 - Operation status register */
+    __IO uint32_t OPTCR;        /* 0x01C - Option control register   */
+    __IO uint32_t SR;           /* 0x020 - Status register           */
+         uint32_t RESERVED2;   /* 0x024                              */
+    __IO uint32_t CR;           /* 0x028 - Control register          */
 } FLASH_TypeDef;
 
 #define FLASH ((FLASH_TypeDef*)FLASH_BASE_ADDR)
 
 /* ==== FLASH CONTROL BITS ==== */
-#define FLASH_CR_PG        (1U << 0)
-#define FLASH_CR_PER       (1U << 1)
-#define FLASH_CR_STRT      (1U << 16)
-#define FLASH_CR_LOCK      (1U << 31)
+#define FLASH_CR_LOCK       (1U << 0)   /* Configuration lock             */
+#define FLASH_CR_PG         (1U << 1)   /* Programming enable             */
+#define FLASH_CR_SER        (1U << 2)   /* Sector erase                   */
+#define FLASH_CR_BER        (1U << 3)   /* Bank erase                     */
+#define FLASH_CR_FW         (1U << 4)   /* Force write (flush buffer)     */
+#define FLASH_CR_STRT       (1U << 5)   /* Start erase                    */
+#define FLASH_CR_SNB_SHIFT  6
+#define FLASH_CR_SNB_MASK   (0x3FU << FLASH_CR_SNB_SHIFT)  /* Sector number [11:6] */
+#define FLASH_CR_BKSEL      (1U << 31)  /* Bank select (0=bank1, 1=bank2) */
 
 /* ==== FLASH STATUS BITS ==== */
-#define FLASH_SR_BSY       (1U << 16)
+#define FLASH_SR_BSY        (1U << 0)   /* Busy flag                      */
+#define FLASH_SR_WBNE       (1U << 1)   /* Write buffer not empty         */
+
+/* ==== FLASH GEOMETRY ==== */
+#define FLASH_BANK1_BASE    0x08000000U
+#define FLASH_BANK2_BASE    0x08040000U
+#define FLASH_SECTOR_SIZE   0x00002000U  /* 8 KB per sector */
 
 /* ==== FLASH KEYS ==== */
 #define FLASH_KEY1 0x45670123U

@@ -9,19 +9,14 @@ int main(void)
 
     USART_HandleType huart;
     USART_constructor(&huart, USART_2, TX_ONLY, __115200);
-
     USART_WriteString(&huart, "\r\nFLASH TEST\r\n");
 
     FLASH_Unlock(&hflash);
-
     FLASH_ErasePage(&hflash, KEY_STORAGE_ADDR);
-
     FLASH_ProgramWord(&hflash, KEY_STORAGE_ADDR, 0x12345678);
-
     FLASH_Lock(&hflash);
 
-    uint32_t value =
-        *(volatile uint32_t*)KEY_STORAGE_ADDR;
+    uint32_t value = *(volatile uint32_t*)KEY_STORAGE_ADDR;
 
     if (value == 0x12345678)
         USART_WriteString(&huart, "FLASH WRITE OK\r\n");
