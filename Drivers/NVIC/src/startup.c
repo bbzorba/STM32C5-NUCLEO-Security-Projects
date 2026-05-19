@@ -82,7 +82,7 @@ extern void RNG_IRQHandler(void);
     [11] = Default_Handler,   /* SVCall            */               \
     [12] = Default_Handler,   /* DebugMon          */               \
     [14] = Default_Handler,   /* PendSV            */               \
-    [15] = Default_Handler,   /* SysTick           */               \
+    [15] = SysTick_Handler,   /* SysTick           */               \
     /* EXTI line IRQs (lines 0-15, IRQn 7-22) */                    \
     [16 +  7] = EXTI0_IRQHandler,                                    \
     [16 +  8] = EXTI1_IRQHandler,                                    \

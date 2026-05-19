@@ -12,6 +12,7 @@
 #PROJECT_DIR = Drivers/RNG
 #PROJECT_DIR = Projects/ECDSA
 PROJECT_DIR = Projects/FLASH
+#PROJECT_DIR = Drivers/SysTick
 
 #TBD
 #PROJECT_DIR = Projects/Secure_Boot
@@ -157,24 +158,6 @@ SPI_SRC_CPP := Drivers/SPI_cpp/src/spi.cpp
 UART_SRC_C := Drivers/UART/src/uart.c
 UART_SRC_CPP := Drivers/UART_cpp/src/uart.cpp
 
-PWM_SRC_C := Drivers/PWM/src/pwm.c
-PWM_SRC_CPP := Drivers/PWM_cpp/src/pwm.cpp
-
-HC_06_SRC_C := Projects/HC06_Bluetooth/src/hc06.c
-HC_06_SRC_CPP := Projects/HC06_Bluetooth_cpp/src/hc06.cpp
-
-Servo_MOTOR_SRC_C := Projects/Servo_Motor/src/servo.c
-Servo_MOTOR_SRC_CPP := Projects/Servo_Motor_cpp/src/servo.cpp
-
-MLX90614_SRC_C := Projects/MLX90614_Temp/src/mlx90614_temp.c
-MLX90614_SRC_CPP := Projects/MLX90614_Temp_cpp/src/mlx90614_temp.cpp
-
-LED_SRC_C := Projects/LED_Blink/src/led.c
-LED_SRC_CPP := Projects/LED_Blink_cpp/src/led.cpp
-
-# BME68x environmental sensor sources
-BME68X_SRC_C := Projects/BME68x_Env_Sensor/src/bme68x_env_sensor.c
-
 # Automatically include GPIO library when project includes the following source files
 ifneq (,$(filter systick.c hc06.c pwm.c servo.c,$(notdir $(SRC))))
 # Important: OBJ is derived from SRC_C/SRC_CPP (not SRC). Only add if not already present.
@@ -199,22 +182,10 @@ SRC_C += $(filter-out $(SRC_C),$(PWM_SRC_C))
 CFLAGS += -IDrivers/PWM/inc
 endif
 
-# Project-specific wiring for C++ servo/controller projects to ensure PWM_cpp is compiled
-ifeq ($(PROJECT_DIR),Projects/Servo_Motor_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(PWM_SRC_CPP))
-SRC_C   += $(filter-out $(SRC_C),$(PWM_SRC_C))
-CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/UART_cpp/inc -IDrivers/PWM_cpp/inc -IDrivers/PWM/inc
-endif
-
-ifeq ($(PROJECT_DIR),Projects/HC06_Servo_Controller_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(PWM_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(HC_06_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(Servo_MOTOR_SRC_CPP))
-CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/UART_cpp/inc -IDrivers/PWM_cpp/inc -IDrivers/PWM/inc
+# Project-specific wiring for SysTick: needs GPIO
+ifeq ($(PROJECT_DIR),Drivers/SysTick)
+SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc
 endif
 
 # Project-specific wiring for AES: needs GPIO and UART drivers

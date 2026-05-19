@@ -1,4 +1,4 @@
-﻿#include <stdint.h>
+#include <stdint.h>
 extern int main(void); extern void SystemInit(void);
 void Reset_Handler(void); void Default_Handler(void);
 typedef void (*isr_handler_t)(void);
@@ -7,7 +7,7 @@ typedef void (*isr_handler_t)(void);
 #endif
 uint32_t SystemCoreClock = 48000000UL;
 void SystemInit(void) { SystemCoreClock = 48000000UL; }
-/* RNG project: EXTI (GPIO interrupts) + RNG ready IRQ (IRQn 64). */
+/* SYSTICK project: EXTI (GPIO interrupts) + SYSTICK ready IRQ (IRQn 64). */
 extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
 extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
 extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
@@ -16,15 +16,14 @@ extern void EXTI8_IRQHandler(void);  extern void EXTI9_IRQHandler(void);
 extern void EXTI10_IRQHandler(void); extern void EXTI11_IRQHandler(void);
 extern void EXTI12_IRQHandler(void); extern void EXTI13_IRQHandler(void);
 extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
-extern void FLASH_IRQHandler(void);
-#define VECTOR_TABLE_CONTENT                                            \
+extern void SysTick_Handler(void);
+#define VECTOR_TABLE_CONTENT                                              \
     [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                          \
-    [2]  = Default_Handler, [3]  = Default_Handler,                     \
-    [4]  = Default_Handler, [5]  = Default_Handler,                     \
-    [6]  = Default_Handler, [11] = Default_Handler,                     \
-    [12] = Default_Handler, [14] = Default_Handler,                     \
-    [15] = Default_Handler,                                             \
-    [16 + 5] = FLASH_IRQHandler,                                        \
+    [2]  = Default_Handler, [3]  = Default_Handler,                      \
+    [4]  = Default_Handler, [5]  = Default_Handler,                      \
+    [6]  = Default_Handler, [11] = Default_Handler,                      \
+    [12] = Default_Handler, [14] = Default_Handler,                      \
+    [15] = SysTick_Handler,                                              \
     [16 +  7] = EXTI0_IRQHandler,  [16 +  8] = EXTI1_IRQHandler,        \
     [16 +  9] = EXTI2_IRQHandler,  [16 + 10] = EXTI3_IRQHandler,        \
     [16 + 11] = EXTI4_IRQHandler,  [16 + 12] = EXTI5_IRQHandler,        \
