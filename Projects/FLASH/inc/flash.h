@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include "../../../Drivers/NVIC/inc/nvic.h"
 #include "../../../Drivers/UART/inc/uart.h"
+#include "../../../Drivers/CRC/inc/crc.h"
+#include "../../../Drivers/AES/inc/aes.h"
 
 #define __IO volatile
 
@@ -98,7 +100,7 @@ typedef struct {
 } FLASH_HandleTypeDef;
 
 
-/* ==== API ==== */
+/* ==== FLASH READ/WRITE API ==== */
 void FLASH_Init(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Unlock(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Lock(FLASH_HandleTypeDef *hflash);
@@ -106,8 +108,15 @@ uint32_t            FLASH_ReadWord(uint32_t address);
 uint8_t             FLASH_ReadByte(uint32_t address);
 FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t address, uint32_t data);
 FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_address);
+
+/* ==== FLASH SECURITY API ==== */
 FLASH_StatusTypeDef FLASH_WriteProtect(FLASH_HandleTypeDef *hflash, uint8_t bank, uint32_t sector_mask);
 uint8_t             FLASH_ReadProtect(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_IsWriteProtected(FLASH_HandleTypeDef *hflash, uint32_t address);
-
+FLASH_StatusTypeDef FLASH_CheckIntegrity(CRC_HandleTypeDef *hcrc, uint32_t address, size_t length, const uint8_t expected_crc[4]);
+FLASH_StatusTypeDef FLASH_StoreIntegrityTag(FLASH_HandleTypeDef *hflash,
+                                             CRC_HandleTypeDef  *hcrc,
+                                             uint32_t region_addr,
+                                             size_t   region_len,
+                                             uint32_t tag_addr);
 #endif /* __FLASH_H */

@@ -100,6 +100,57 @@ static void Test_FlashSecurityFeatures(FLASH_HandleTypeDef *hflash, USART_Handle
 
 }
 
+static void Test_FlashIntegrity(FLASH_HandleTypeDef *hflash, CRC_HandleTypeDef *hcrc, SysTick_HandleTypeDef *htick, USART_HandleType *huart, char buffer[64]) {
+    USART_WriteString(huart, "\r\n--- Data Integrity Check ---\r\n");
+
+    /* CRC region:  all of bank 1 (256 KB) — covers app code + key storage */
+    /* CRC tag:     bank 2 sector 0 (0x08040000) — outside the measured region */
+    const uint32_t region_addr = FLASH_BANK1_BASE;
+    const uint32_t region_size = 256U * 1024U;
+    const uint32_t tag_addr    = FLASH_BANK2_BASE;
+
+    /* Step 1: compute CRC of bank 1 and store it in bank 2 sector 0 */
+    SysTick_StartTimer(htick);
+    FLASH_StatusTypeDef store_status = FLASH_StoreIntegrityTag(hflash, hcrc,
+                                            region_addr, region_size, tag_addr);
+    uint32_t elapsed = SysTick_GetElapsedTime_us(htick);
+    sprintf(buffer, "Store tag: %s  Elapsed (us): %lu\r\n",
+            store_status == FLASH_OK ? "OK" : "FAIL", elapsed);
+    USART_WriteString(huart, buffer);
+
+    if (store_status != FLASH_OK) {
+        USART_WriteString(huart, "FLASH DATA INTEGRITY FAILED\r\n");
+        return;
+    }
+
+    /* Step 2: read back the stored CRC word and unpack to byte array */
+    uint32_t stored_word = FLASH_ReadWord(tag_addr);
+    uint8_t  stored_crc[4] = {
+        (uint8_t)(stored_word >> 24),
+        (uint8_t)(stored_word >> 16),
+        (uint8_t)(stored_word >>  8),
+        (uint8_t)(stored_word)
+    };
+    sprintf(buffer, "CRC tag:   %02X%02X%02X%02X  @0x%08lX\r\n",
+            stored_crc[0], stored_crc[1], stored_crc[2], stored_crc[3],
+            (unsigned long)tag_addr);
+    USART_WriteString(huart, buffer);
+
+    /* Step 3: verify — re-compute CRC of bank 1 and compare to stored tag */
+    SysTick_StartTimer(htick);
+    FLASH_StatusTypeDef check_status = FLASH_CheckIntegrity(hcrc,
+                                            region_addr, region_size, stored_crc);
+    elapsed = SysTick_GetElapsedTime_us(htick);
+    sprintf(buffer, "Verify:    %s  Elapsed (us): %lu\r\n",
+            check_status == FLASH_OK ? "OK" : "FAIL", elapsed);
+    USART_WriteString(huart, buffer);
+
+    if (check_status == FLASH_OK)
+        USART_WriteString(huart, "FLASH DATA INTEGRITY OK\r\n");
+    else
+        USART_WriteString(huart, "FLASH DATA INTEGRITY FAILED\r\n");
+}
+
 int main(void)
 {
     FLASH_HandleTypeDef hflash;
@@ -112,9 +163,13 @@ int main(void)
     SysTick_HandleTypeDef htick;
     SysTick_constructor(&htick, SysTick, SYSTICK_OK);
 
+    CRC_HandleTypeDef hcrc;
+    CRC_Constructor(&hcrc);
+
     char buffer[64];
 
     Test_FlashElapsedTime(&hflash, &huart, &htick, buffer);
     Test_FlashSecurityFeatures(&hflash, &huart, buffer);
+    Test_FlashIntegrity(&hflash, &hcrc, &htick, &huart, buffer);
     while (1){ }
 }

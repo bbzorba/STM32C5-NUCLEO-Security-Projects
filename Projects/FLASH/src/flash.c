@@ -50,7 +50,9 @@ FLASH_StatusTypeDef FLASH_Lock(FLASH_HandleTypeDef *hflash) {
 FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t address, uint32_t data) {
     while (hflash->Instance->SR & FLASH_SR_BSY);
 
-    hflash->Instance->CR |= FLASH_CR_PG;
+    /* Select bank: BKSEL=1 for addresses in bank 2 (>= 0x08040000). */
+    uint32_t bksel = (address >= FLASH_BANK2_BASE) ? FLASH_CR_BKSEL : 0U;
+    hflash->Instance->CR |= FLASH_CR_PG | bksel;
 
     *(volatile uint32_t*)address = data;
 
@@ -61,7 +63,7 @@ FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t addr
     /* Wait until the write buffer is empty and the operation is done. */
     while (hflash->Instance->SR & (FLASH_SR_BSY | FLASH_SR_WBNE));
 
-    hflash->Instance->CR &= ~FLASH_CR_PG;
+    hflash->Instance->CR &= ~(FLASH_CR_PG | FLASH_CR_BKSEL);
 
     return FLASH_OK;
 }
@@ -109,54 +111,4 @@ FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_a
     hflash->last_error = s_flash_error;
 
     return s_flash_error ? FLASH_ERROR : FLASH_OK;
-}
-
-/* ==== WRITE PROTECT ====
- * Programs WRP1R/WRP2R_PRG so the specified sectors are write-protected.
- * Each bit in sector_mask that is SET will be CLEARED in the PRG register
- * (0 = sector protected, 1 = sector writable — hardware polarity).
- * Changes are staged in the PRG register. Activate by calling OPTSTRT
- * and performing a system reset (not done here to keep the demo safe).
- */
-FLASH_StatusTypeDef FLASH_WriteProtect(FLASH_HandleTypeDef *hflash,
-                                         uint8_t bank, uint32_t sector_mask)
-{
-    /* Unlock option bytes if locked */
-    if (hflash->Instance->OPTCR & FLASH_OPTCR_OPTLOCK) {
-        hflash->Instance->OPTKEYR = FLASH_OPTKEY1;
-        hflash->Instance->OPTKEYR = FLASH_OPTKEY2;
-        if (hflash->Instance->OPTCR & FLASH_OPTCR_OPTLOCK)
-            return FLASH_ERROR;
-    }
-
-    /* Clear the bits for the requested sectors to enable write protection */
-    if (bank == 1U)
-        FLASH_WRP1R_PRG_REG &= ~sector_mask;
-    else
-        FLASH_WRP2R_PRG_REG &= ~sector_mask;
-
-    /* Re-lock option bytes without committing (safe for demo) */
-    hflash->Instance->OPTCR |= FLASH_OPTCR_OPTLOCK;
-    return FLASH_OK;
-}
-
-/* ==== READ PROTECT ====
- * Returns the active RDP level byte from OPTSR_CUR bits[15:8].
- * 0xAA = Level 0 (no protection), 0xBB = Level 1, 0xCC = Level 2 (irreversible).
- */
-uint8_t FLASH_ReadProtect(FLASH_HandleTypeDef *hflash)
-{
-    (void)hflash;
-    return (uint8_t)((FLASH_OPTSR_CUR_REG >> 8U) & 0xFFU);
-}
-
-FLASH_StatusTypeDef FLASH_IsWriteProtected(FLASH_HandleTypeDef *hflash, uint32_t address) {
-    uint32_t sector_mask;
-    if (address >= FLASH_BANK2_BASE) {
-        sector_mask = 1U << ((address - FLASH_BANK2_BASE) / FLASH_SECTOR_SIZE);
-        return (FLASH_WRP2R_CUR_REG & sector_mask) == 0U ? FLASH_OK : FLASH_ERROR; // 0 = protected
-    } else {
-        sector_mask = 1U << ((address - FLASH_BANK1_BASE) / FLASH_SECTOR_SIZE);
-        return (FLASH_WRP1R_CUR_REG & sector_mask) == 0U ? FLASH_OK : FLASH_ERROR; // 0 = protected
-    }
 }
