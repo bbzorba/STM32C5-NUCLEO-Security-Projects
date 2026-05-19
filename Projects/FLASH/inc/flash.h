@@ -42,6 +42,39 @@ typedef struct
 /* ==== FLASH STATUS BITS ==== */
 #define FLASH_SR_BSY        (1U << 0)   /* Busy flag                      */
 #define FLASH_SR_WBNE       (1U << 1)   /* Write buffer not empty         */
+#define FLASH_SR_EOP        (1U << 16)  /* End of operation flag          */
+#define FLASH_SR_WRPERR     (1U << 17)  /* Write protection error flag    */
+#define FLASH_SR_PGSERR     (1U << 18)  /* Programming sequence error     */
+
+/* ==== FLASH INTERRUPT ENABLE (FLASH_CR bits) ==== */
+#define FLASH_CR_EOPIE      (1U << 16)  /* EOP interrupt enable           */
+#define FLASH_CR_WRPERRIE   (1U << 17)  /* Write-protect error interrupt  */
+
+/* ==== FLASH CLEAR CONTROL REGISTER (FLASH_CCR @ base+0x030) ==== */
+#define FLASH_CCR_CLR_EOP    (1U << 16) /* Clear EOP flag                 */
+#define FLASH_CCR_CLR_WRPERR (1U << 17) /* Clear WRPERR flag              */
+#define FLASH_CCR_CLR_PGSERR (1U << 18) /* Clear PGSERR flag              */
+
+/* ==== FLASH OPTION CONTROL BITS ==== */
+#define FLASH_OPTCR_OPTLOCK (1U << 0)   /* Option bytes configuration lock */
+#define FLASH_OPTCR_OPTSTRT (1U << 1)   /* Start option byte programming   */
+
+/* ==== OPTION BYTE UNLOCK KEYS ==== */
+#define FLASH_OPTKEY1  0x08192A3BU
+#define FLASH_OPTKEY2  0x4C5D6E7FU
+
+/* ==== RDP LEVEL CODES (Hamming 8,4 encoded per SVD) ==== */
+#define FLASH_RDP_LEVEL_0  0xAAU        /* No read protection (default)   */
+#define FLASH_RDP_LEVEL_1  0xBBU        /* Level 1 read protection        */
+
+/* ==== EXTENDED REGISTER DIRECT ACCESS (beyond FLASH_TypeDef) ==== */
+#define FLASH_CCR_REG        (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x030U))
+#define FLASH_OPTSR_CUR_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x050U))
+#define FLASH_OPTSR_PRG_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x054U))
+#define FLASH_WRP1R_CUR_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x0E8U))
+#define FLASH_WRP1R_PRG_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x0ECU))
+#define FLASH_WRP2R_CUR_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x1E8U))
+#define FLASH_WRP2R_PRG_REG  (*(volatile uint32_t*)(FLASH_BASE_ADDR + 0x1ECU))
 
 /* ==== FLASH GEOMETRY ==== */
 #define FLASH_BANK1_BASE    0x08000000U
@@ -69,7 +102,12 @@ typedef struct {
 void FLASH_Init(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Unlock(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Lock(FLASH_HandleTypeDef *hflash);
+uint32_t            FLASH_ReadWord(uint32_t address);
+
 FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t address, uint32_t data);
 FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_address);
-    
+FLASH_StatusTypeDef FLASH_WriteProtect(FLASH_HandleTypeDef *hflash, uint8_t bank, uint32_t sector_mask);
+uint8_t             FLASH_ReadProtect(FLASH_HandleTypeDef *hflash);
+FLASH_StatusTypeDef FLASH_IsWriteProtected(FLASH_HandleTypeDef *hflash, uint32_t address);
+
 #endif /* __FLASH_H */

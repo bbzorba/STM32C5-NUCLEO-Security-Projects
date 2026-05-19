@@ -756,13 +756,13 @@ LOAD linker stubs
  .debug_ranges  0x000002d8       0x48 Drivers/SysTick/src/systick.o
  .debug_ranges  0x00000320      0x2a8 Drivers/UART/src/uart.o
 
-.debug_line     0x00000000     0x29bf
+.debug_line     0x00000000     0x29c1
  .debug_line    0x00000000      0x503 Drivers/GPIO/src/gpio.o
  .debug_line    0x00000503      0xbef Drivers/NVIC/src/nvic.o
- .debug_line    0x000010f2      0x29a Drivers/SysTick/src/main.o
- .debug_line    0x0000138c      0x1c8 Drivers/SysTick/src/startup.o
- .debug_line    0x00001554      0x449 Drivers/SysTick/src/systick.o
- .debug_line    0x0000199d     0x1022 Drivers/UART/src/uart.o
+ .debug_line    0x000010f2      0x29c Drivers/SysTick/src/main.o
+ .debug_line    0x0000138e      0x1c8 Drivers/SysTick/src/startup.o
+ .debug_line    0x00001556      0x449 Drivers/SysTick/src/systick.o
+ .debug_line    0x0000199f     0x1022 Drivers/UART/src/uart.o
 
 .debug_str      0x00000000     0x11dc
  .debug_str     0x00000000      0x3c0 Drivers/GPIO/src/gpio.o

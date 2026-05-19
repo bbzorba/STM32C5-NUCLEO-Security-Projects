@@ -26,6 +26,8 @@ typedef enum IRQn
     DebugMonitor_IRQn      = -4,
     PendSV_IRQn            = -2,
     SysTick_IRQn           = -1,
+    /* FLASH global interrupt */
+    FLASH_IRQn  = 5,
     /* EXTI line IRQs (GPIO external interrupt lines 0-15) */
     EXTI0_IRQn  = 7,
     EXTI1_IRQn  = 8,

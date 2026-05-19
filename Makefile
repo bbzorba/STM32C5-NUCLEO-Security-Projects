@@ -11,8 +11,8 @@
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/RNG
 #PROJECT_DIR = Projects/ECDSA
-#PROJECT_DIR = Projects/FLASH
-PROJECT_DIR = Drivers/SysTick
+PROJECT_DIR = Projects/FLASH
+#PROJECT_DIR = Drivers/SysTick
 
 #TBD
 #PROJECT_DIR = Projects/Secure_Boot
@@ -147,16 +147,10 @@ SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
 SRC := $(SRC_C) $(SRC_CPP)
 
 GPIO_SRC_C := Drivers/GPIO/src/gpio.c
-GPIO_SRC_CPP := Drivers/GPIO_cpp/src/gpio.cpp
-
 I2C_SRC_C := Drivers/I2C/src/i2c.c
-I2C_SRC_CPP := Drivers/I2C_cpp/src/i2c.cpp
-
 SPI_SRC_C := Drivers/SPI/src/spi.c
-SPI_SRC_CPP := Drivers/SPI_cpp/src/spi.cpp
-
 UART_SRC_C := Drivers/UART/src/uart.c
-UART_SRC_CPP := Drivers/UART_cpp/src/uart.cpp
+SYSTICK_SRC_C := Drivers/SysTick/src/systick.c
 
 # Automatically include GPIO library when project includes the following source files
 ifneq (,$(filter systick.c hc06.c pwm.c servo.c,$(notdir $(SRC))))
@@ -254,10 +248,11 @@ CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
           -IDrivers/RNG/inc -IProjects/ECDSA/inc
 endif
 
-# Project-specific wiring for FLASH: needs UART
+# Project-specific wiring for FLASH: needs UART and SysTick drivers
 ifeq ($(strip $(PROJECT_DIR)),Projects/FLASH)
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/UART/inc
+SRC_C += $(filter-out $(SRC_C),$(SYSTICK_SRC_C))
+CFLAGS += -IDrivers/UART/inc -IDrivers/SysTick/inc
 endif
 
 # nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.

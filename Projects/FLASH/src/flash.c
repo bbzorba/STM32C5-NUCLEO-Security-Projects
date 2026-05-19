@@ -1,10 +1,28 @@
 ﻿#include "../inc/flash.h"
-#include "../../../Drivers/SysTick/inc/systick.h"
+#include <stdint.h>
+
+static volatile uint8_t s_flash_eop   = 0;
+static volatile uint8_t s_flash_error = 0;
+
+/* EOP interrupt: fired when an erase or program operation completes. */
+void FLASH_IRQHandler(void)
+{
+    uint32_t sr = FLASH->SR;
+    /* Clear all pending flags via the write-only CCR register */
+    FLASH_CCR_REG = FLASH_CCR_CLR_EOP | FLASH_CCR_CLR_WRPERR | FLASH_CCR_CLR_PGSERR;
+    /* Disable EOP interrupt; re-armed per operation in FLASH_ErasePage */
+    FLASH->CR &= ~FLASH_CR_EOPIE;
+    if (sr & FLASH_SR_EOP)                             { s_flash_eop = 1; }
+    if (sr & (FLASH_SR_WRPERR | FLASH_SR_PGSERR))      { s_flash_error = 1; s_flash_eop = 1; }
+}
 
 /* ==== INIT ==== */
 void FLASH_Init(FLASH_HandleTypeDef *hflash) {
     hflash->Instance = FLASH;
     hflash->last_error = 0;
+    /* Enable FLASH global interrupt in NVIC (IRQn = 5) */
+    NVIC_SetPriority(FLASH_IRQn, 0);
+    NVIC_EnableIRQ(FLASH_IRQn);
 }
 
 /* ==== UNLOCK ==== */
@@ -48,6 +66,12 @@ FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t addr
     return FLASH_OK;
 }
 
+
+
+uint32_t FLASH_ReadWord(uint32_t address) {
+    return *(volatile uint32_t*)address;
+}
+
 /* ==== ERASE SECTOR ==== */
 FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_address) {
     uint32_t bksel, sector_num, cr;
@@ -69,13 +93,68 @@ FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_a
     cr |= FLASH_CR_SER | (sector_num << FLASH_CR_SNB_SHIFT) | (bksel ? FLASH_CR_BKSEL : 0U);
     hflash->Instance->CR = cr;
 
-    /* Start erase. */
-    hflash->Instance->CR |= FLASH_CR_STRT;
+    /* Arm the EOP interrupt and start erase. */
+    s_flash_eop   = 0;
+    s_flash_error = 0;
+    hflash->Instance->CR |= FLASH_CR_EOPIE;  /* enable EOP interrupt */
+    hflash->Instance->CR |= FLASH_CR_STRT;   /* kick off erase       */
 
-    while (hflash->Instance->SR & FLASH_SR_BSY);
+    /* Wait for EOP via interrupt — CPU is free to do other work here. */
+    while (!s_flash_eop);
 
     /* Clear erase configuration. */
     hflash->Instance->CR &= ~(FLASH_CR_SER | FLASH_CR_SNB_MASK | FLASH_CR_BKSEL);
+    hflash->last_error = s_flash_error;
 
+    return s_flash_error ? FLASH_ERROR : FLASH_OK;
+}
+
+/* ==== WRITE PROTECT ====
+ * Programs WRP1R/WRP2R_PRG so the specified sectors are write-protected.
+ * Each bit in sector_mask that is SET will be CLEARED in the PRG register
+ * (0 = sector protected, 1 = sector writable — hardware polarity).
+ * Changes are staged in the PRG register. Activate by calling OPTSTRT
+ * and performing a system reset (not done here to keep the demo safe).
+ */
+FLASH_StatusTypeDef FLASH_WriteProtect(FLASH_HandleTypeDef *hflash,
+                                         uint8_t bank, uint32_t sector_mask)
+{
+    /* Unlock option bytes if locked */
+    if (hflash->Instance->OPTCR & FLASH_OPTCR_OPTLOCK) {
+        hflash->Instance->OPTKEYR = FLASH_OPTKEY1;
+        hflash->Instance->OPTKEYR = FLASH_OPTKEY2;
+        if (hflash->Instance->OPTCR & FLASH_OPTCR_OPTLOCK)
+            return FLASH_ERROR;
+    }
+
+    /* Clear the bits for the requested sectors to enable write protection */
+    if (bank == 1U)
+        FLASH_WRP1R_PRG_REG &= ~sector_mask;
+    else
+        FLASH_WRP2R_PRG_REG &= ~sector_mask;
+
+    /* Re-lock option bytes without committing (safe for demo) */
+    hflash->Instance->OPTCR |= FLASH_OPTCR_OPTLOCK;
     return FLASH_OK;
+}
+
+/* ==== READ PROTECT ====
+ * Returns the active RDP level byte from OPTSR_CUR bits[15:8].
+ * 0xAA = Level 0 (no protection), 0xBB = Level 1, 0xCC = Level 2 (irreversible).
+ */
+uint8_t FLASH_ReadProtect(FLASH_HandleTypeDef *hflash)
+{
+    (void)hflash;
+    return (uint8_t)((FLASH_OPTSR_CUR_REG >> 8U) & 0xFFU);
+}
+
+FLASH_StatusTypeDef FLASH_IsWriteProtected(FLASH_HandleTypeDef *hflash, uint32_t address) {
+    uint32_t sector_mask;
+    if (address >= FLASH_BANK2_BASE) {
+        sector_mask = 1U << ((address - FLASH_BANK2_BASE) / FLASH_SECTOR_SIZE);
+        return (FLASH_WRP2R_CUR_REG & sector_mask) == 0U ? FLASH_OK : FLASH_ERROR; // 0 = protected
+    } else {
+        sector_mask = 1U << ((address - FLASH_BANK1_BASE) / FLASH_SECTOR_SIZE);
+        return (FLASH_WRP1R_CUR_REG & sector_mask) == 0U ? FLASH_OK : FLASH_ERROR; // 0 = protected
+    }
 }
