@@ -103,7 +103,7 @@ void FLASH_Init(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Unlock(FLASH_HandleTypeDef *hflash);
 FLASH_StatusTypeDef FLASH_Lock(FLASH_HandleTypeDef *hflash);
 uint32_t            FLASH_ReadWord(uint32_t address);
-
+uint8_t             FLASH_ReadByte(uint32_t address);
 FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t address, uint32_t data);
 FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_address);
 FLASH_StatusTypeDef FLASH_WriteProtect(FLASH_HandleTypeDef *hflash, uint8_t bank, uint32_t sector_mask);

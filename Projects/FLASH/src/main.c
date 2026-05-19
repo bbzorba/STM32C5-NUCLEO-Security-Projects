@@ -42,12 +42,31 @@ static void Test_FlashElapsedTime(FLASH_HandleTypeDef *hflash, USART_HandleType 
     USART_WriteString(huart, buffer);
     USART_WriteString(huart, "\r\n");
 
-    uint32_t value = *(volatile uint32_t*)KEY_STORAGE_ADDR;
+    USART_WriteString(huart, "\r\nReading a Byte from FLASH...\r\n");
+    SysTick_StartTimer(htick);
+    uint8_t byte_value = FLASH_ReadByte(KEY_STORAGE_ADDR);
+    elapsed_time_us = SysTick_GetElapsedTime_us(htick);
+    USART_WriteString(huart, "Read Byte: 0x");
+    sprintf(buffer, "%02X", byte_value);
+    USART_WriteString(huart, buffer);
+    USART_WriteString(huart, "\r\nElapsed (us): ");
+    sprintf(buffer, "%lu", elapsed_time_us);
+    USART_WriteString(huart, buffer);
+    USART_WriteString(huart, "\r\n");
 
-    if (value == 0x12345678)
-        USART_WriteString(huart, "FLASH WRITE OK\r\n");
+    USART_WriteString(huart, "\r\nReading a Word from FLASH...\r\n");
+    SysTick_StartTimer(htick);
+    uint32_t word_value = FLASH_ReadWord(KEY_STORAGE_ADDR);
+    elapsed_time_us = SysTick_GetElapsedTime_us(htick);
+    USART_WriteString(huart, "Elapsed (us): ");
+    sprintf(buffer, "%lu", elapsed_time_us);
+    USART_WriteString(huart, buffer);
+    USART_WriteString(huart, "\r\n");
+
+    if (word_value == 0x12345678)
+        USART_WriteString(huart, "FLASH WRITE & READ OK\r\n");
     else
-        USART_WriteString(huart, "FLASH WRITE FAILED\r\n");
+        USART_WriteString(huart, "FLASH WRITE / READ FAILED\r\n");
 }
 
 static void Test_FlashSecurityFeatures(FLASH_HandleTypeDef *hflash, USART_HandleType *huart, char buffer[64]){

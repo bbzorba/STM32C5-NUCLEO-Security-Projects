@@ -66,7 +66,9 @@ FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t addr
     return FLASH_OK;
 }
 
-
+uint8_t FLASH_ReadByte(uint32_t address) {
+    return *(volatile uint8_t*)address;
+}
 
 uint32_t FLASH_ReadWord(uint32_t address) {
     return *(volatile uint32_t*)address;
