@@ -11,8 +11,8 @@
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/RNG
 #PROJECT_DIR = Projects/ECDSA
-PROJECT_DIR = Projects/FLASH
-#PROJECT_DIR = Drivers/SysTick
+#PROJECT_DIR = Projects/FLASH
+PROJECT_DIR = Drivers/SysTick
 
 #TBD
 #PROJECT_DIR = Projects/Secure_Boot
@@ -169,23 +169,11 @@ SRC_C += $(filter-out $(SRC_C),$(PWM_SRC_C))
 CFLAGS += -IDrivers/PWM/inc
 endif
 
-# Automatically include GPIO_cpp, UART_cpp, and PWM_cpp libraries when project includes the following source files
-ifneq (,$(filter systick.cpp hc06.cpp pwm.cpp servo.cpp,$(notdir $(SRC))))
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-CFLAGS += -IDrivers/GPIO_cpp/inc
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-CFLAGS += -IDrivers/UART_cpp/inc
-SRC_CPP += $(filter-out $(SRC_CPP),$(PWM_SRC_CPP))
-CFLAGS += -IDrivers/PWM_cpp/inc
-# Also link the C PWM driver to satisfy free-function usages like Timer_Init/Configure_PWM from C++ code
-SRC_C += $(filter-out $(SRC_C),$(PWM_SRC_C))
-CFLAGS += -IDrivers/PWM/inc
-endif
-
-# Project-specific wiring for SysTick: needs GPIO
+# Project-specific wiring for SysTick: needs GPIO and UART drivers
 ifeq ($(PROJECT_DIR),Drivers/SysTick)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
 endif
 
 # Project-specific wiring for AES: needs GPIO and UART drivers

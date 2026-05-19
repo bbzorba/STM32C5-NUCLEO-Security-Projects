@@ -34,6 +34,7 @@ typedef struct
   SysTick_ManualType *regs;   /*!< Pointer to SysTick registers */
   SysTick_StatusTypeDef status; /*!< Status of the SysTick */
   uint32_t SystemCoreClock;   /*!< System Core Clock Frequency */
+  uint32_t start_tick;        /*!< Tick count captured by SysTick_StartTimer */
 }SysTick_HandleTypeDef;
 
 #define SysTick ((SysTick_ManualType *)SYSTICK_BASE)   /*!< SysTick configuration struct */
@@ -42,5 +43,8 @@ void SysTick_constructor(SysTick_HandleTypeDef *handle, SysTick_ManualType *regs
 void SysTick_delay(SysTick_HandleTypeDef *handle, volatile uint32_t sec);
 void SysTick_delay_ms(SysTick_HandleTypeDef *handle, volatile uint32_t ms);
 void SysTick_delay_ms_irq(SysTick_HandleTypeDef *handle, volatile uint32_t ms);
+void SysTick_StartTimer(SysTick_HandleTypeDef *handle);
+float SysTick_GetElapsedTime_ms(SysTick_HandleTypeDef *handle);
+uint32_t SysTick_GetElapsedTime_us(SysTick_HandleTypeDef *handle);
 
 #endif /* __SYSTICK_H */

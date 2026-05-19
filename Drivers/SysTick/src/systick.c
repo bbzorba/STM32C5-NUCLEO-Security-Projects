@@ -5,9 +5,7 @@ static volatile uint32_t s_tick_ms = 0;
 
 void SysTick_Handler(void)
 {
-    if (s_tick_ms > 0) {
-        s_tick_ms--;
-    }
+    s_tick_ms++;
 }
 
 void SysTick_constructor(SysTick_HandleTypeDef *handle, SysTick_ManualType *regs, SysTick_StatusTypeDef status){
@@ -51,13 +49,43 @@ void SysTick_delay_ms(SysTick_HandleTypeDef *handle, volatile uint32_t ms){
 
 void SysTick_delay_ms_irq(SysTick_HandleTypeDef *handle, volatile uint32_t ms)
 {
-    s_tick_ms = ms;
+    uint32_t start = s_tick_ms;
 
     handle->regs->LOAD = handle->SystemCoreClock / 1000 - 1; // 1 ms per tick
     handle->regs->VAL  = 0;
     handle->regs->CTRL = 7; // CLKSOURCE=1, TICKINT=1, ENABLE=1
 
-    while (s_tick_ms > 0); // wait for IRQ-driven countdown
+    while ((s_tick_ms - start) < ms); // wait for IRQ-driven delta
 
     handle->regs->CTRL = 0; // Disable SysTick
+}
+
+void SysTick_StartTimer(SysTick_HandleTypeDef *handle)
+{
+    handle->regs->LOAD = handle->SystemCoreClock / 1000 - 1; // 1 ms per tick
+    handle->regs->VAL  = 0;
+    handle->regs->CTRL = 7; // CLKSOURCE=1, TICKINT=1, ENABLE=1
+    handle->start_tick = s_tick_ms; // snapshot after timer is running
+}
+
+float SysTick_GetElapsedTime_ms(SysTick_HandleTypeDef *handle)
+{
+    uint32_t val      = handle->regs->VAL;            // read VAL first to minimise race
+    uint32_t full_ms  = s_tick_ms - handle->start_tick;
+    uint32_t load     = handle->regs->LOAD;
+    // Sub-ms: VAL counts down from LOAD. Ticks elapsed in current period = LOAD - VAL.
+    float sub_ms = (float)(load - val) / (float)(load + 1U);
+    return (float)full_ms + sub_ms;                   // total elapsed time in ms
+}
+
+uint32_t SysTick_GetElapsedTime_us(SysTick_HandleTypeDef *handle)
+{
+    uint32_t val     = handle->regs->VAL;            // read downcounter first
+    uint32_t full_ms = s_tick_ms - handle->start_tick;
+    uint32_t load    = handle->regs->LOAD;
+
+    /* Ticks elapsed in the current 1 ms window, converted to µs */
+    uint32_t sub_us  = (load - val) * 1000U / (load + 1U);
+
+    return full_ms * 1000U + sub_us;
 }
