@@ -103,11 +103,12 @@ static void Test_FlashSecurityFeatures(FLASH_HandleTypeDef *hflash, USART_Handle
 static void Test_FlashIntegrity(FLASH_HandleTypeDef *hflash, CRC_HandleTypeDef *hcrc, SysTick_HandleTypeDef *htick, USART_HandleType *huart, char buffer[64]) {
     USART_WriteString(huart, "\r\n--- Data Integrity Check ---\r\n");
 
-    /* CRC region:  all of bank 1 (256 KB) — covers app code + key storage */
-    /* CRC tag:     bank 2 sector 0 (0x08040000) — outside the measured region */
-    const uint32_t region_addr = FLASH_BANK1_BASE;
-    const uint32_t region_size = 256U * 1024U;
-    const uint32_t tag_addr    = FLASH_BANK2_BASE;
+    /* CRC region:  bank 1 sectors 0-29 (240 KB) — app code + unused space   */
+    /* CRC tag:     bank 1 sector 30 (0x0803C000) — outside measured region   */
+    /* Note: sector 30 is the tag sector; sector 31 is KEY_STORAGE            */
+    const uint32_t region_addr = FLASH_BANK1_BASE;           /* 0x08000000 */
+    const uint32_t region_size = 30U * FLASH_SECTOR_SIZE;    /* 30 × 8 KB  */
+    const uint32_t tag_addr    = 0x0803C000U;                /* sector 30  */
 
     /* Step 1: compute CRC of bank 1 and store it in bank 2 sector 0 */
     SysTick_StartTimer(htick);

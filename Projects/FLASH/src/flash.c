@@ -4,7 +4,8 @@
 static volatile uint8_t s_flash_eop   = 0;
 static volatile uint8_t s_flash_error = 0;
 
-/* EOP interrupt: fired when an erase or program operation completes. */
+/* EOP interrupt: fired when an erase or program operation completes (end of operation). */
+/* TODO: Write protection interrupt handling */
 void FLASH_IRQHandler(void)
 {
     uint32_t sr = FLASH->SR;
@@ -100,6 +101,9 @@ FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_a
     /* Arm the EOP interrupt and start erase. */
     s_flash_eop   = 0;
     s_flash_error = 0;
+    /* Clear any stale EOP/error flags before enabling the interrupt to avoid
+       a spurious immediate trigger from a leftover flag set by a prior operation. */
+    FLASH_CCR_REG = FLASH_CCR_CLR_EOP | FLASH_CCR_CLR_WRPERR | FLASH_CCR_CLR_PGSERR;
     hflash->Instance->CR |= FLASH_CR_EOPIE;  /* enable EOP interrupt */
     hflash->Instance->CR |= FLASH_CR_STRT;   /* kick off erase       */
 
