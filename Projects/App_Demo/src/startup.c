@@ -1,0 +1,82 @@
+/*
+ * startup.c for Projects/App_Demo
+ *
+ * Identical structure to the UART driver startup: the NVIC dispatch driver
+ * (nvic.c) provides all concrete IRQ handler definitions, so the externs
+ * below are satisfied by including NVIC_SRC_C in the Makefile App_Demo section.
+ */
+#include <stdint.h>
+
+extern int  main(void);
+extern void SystemInit(void);
+void Reset_Handler(void);
+void Default_Handler(void);
+typedef void (*isr_handler_t)(void);
+
+#ifndef STM32_IRQ_TABLE_SIZE
+#define STM32_IRQ_TABLE_SIZE 128U
+#endif
+
+uint32_t SystemCoreClock = 48000000UL;
+void SystemInit(void) { SystemCoreClock = 48000000UL; }
+
+/* Peripheral IRQ handlers defined by nvic.c */
+extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
+extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
+extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
+extern void EXTI6_IRQHandler(void);  extern void EXTI7_IRQHandler(void);
+extern void EXTI8_IRQHandler(void);  extern void EXTI9_IRQHandler(void);
+extern void EXTI10_IRQHandler(void); extern void EXTI11_IRQHandler(void);
+extern void EXTI12_IRQHandler(void); extern void EXTI13_IRQHandler(void);
+extern void EXTI14_IRQHandler(void); extern void EXTI15_IRQHandler(void);
+extern void LPDMA1_Channel0_IRQHandler(void); extern void LPDMA1_Channel1_IRQHandler(void);
+extern void LPDMA1_Channel2_IRQHandler(void); extern void LPDMA1_Channel3_IRQHandler(void);
+extern void LPDMA1_Channel4_IRQHandler(void); extern void LPDMA1_Channel5_IRQHandler(void);
+extern void LPDMA1_Channel6_IRQHandler(void); extern void LPDMA1_Channel7_IRQHandler(void);
+extern void USART1_IRQHandler(void); extern void USART2_IRQHandler(void);
+extern void USART3_IRQHandler(void); extern void UART4_IRQHandler(void);
+extern void UART5_IRQHandler(void);
+
+#define VECTOR_TABLE_CONTENT                                                      \
+    [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                                   \
+    [2]  = Default_Handler, [3]  = Default_Handler,                               \
+    [4]  = Default_Handler, [5]  = Default_Handler,                               \
+    [6]  = Default_Handler, [11] = Default_Handler,                               \
+    [12] = Default_Handler, [14] = Default_Handler,                               \
+    [15] = Default_Handler,                                                        \
+    [16 +  7] = EXTI0_IRQHandler,  [16 +  8] = EXTI1_IRQHandler,                 \
+    [16 +  9] = EXTI2_IRQHandler,  [16 + 10] = EXTI3_IRQHandler,                 \
+    [16 + 11] = EXTI4_IRQHandler,  [16 + 12] = EXTI5_IRQHandler,                 \
+    [16 + 13] = EXTI6_IRQHandler,  [16 + 14] = EXTI7_IRQHandler,                 \
+    [16 + 15] = EXTI8_IRQHandler,  [16 + 16] = EXTI9_IRQHandler,                 \
+    [16 + 17] = EXTI10_IRQHandler, [16 + 18] = EXTI11_IRQHandler,                \
+    [16 + 19] = EXTI12_IRQHandler, [16 + 20] = EXTI13_IRQHandler,                \
+    [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,                \
+    [16 + 23] = LPDMA1_Channel0_IRQHandler, [16 + 24] = LPDMA1_Channel1_IRQHandler, \
+    [16 + 25] = LPDMA1_Channel2_IRQHandler, [16 + 26] = LPDMA1_Channel3_IRQHandler, \
+    [16 + 27] = LPDMA1_Channel4_IRQHandler, [16 + 28] = LPDMA1_Channel5_IRQHandler, \
+    [16 + 29] = LPDMA1_Channel6_IRQHandler, [16 + 30] = LPDMA1_Channel7_IRQHandler, \
+    [16 + 51] = USART1_IRQHandler, [16 + 52] = USART2_IRQHandler,                \
+    [16 + 53] = USART3_IRQHandler, [16 + 54] = UART4_IRQHandler,                 \
+    [16 + 55] = UART5_IRQHandler
+
+extern uint32_t _estack;
+#define _VT_STACK_TOP  ((isr_handler_t)&_estack)
+
+__attribute__((section(".isr_vector")))
+isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = { VECTOR_TABLE_CONTENT };
+
+void Reset_Handler(void)
+{
+    extern uint32_t __etext, __data_start__, __data_end__;
+    extern uint32_t __bss_start__, __bss_end__;
+    uint32_t *src = &__etext, *dst = &__data_start__;
+    while (dst < &__data_end__)  { *dst++ = *src++; }
+    dst = &__bss_start__;
+    while (dst < &__bss_end__)   { *dst++ = 0; }
+    SystemInit();
+    main();
+    while (1);
+}
+
+void Default_Handler(void) { while (1); }

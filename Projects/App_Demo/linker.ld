@@ -1,9 +1,15 @@
+/* Linker script for App_Demo — runs in the Secure Boot ACTIVE slot.
+ * ORIGIN must match BOOT_ACTIVE_ADDR (0x08010000).
+ * LENGTH must match BOOT_ACTIVE_SIZE (22 sectors × 8 KB = 176 KB).
+ * The bootloader sets VTOR = 0x08010000 before jumping, so the
+ * vector table must be placed at the very start of this region.
+ */
 ENTRY(Reset_Handler)
 
-MEMORY 
+MEMORY
 {
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K   /* sectors 0–7 only */
-    RAM   (rw) : ORIGIN = 0x20000000, LENGTH = 128K
+  FLASH (rx) : ORIGIN = 0x08010000, LENGTH = 176K   /* sectors 8-29 */
+  RAM   (xrw): ORIGIN = 0x20000000, LENGTH = 128K
 }
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -44,14 +50,6 @@ SECTIONS
     *(COMMON)
     __bss_end__ = .;
     _end = .;
-    end = .;
-    __end__ = .;
-  } >RAM
-
-  .stack :
-  {
-    . = ALIGN(8);
-    _stack = .;
-    . += 0x400;
+    end  = .;
   } >RAM
 }

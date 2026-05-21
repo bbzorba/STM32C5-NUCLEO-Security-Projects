@@ -51,9 +51,9 @@ FLASH_StatusTypeDef FLASH_Lock(FLASH_HandleTypeDef *hflash) {
 FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t address, uint32_t data) {
     while (hflash->Instance->SR & FLASH_SR_BSY);
 
-    /* Select bank: BKSEL=1 for addresses in bank 2 (>= 0x08040000). */
-    uint32_t bksel = (address >= FLASH_BANK2_BASE) ? FLASH_CR_BKSEL : 0U;
-    hflash->Instance->CR |= FLASH_CR_PG | bksel;
+    /* Single-bank mode: BKSEL is always 0 (ignored by hardware anyway).
+     * The physical write address is used directly. */
+    hflash->Instance->CR |= FLASH_CR_PG;
 
     *(volatile uint32_t*)address = data;
 
@@ -64,7 +64,7 @@ FLASH_StatusTypeDef FLASH_ProgramWord(FLASH_HandleTypeDef *hflash, uint32_t addr
     /* Wait until the write buffer is empty and the operation is done. */
     while (hflash->Instance->SR & (FLASH_SR_BSY | FLASH_SR_WBNE));
 
-    hflash->Instance->CR &= ~(FLASH_CR_PG | FLASH_CR_BKSEL);
+    hflash->Instance->CR &= ~FLASH_CR_PG;
 
     return FLASH_OK;
 }
@@ -83,14 +83,12 @@ FLASH_StatusTypeDef FLASH_ErasePage(FLASH_HandleTypeDef *hflash, uint32_t page_a
 
     while (hflash->Instance->SR & FLASH_SR_BSY);
 
-    /* Compute sector number and bank from address (8 KB sectors). */
-    if (page_address >= FLASH_BANK2_BASE) {
-        bksel = 1U;
-        sector_num = (page_address - FLASH_BANK2_BASE) / FLASH_SECTOR_SIZE;
-    } else {
-        bksel = 0U;
-        sector_num = (page_address - FLASH_BANK1_BASE) / FLASH_SECTOR_SIZE;
-    }
+    /* STM32C562RE is always single-bank (DBANK=0 option byte).
+     * BKSEL is ignored by hardware; SNB is the absolute sector number 0-63
+     * computed from the start of flash.  Do NOT split on FLASH_BANK2_BASE —
+     * that would give SNB=0 for sector 32+ and erase the wrong sector. */
+    bksel = 0U;
+    sector_num = (page_address - FLASH_BANK1_BASE) / FLASH_SECTOR_SIZE;
 
     /* Configure sector erase: set SER, SNB, BKSEL. */
     cr = hflash->Instance->CR;

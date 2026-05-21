@@ -11,10 +11,12 @@
 #PROJECT_DIR = Drivers/AES
 #PROJECT_DIR = Drivers/RNG
 #PROJECT_DIR = Projects/ECDSA
-PROJECT_DIR = Projects/FLASH
+#PROJECT_DIR = Projects/FLASH
 #PROJECT_DIR = Drivers/SysTick
+#PROJECT_DIR = Projects/App_Demo
 
 #TBD
+PROJECT_DIR = Projects/App_Demo
 #PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_Firmware_Update
 #PROJECT_DIR = Projects/TrustZone
@@ -153,6 +155,7 @@ UART_SRC_C := Drivers/UART/src/uart.c
 SYSTICK_SRC_C := Drivers/SysTick/src/systick.c
 CRC_SRC_C     := Drivers/CRC/src/crc.c
 AES_SRC_C     := Drivers/AES/src/aes.c
+NVIC_SRC_C	 := Drivers/NVIC/src/nvic.c
 
 # Automatically include GPIO library when project includes the following source files
 ifneq (,$(filter systick.c hc06.c pwm.c servo.c,$(notdir $(SRC))))
@@ -222,15 +225,26 @@ SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
 endif
 
-# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, RNG, and ECDSA
+# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, RNG, ECDSA, NVIC and CRC
 ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_Boot)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
-          -IDrivers/RNG/inc -IProjects/ECDSA/inc
+          -IDrivers/RNG/inc -IProjects/ECDSA/inc -IDrivers/NVIC/inc -IDrivers/CRC/inc
+endif
+
+# Project-specific wiring for App_Demo: needs UART + NVIC (for IRQ dispatch)
+# Flash address is 0x08010000 (Secure Boot active slot) — NOT 0x08000000.
+ifeq ($(strip $(PROJECT_DIR)),Projects/App_Demo)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
+CFLAGS   += -IDrivers/UART/inc -IDrivers/NVIC/inc
+FLASH_ADDR = 0x08010000
 endif
 
 # Project-specific wiring for Dummy_Project: needs UART
@@ -329,6 +343,13 @@ flash_openocd: FLASH_TOOL=openocd
 flash_openocd: build
 	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
 
+# Seal the active application slot (Projects/App_Demo workflow):
+#   1. Build the application binary
+#   2. Pad to 176 KB, compute CRC-32, flash app + write CRC tag, reset board
+# Usage: make seal-active   (with PROJECT_DIR = Projects/App_Demo)
+.PHONY: seal-active
+seal-active: build
+	python tools/seal.py $(TARGET).bin
 
 # Open a simple serial monitor with PowerShell
 .PHONY: monitor
