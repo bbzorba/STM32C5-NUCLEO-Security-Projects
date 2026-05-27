@@ -1,0 +1,156 @@
+﻿###############################################################################
+#
+# IAR ELF Linker V9.70.4.588/W64 for ARM                  03/Apr/2026  00:59:10
+# Copyright 2007-2026 IAR Systems AB.
+#
+#    Output file  =  Drivers/GPIO/main_iar.out
+#    Map file     =  Drivers/GPIO/main_iar.map
+#    Command line =
+#        --config stm32c562re.icf --entry Reset_Handler --map
+#        Drivers/GPIO/main_iar.map -o Drivers/GPIO/main_iar.out
+#        Drivers/GPIO/iar_obj/gpio.o Drivers/GPIO/iar_obj/main.o
+#        Drivers/GPIO/iar_obj/startup.o
+#
+###############################################################################
+
+*******************************************************************************
+*** RUNTIME MODEL ATTRIBUTES
+***
+
+CppFlavor       = *
+__CPP_Runtime   = 1
+__SystemLibrary = DLib
+__dlib_version  = 6
+
+
+*******************************************************************************
+*** HEAP SELECTION
+***
+
+The basic heap was selected because --advanced_heap
+was not specified and the application did not appear to
+be primarily optimized for speed.
+
+
+*******************************************************************************
+*** PLACEMENT SUMMARY
+***
+
+"P1":  place in [from 0x800'0000 to 0x80f'ffff] {  ro };
+define block CSTACK with size = 1K, alignment = 8 { };
+define block HEAP with size = 512, alignment = 8 { };
+"P2":  place in [from 0x2000'0000 to 0x2001'ffff] {
+           rw,  block CSTACK,  block HEAP };
+initialize by copy {  rw };
+
+No sections matched the following patterns:
+
+  ro section .intvec  in "A0"
+
+
+  Section            Kind         Address  Alignment   Size  Object
+  -------            ----         -------  ---------   ----  ------
+"P1":                                                 0x2bc
+  .text              ro code   0x800'0000          4  0x1d8  gpio.o [1]
+  .text              ro code   0x800'01d8          4   0x58  main.o [1]
+  .text              ro code   0x800'0230          2   0x2a  copy_init3.o [3]
+  .text              ro code   0x800'025c          4   0x28  data_init.o [3]
+  .iar.init_table    const     0x800'0284          4   0x14  - Linker created -
+  .text              ro code   0x800'0298          4   0x20  startup.o [1]
+  Initializer bytes  const     0x800'02b8          4    0x4  <for P2-1>
+  .rodata            const     0x800'02bc               0x0  copy_init3.o [3]
+                             - 0x800'02bc             0x2bc
+
+"P2":                                                   0x4
+  P2-1                        0x2000'0000          4    0x4  <Init block>
+    .data            inited   0x2000'0000          4    0x4  startup.o [1]
+                            - 0x2000'0004               0x4
+
+Unused ranges:
+
+         From           To      Size
+         ----           --      ----
+   0x800'02bc   0x80f'ffff  0xf'fd44
+  0x2000'0004  0x2001'ffff  0x1'fffc
+
+
+*******************************************************************************
+*** INIT TABLE
+***
+
+          Address      Size
+          -------      ----
+Copy (__iar_copy_init3)
+    1 source range, total size 0x4:
+           0x800'02b8   0x4
+    1 destination range, total size 0x4:
+          0x2000'0000   0x4
+
+
+
+*******************************************************************************
+*** MODULE SUMMARY
+***
+
+    Module          ro code  ro data  rw data
+    ------          -------  -------  -------
+command line/config:
+    -----------------------------------------
+    Total:
+
+F:\dev\STM32\STM32C5-NUCLEO-Projects\Drivers\GPIO\iar_obj: [1]
+    gpio.o              472
+    main.o               88
+    startup.o            32        4        4
+    -----------------------------------------
+    Total:              592        4        4
+
+dl7M_tln.a: [2]
+    -----------------------------------------
+    Total:
+
+rt7M_tl.a: [3]
+    copy_init3.o         42
+    data_init.o          40
+    -----------------------------------------
+    Total:               82
+
+    Gaps                  2
+    Linker created                20
+---------------------------------------------
+    Grand Total:        676       24        4
+
+
+*******************************************************************************
+*** ENTRY LIST
+***
+
+Entry                       Address   Size  Type      Object
+-----                       -------   ----  ----      ------
+.iar.init_table$$Base    0x800'0284          --   Gb  - Linker created -
+.iar.init_table$$Limit   0x800'0298          --   Gb  - Linker created -
+GPIO_Init                0x800'000d  0x11e  Code  Gb  gpio.o [1]
+GPIO_TogglePin           0x800'012b    0xe  Code  Gb  gpio.o [1]
+GPIO_constructor         0x800'0001    0xc  Code  Gb  gpio.o [1]
+Region$$Table$$Base      0x800'0284          --   Gb  - Linker created -
+Region$$Table$$Limit     0x800'0298          --   Gb  - Linker created -
+Reset_Handler            0x800'02a9   0x10  Code  Gb  startup.o [1]
+SystemCoreClock         0x2000'0000    0x4  Data  Gb  startup.o [1]
+SystemInit               0x800'0299    0x8  Code  Gb  startup.o [1]
+__RCC_GPIO_CLK_ENABLE    0x800'0139   0x84  Code  Gb  gpio.o [1]
+__iar_copy_init3         0x800'0231   0x2a  Code  Gb  copy_init3.o [3]
+__iar_data_init3         0x800'025d   0x28  Code  Gb  data_init.o [3]
+delay_fn                 0x800'01d9   0x1c  Code  Gb  main.o [1]
+main                     0x800'01f5   0x32  Code  Gb  main.o [1]
+
+
+[1] = F:\dev\STM32\STM32C5-NUCLEO-Projects\Drivers\GPIO\iar_obj
+[2] = dl7M_tln.a
+[3] = rt7M_tl.a
+
+  676 bytes of readonly  code memory
+   24 bytes of readonly  data memory
+    4 bytes of readwrite data memory
+
+Errors: none
+Warnings: none

@@ -14,12 +14,12 @@
 #PROJECT_DIR = Projects/FLASH
 #PROJECT_DIR = Drivers/SysTick
 #PROJECT_DIR = Projects/App_Demo
+PROJECT_DIR = Projects/RSA
 
 #TBD
-PROJECT_DIR = Projects/App_Demo
+#PROJECT_DIR = Projects/Root_of_Trust
 #PROJECT_DIR = Projects/Secure_Boot
-#PROJECT_DIR = Projects/Secure_Firmware_Update
-#PROJECT_DIR = Projects/TrustZone
+#PROJECT_DIR = Projects/Secure_FW_Update
 
 CXX=arm-none-eabi-g++
 CC=arm-none-eabi-gcc
@@ -238,6 +238,36 @@ CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
           -IDrivers/RNG/inc -IProjects/ECDSA/inc -IDrivers/NVIC/inc -IDrivers/CRC/inc
 endif
 
+FLASH_DRV_SRC_C := Projects/FLASH/src/flash.c
+
+# Project-specific wiring for Root_of_Trust: needs UART + NVIC + HASH + CRC.
+# Runs in the active slot (0x08010000); measures the bootloader at 0x08000000.
+ifeq ($(strip $(PROJECT_DIR)),Projects/Root_of_Trust)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
+CFLAGS += -IDrivers/UART/inc -IDrivers/NVIC/inc -IDrivers/HASH/inc -IDrivers/CRC/inc
+FLASH_ADDR = 0x08010000
+endif
+
+# Project-specific wiring for Secure_FW_Update: needs UART + NVIC + HASH +
+# RNG + ECDSA + CRC + the FLASH driver from Projects/FLASH.
+# Runs in the active slot (0x08010000); writes the update to the fallback slot.
+ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_FW_Update)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(FLASH_DRV_SRC_C))
+CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/NVIC/inc \
+          -IDrivers/HASH/inc -IDrivers/RNG/inc -IProjects/ECDSA/inc \
+          -IDrivers/CRC/inc -IProjects/FLASH/inc
+FLASH_ADDR = 0x08010000
+endif
+
 # Project-specific wiring for App_Demo: needs UART + NVIC (for IRQ dispatch)
 # Flash address is 0x08010000 (Secure Boot active slot) — NOT 0x08000000.
 ifeq ($(strip $(PROJECT_DIR)),Projects/App_Demo)
@@ -272,6 +302,14 @@ SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(AES_SRC_C))
 CFLAGS += -IDrivers/UART/inc -IDrivers/SysTick/inc -IDrivers/CRC/inc \
           -IDrivers/AES/inc -IDrivers/GPIO/inc
+endif
+
+# Project-specific wiring for RSA: standalone demo at 0x08000000.
+# Needs UART + NVIC only (no peripheral drivers).
+ifeq ($(strip $(PROJECT_DIR)),Projects/RSA)
+SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
+SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
+CFLAGS += -IDrivers/UART/inc -IDrivers/NVIC/inc -IDrivers/GPIO/inc
 endif
 
 # nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
@@ -326,6 +364,11 @@ run: build
 flash: build
 ifeq ($(_FLASH_TOOL),cubeprog)
 	"$(CUBE_PROG)" -c port=SWD -halt -d $(TARGET).bin $(FLASH_ADDR) -rst
+ifeq ($(strip $(FLASH_ADDR)),0x08010000)
+	@echo "  Active slot written without sealing — clearing stale CRC tag (sector 30)."
+	@echo "  Run 'make seal-active PROJECT_DIR=$(PROJECT_DIR)' to properly seal."
+	python tools/clear_tag.py
+endif
 else ifeq ($(_FLASH_TOOL),openocd)
 	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
 else ifeq ($(_FLASH_TOOL),stlink)
@@ -350,6 +393,13 @@ flash_openocd: build
 .PHONY: seal-active
 seal-active: build
 	python tools/seal.py $(TARGET).bin
+
+# Restore Secure_Boot to 0x08000000 after testing Flash_Encrypt.
+# Flash_Encrypt overwrites the bootloader; run this target before trying
+# to test any active-slot project (App_Demo / Root_of_Trust / Secure_FW_Update).
+.PHONY: restore-bootloader
+restore-bootloader:
+	$(MAKE) flash PROJECT_DIR=Projects/Secure_Boot
 
 # Open a simple serial monitor with PowerShell
 .PHONY: monitor

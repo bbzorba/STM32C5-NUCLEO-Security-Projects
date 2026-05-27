@@ -52,6 +52,21 @@ function Find-CdcComPort {
     }
   }
 
+  # Priority 3: ST-LINK virtual COM port (NUCLEO boards — VID 0483)
+  # Accept these as last-resort CDC source since NUCLEO has no separate bridge.
+  foreach ($p in $pnp) {
+    if ($p.FriendlyName -match 'STLink Virtual COM|STM32.*COM|Virtual COM' -and
+        $p.InstanceId   -match 'VID_0483') {
+      $com = Extract-ComPort $p.FriendlyName
+      if ($com) { return $com }
+    }
+  }
+  foreach ($p in $wmi) {
+    if ($p.Name -match 'STLink Virtual COM|STM32.*COM|Virtual COM') {
+      return $p.DeviceID
+    }
+  }
+
   return $null
 }
 
