@@ -14,11 +14,11 @@
 #PROJECT_DIR = Projects/FLASH
 #PROJECT_DIR = Drivers/SysTick
 #PROJECT_DIR = Projects/App_Demo
-PROJECT_DIR = Projects/RSA
+#PROJECT_DIR = Projects/RSA
+#PROJECT_DIR = Projects/Root_of_Trust
 
 #TBD
-#PROJECT_DIR = Projects/Root_of_Trust
-#PROJECT_DIR = Projects/Secure_Boot
+PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_FW_Update
 
 CXX=arm-none-eabi-g++
@@ -159,7 +159,6 @@ NVIC_SRC_C	 := Drivers/NVIC/src/nvic.c
 
 # Automatically include GPIO library when project includes the following source files
 ifneq (,$(filter systick.c hc06.c pwm.c servo.c,$(notdir $(SRC))))
-# Important: OBJ is derived from SRC_C/SRC_CPP (not SRC). Only add if not already present.
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
@@ -225,17 +224,15 @@ SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
 endif
 
-# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, RNG, ECDSA, NVIC and CRC
+# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, ECDSA, NVIC
 ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_Boot)
 SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
 SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
 CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
-          -IDrivers/RNG/inc -IProjects/ECDSA/inc -IDrivers/NVIC/inc -IDrivers/CRC/inc
+          -IProjects/ECDSA/inc -IDrivers/NVIC/inc
 endif
 
 FLASH_DRV_SRC_C := Projects/FLASH/src/flash.c

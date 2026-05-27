@@ -35,7 +35,6 @@ void SEC_BOOT_Init(SEC_BOOT_HandleTypeDef *hsb,
 {
     HASH_Constructor(&hsb->hhash);
     ECDSA_Init(&hsb->hecdsa, &hsb->hhash, pub_x, pub_y);
-    CRC_Constructor(&hsb->hcrc);
 }
 
 SEC_BOOT_Status SEC_BOOT_VerifyImage(SEC_BOOT_HandleTypeDef *hsb,
@@ -50,98 +49,67 @@ SEC_BOOT_Status SEC_BOOT_VerifyImage(SEC_BOOT_HandleTypeDef *hsb,
 }
 
 /*
- * SEC_BOOT_Boot — the main boot-decision loop.
+ * SEC_BOOT_Boot — NIST SP 800-193 aligned secure boot sequence.
  *
- * For each slot (active, then fallback):
- *   1. Read the stored CRC-32 tag from the tag sector.
- *   2. Compute CRC-32 over the image region.
- *   3. If they match, validate the MSP value at the image base.
- *   4. If MSP is a valid SRAM address → jump (never returns).
+ * Boot authentication chain:
+ *   1. Sanity check: validate MSP at BOOT_ACTIVE_ADDR points into SRAM.
+ *      An erased flash slot (0xFFFFFFFF) is rejected here before any
+ *      expensive crypto operation is performed.
+ *   2. Integrity + Authentication: hardware SHA-256 over the image bytes,
+ *      then ECDSA_Verify compares the digest against the pre-embedded sig_r.
+ *      sig_r is produced OFFLINE by the firmware signer; an attacker cannot
+ *      forge a matching sig_r without the corresponding private key.
+ *   3. Both checks pass → jump to application (never returns).
  *
- * Returns SEC_BOOT_ERR_NO_IMAGE when no slot can boot (caller halts).
+ * Returns SEC_BOOT_ERR_NO_IMAGE when no bootable image is found so the
+ * caller can fall through to a diagnostic or halt.
  */
 SEC_BOOT_Status SEC_BOOT_Boot(SEC_BOOT_HandleTypeDef *hsb,
-                               USART_HandleType       *huart)
+                               const uint8_t    *sig_r,
+                               const uint8_t    *sig_s,
+                               size_t            image_len,
+                               USART_HandleType *huart)
 {
     char     buf[80];
-    uint8_t  crc_out[4];
-    uint32_t computed, stored, msp;
+    uint32_t msp;
 
-    /* ── Slot 1: Active image (sectors 8-29, 0x08010000, 176 KB) ─── */
-    USART_WriteString(huart,
-        "[SLOT 1] Active  0x08010000  sectors 8-29  176 KB\r\n");
+    USART_WriteString(huart, "[BOOT] Active slot \u2014 0x08010000\r\n");
 
-    stored = *(volatile uint32_t *)BOOT_ACTIVE_TAG_ADDR;
-    snprintf(buf, sizeof(buf), "  CRC tag @ 0x%08lX : %08lX\r\n",
-             (unsigned long)BOOT_ACTIVE_TAG_ADDR, (unsigned long)stored);
+    /* Step 1: validate MSP (rules out erased flash / no application) */
+    msp = *(volatile uint32_t *)BOOT_ACTIVE_ADDR;
+    snprintf(buf, sizeof(buf), "  MSP      : 0x%08lX\r\n", (unsigned long)msp);
     USART_WriteString(huart, buf);
 
-    if (stored == 0xFFFFFFFFU) {
-        USART_WriteString(huart, "  Tag : BLANK (slot not sealed)\r\n");
-    } else {
-        CRC_Calculate(&hsb->hcrc,
-                      (const uint8_t *)BOOT_ACTIVE_ADDR, BOOT_ACTIVE_SIZE,
-                      crc_out);
-        computed = ((uint32_t)crc_out[0] << 24) | ((uint32_t)crc_out[1] << 16) |
-                   ((uint32_t)crc_out[2] <<  8) |  (uint32_t)crc_out[3];
-        snprintf(buf, sizeof(buf), "  Computed CRC      : %08lX\r\n",
-                 (unsigned long)computed);
-        USART_WriteString(huart, buf);
-
-        if (computed == stored) {
-            USART_WriteString(huart, "  CRC  : OK\r\n");
-            msp = *(volatile uint32_t *)BOOT_ACTIVE_ADDR;
-            snprintf(buf, sizeof(buf), "  App MSP           : 0x%08lX\r\n",
-                     (unsigned long)msp);
-            USART_WriteString(huart, buf);
-            if ((msp >= 0x20000000U) && (msp <= 0x20020000U)) {
-                USART_WriteString(huart, "  MSP  : valid — jumping to application\r\n");
-                SEC_BOOT_Jump(BOOT_ACTIVE_ADDR);
-                /* Reaches here only if jump somehow fails */
-            }
-            USART_WriteString(huart, "  MSP  : INVALID — no application flashed\r\n");
-        } else {
-            USART_WriteString(huart, "  CRC  : MISMATCH\r\n");
-        }
+    if (msp < 0x20000000U || msp > 0x20020000U) {
+        USART_WriteString(huart,
+            "  MSP      : INVALID \u2014 no application in slot\r\n"
+            "[BOOT] No trusted image found\r\n");
+        return SEC_BOOT_ERR_NO_IMAGE;
     }
 
-    /* ── Slot 2: Fallback image (sectors 32-61, 0x08040000, 240 KB) ─ */
+    /* Step 2: SHA-256 + ECDSA signature verification */
+    USART_WriteString(huart, "  Verifying SHA-256 + ECDSA signature ...\r\n");
+
+    SEC_BOOT_Status st = SEC_BOOT_VerifyImage(
+        hsb,
+        (const uint8_t *)BOOT_ACTIVE_ADDR,
+        image_len,
+        sig_r,
+        sig_s);
+
+    if (st != SEC_BOOT_OK) {
+        USART_WriteString(huart,
+            "  Signature : INVALID \u2014 boot refused\r\n"
+            "[BOOT] No trusted image found\r\n");
+        return SEC_BOOT_ERR_NO_IMAGE;
+    }
+
+    /* Step 3: signature is valid — jump to application */
     USART_WriteString(huart,
-        "[SLOT 2] Fallback 0x08040000  sectors 32-61  240 KB\r\n");
+        "  Signature : OK\r\n"
+        "[BOOT] Jumping to application ...\r\n");
+    SEC_BOOT_Jump(BOOT_ACTIVE_ADDR);
 
-    stored = *(volatile uint32_t *)BOOT_FALLBACK_TAG_ADDR;
-    snprintf(buf, sizeof(buf), "  CRC tag @ 0x%08lX : %08lX\r\n",
-             (unsigned long)BOOT_FALLBACK_TAG_ADDR, (unsigned long)stored);
-    USART_WriteString(huart, buf);
-
-    if (stored == 0xFFFFFFFFU) {
-        USART_WriteString(huart, "  Tag : BLANK (no fallback)\r\n");
-    } else {
-        CRC_Calculate(&hsb->hcrc,
-                      (const uint8_t *)BOOT_FALLBACK_ADDR, BOOT_FALLBACK_SIZE,
-                      crc_out);
-        computed = ((uint32_t)crc_out[0] << 24) | ((uint32_t)crc_out[1] << 16) |
-                   ((uint32_t)crc_out[2] <<  8) |  (uint32_t)crc_out[3];
-        snprintf(buf, sizeof(buf), "  Computed CRC      : %08lX\r\n",
-                 (unsigned long)computed);
-        USART_WriteString(huart, buf);
-
-        if (computed == stored) {
-            USART_WriteString(huart, "  CRC  : OK\r\n");
-            msp = *(volatile uint32_t *)BOOT_FALLBACK_ADDR;
-            snprintf(buf, sizeof(buf), "  Fallback MSP      : 0x%08lX\r\n",
-                     (unsigned long)msp);
-            USART_WriteString(huart, buf);
-            if ((msp >= 0x20000000U) && (msp <= 0x20020000U)) {
-                USART_WriteString(huart, "  MSP  : valid — jumping to fallback\r\n");
-                SEC_BOOT_Jump(BOOT_FALLBACK_ADDR);
-            }
-            USART_WriteString(huart, "  MSP  : INVALID — no fallback application flashed\r\n");
-        } else {
-            USART_WriteString(huart, "  CRC  : MISMATCH\r\n");
-        }
-    }
-
-    USART_WriteString(huart, "\r\n[BOOT FAILED] No trusted image in any slot\r\n");
+    /* Unreachable — SEC_BOOT_Jump does not return */
     return SEC_BOOT_ERR_NO_IMAGE;
 }

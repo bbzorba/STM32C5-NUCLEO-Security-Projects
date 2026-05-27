@@ -99,34 +99,60 @@ HASH_StatusTypeDef HASH_SHA256_Update(HASH_HandleTypeDef *hhash, const uint8_t *
     if (!data || len == 0)
         return HASH_ERROR;
 
-    size_t full_words = len / 4U;
-    size_t rem        = len % 4U;
+    size_t       total_words = len / 4U;
+    size_t       rem         = len % 4U;
+    const uint8_t *p         = data;
 
-    /* Feed full 32-bit words.
-     * DINIS=1 only when all 16 FIFO slots are free (block boundary).
-     * Writing DIN clears DINIS; it only returns to 1 after the engine
-     * consumes a complete 16-word block.  Poll only at block boundaries. */
-    for (size_t i = 0; i < full_words; i++) {
-        if ((i % 16U) == 0U) {
-            while (!(hhash->Instance->SR & HASH_SR_DINIS));
+    if (total_words > 0U) {
+        /* ── First burst ───────────────────────────────────────────────────
+         * After INIT the hardware sets NBWE=17 (SVD HASH_SR bits[20:16]).
+         * DINIS=1 signals that all 16 FIFO slots are free and the engine is
+         * ready.  Writing the 17th word (NBWE counts down to 0) triggers the
+         * first partial-block computation; NBWE then resets to 16 for every
+         * subsequent block.  Writing any DIN word clears DINIS; it only
+         * returns to 1 after a complete partial-block computation finishes. */
+        while (!(hhash->Instance->SR & HASH_SR_DINIS));
+        size_t first_size = (total_words < 17U) ? total_words : 17U;
+        for (size_t j = 0; j < first_size; j++, p += 4) {
+            hhash->Instance->DIN = ((uint32_t)p[0] << 24) |
+                                   ((uint32_t)p[1] << 16) |
+                                   ((uint32_t)p[2] <<  8) |
+                                   ((uint32_t)p[3]);
         }
-        uint32_t w = ((uint32_t)data[i*4+0] << 24) |
-                     ((uint32_t)data[i*4+1] << 16) |
-                     ((uint32_t)data[i*4+2] <<  8) |
-                     ((uint32_t)data[i*4+3]);
-        hhash->Instance->DIN = w;
+
+        /* ── Subsequent 16-word bursts ─────────────────────────────────── */
+        size_t words_left = total_words - first_size;
+        while (words_left >= 16U) {
+            while (!(hhash->Instance->SR & HASH_SR_DINIS));
+            for (size_t j = 0; j < 16U; j++, p += 4) {
+                hhash->Instance->DIN = ((uint32_t)p[0] << 24) |
+                                       ((uint32_t)p[1] << 16) |
+                                       ((uint32_t)p[2] <<  8) |
+                                       ((uint32_t)p[3]);
+            }
+            words_left -= 16U;
+        }
+
+        /* ── Remaining full words (< 16): DINIS=1 from last partial ────── */
+        if (words_left > 0U) {
+            while (!(hhash->Instance->SR & HASH_SR_DINIS));
+            for (; words_left > 0U; words_left--, p += 4) {
+                hhash->Instance->DIN = ((uint32_t)p[0] << 24) |
+                                       ((uint32_t)p[1] << 16) |
+                                       ((uint32_t)p[2] <<  8) |
+                                       ((uint32_t)p[3]);
+            }
+        }
     }
 
-    /* Partial last word: set NBLW in STR BEFORE writing DIN.
-     * Poll DINIS only if we are at a fresh block boundary. */
-    if (rem > 0) {
-        if ((full_words % 16U) == 0U) {
-            while (!(hhash->Instance->SR & HASH_SR_DINIS));
-        }
-        hhash->Instance->STR = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
-        uint32_t last = 0;
+    /* ── Partial last word (1–3 trailing bytes) ──────────────────────────
+     * Write NBLW into STR before the final DIN so the hardware knows how
+     * many bits of the last word are valid when DCAL fires. */
+    if (rem > 0U) {
+        uint32_t last = 0U;
         for (size_t j = 0; j < rem; j++)
-            last |= ((uint32_t)data[full_words*4 + j] << (24U - 8U*j));
+            last |= ((uint32_t)p[j] << (24U - j * 8U));
+        hhash->Instance->STR = (uint32_t)(rem * 8U) & HASH_STR_NBLW_MASK;
         hhash->Instance->DIN = last;
     }
 
