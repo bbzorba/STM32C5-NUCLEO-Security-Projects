@@ -1,7 +1,9 @@
 # ── HASH — hardware SHA-256 driver ────────────────────────────────────────
-# Library: linked into any module that lists HASH in its _DEPS
+# Library interface: linked into any module that lists HASH in its DEPS
 HASH_SRC_C := Drivers/HASH/src/hash.c
 HASH_INC   := Drivers/HASH/inc
 
 # Standalone build (PROJECT_DIR = Drivers/HASH): needs GPIO and UART drivers
-HASH_DEPS  := GPIO UART
+ifeq ($(MODULE),HASH)
+DEPS := GPIO UART
+endif

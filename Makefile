@@ -22,9 +22,9 @@
 PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_FW_Update
 
-CXX=arm-none-eabi-g++
-CC=arm-none-eabi-gcc
-OBJCOPY=arm-none-eabi-objcopy
+# Default goal: show help when running plain `make`
+.DEFAULT_GOAL := help
+
 MCU := cortex-m33
 BOARD := NUCLEO-C562RE
 
@@ -37,7 +37,8 @@ DEBUG_SVD     := STM32C562.svd
 DEBUG_CFG     := stm32c562re.cfg
 DEBUG_TAPID   := 0x6ba02477
 endif
-# Platform-specific shell & command selection.
+
+# ── Shell selection ───────────────────────────────────────
 # On Windows we prefer a POSIX shell (sh.exe from Git-for-Windows, MSYS2,
 # Cygwin …) because cmd.exe can misinterpret forward-slash include paths
 # (e.g. -IDrivers/compat_inc) as its own /C switch, causing:
@@ -73,40 +74,57 @@ RM        := rm -f
 DEVNULL   := /dev/null
 endif
 
-# ── Module wiring ─────────────────────────────────────────
-# Every driver/project folder carries a module.mk. Its variables are prefixed
-# with the folder name (e.g. UART_*, Secure_Boot_*):
-#   <Name>_SRC_C       library source(s) linked into modules that depend on it
-#   <Name>_INC         library include directory
-#   <Name>_DEPS        modules linked when this folder is built as PROJECT_DIR
-#   <Name>_INCS        extra include-only directories for that build
-#   <Name>_FLASH_ADDR  load address when it is not 0x08000000
-# A new driver/project only needs its own module.mk — nothing to edit here.
-include $(wildcard Drivers/*/module.mk Projects/*/module.mk)
+# Running inside WSL: Windows tools (.exe) are callable directly
+_WSL := $(if $(WSL_DISTRO_NAME),1,)
 
-MODULE := $(notdir $(strip $(PROJECT_DIR)))
-ifeq ($(wildcard $(PROJECT_DIR)/module.mk),)
-$(warning $(PROJECT_DIR) has no module.mk — building its own sources only)
+# Look a command up on PATH; expands to its location or to nothing
+ifeq ($(OS),Windows_NT)
+on_path = $(shell where $(1) 2>$(DEVNULL))
+else
+on_path = $(shell command -v $(1) 2>/dev/null)
 endif
 
-# nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
-# Startup files reference these names in their vector tables, so NVIC is
-# always a dependency.
-DEPS := $($(MODULE)_DEPS) $(filter-out $($(MODULE)_DEPS),NVIC)
+_space := $(subst ,, )
+# $(wildcard) for a single path that may contain spaces
+path_exists = $(wildcard $(subst $(_space),\$(_space),$(1)))
 
-# Flashing configuration
-FLASH_ADDR = $(if $($(MODULE)_FLASH_ADDR),$($(MODULE)_FLASH_ADDR),0x08000000)
-FLASH_TOOL?=cubeprog  # options: cubeprog | openocd | stlink
-# Sanitize FLASH_TOOL in case of stray spaces from environment or edits
-_FLASH_TOOL:=$(strip $(FLASH_TOOL))
-CUBE_PROG?=C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe
-OPENOCD?=openocd
-STFLASH?=st-flash
-OPENOCD_SCRIPTS?=
-OPENOCD_IF?=interface/stlink-dap.cfg
-OPENOCD_TARGET?=target/stm32u5x.cfg
-OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
+# ── Toolchain ─────────────────────────────────────────────
+# arm-none-eabi-gcc is taken from PATH. When it is not on PATH, the toolchain
+# bundled with STM32CubeIDE is used (C:/ST/STM32CubeIDE_* on Windows and WSL,
+# /opt/st/stm32cubeide_* on Linux). Override with TOOLCHAIN_DIR=<.../bin>.
+ifeq ($(origin TOOLCHAIN_DIR),undefined)
+ifeq ($(call on_path,arm-none-eabi-gcc),)
+TOOLCHAIN_DIR := $(lastword $(sort $(wildcard \
+	C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/*gnu-tools-for-stm32*/tools/bin \
+	/mnt/c/ST/STM32CubeIDE*/STM32CubeIDE/plugins/*gnu-tools-for-stm32*/tools/bin \
+	/opt/st/stm32cubeide*/plugins/*gnu-tools-for-stm32*/tools/bin)))
+endif
+endif
 
+ifneq ($(strip $(TOOLCHAIN_DIR)),)
+TOOLCHAIN_DIR := $(patsubst %/,%,$(strip $(TOOLCHAIN_DIR)))
+_EXE := $(if $(wildcard $(TOOLCHAIN_DIR)/arm-none-eabi-gcc.exe),.exe,)
+CC      := $(TOOLCHAIN_DIR)/arm-none-eabi-gcc$(_EXE)
+CXX     := $(TOOLCHAIN_DIR)/arm-none-eabi-g++$(_EXE)
+OBJCOPY := $(TOOLCHAIN_DIR)/arm-none-eabi-objcopy$(_EXE)
+# WSL + Windows toolchain: gcc.exe cannot locate cc1/as/ld from the argv[0]
+# WSL hands it ("cannot execute 'cc1'"), so pass its install prefix explicitly.
+ifeq ($(_WSL)$(_EXE),1.exe)
+export GCC_EXEC_PREFIX := $(shell wslpath -m '$(patsubst %/bin,%,$(TOOLCHAIN_DIR))')/lib/gcc/
+export WSLENV := $(if $(WSLENV),$(WSLENV):,)GCC_EXEC_PREFIX
+endif
+else
+CC      := arm-none-eabi-gcc
+CXX     := arm-none-eabi-g++
+OBJCOPY := arm-none-eabi-objcopy
+endif
+
+# Python interpreter used by the helper scripts (python3 on Linux / WSL)
+ifeq ($(origin PYTHON),undefined)
+PYTHON := $(if $(call on_path,python3),python3,python)
+endif
+
+# ── Compiler flags ────────────────────────────────────────
 CFLAGS=-mcpu=$(MCU) -mthumb -Wall -O2 -g -DSTM32C5xx \
 	-IDrivers/compat_inc \
 	-IDrivers/CMSIS \
@@ -118,16 +136,81 @@ ifeq ($(strip $(DEBUG)),1)
 CFLAGS := $(filter-out -O2,$(CFLAGS)) -Og -g3 -fno-inline
 endif
 
-# All current projects target STM32C5 (Cortex-M33) via ST-LINK DAP.
+LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
 
-# C++ flags largely mirror C; disable RTTI/exceptions to keep size small
-CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti -fno-use-cxa-atexit
+# ── Module wiring ─────────────────────────────────────────
+# Only the selected PROJECT_DIR/module.mk is read as the project. It declares,
+# inside an `ifeq ($(MODULE),<Name>)` block, everything specific to building
+# and uploading that folder:
+#   DEPS        modules (driver/project folder names) linked into this build
+#   EXTRA_INCS  extra include-only directories
+#   FLASH_ADDR  load address when it is not 0x08000000
+#   POST_FLASH  commands run after `make flash` (optional)
+#   MODULE_HELP @echo lines appended to `make help` (optional)
+#   plus any project-specific targets (bl-upload, seal-active, …) and
+#   additions to CFLAGS / LDFLAGS.
+# Outside that block every module.mk exports its library interface, prefixed
+# with the folder name, which is read for each module listed in DEPS:
+#   <Name>_SRC_C   library source(s) linked into modules that depend on it
+#   <Name>_INC     library include directory
+override PROJECT_DIR := $(patsubst ./%,%,$(patsubst %/,%,$(strip $(PROJECT_DIR))))
+MODULE := $(notdir $(PROJECT_DIR))
 
-# Serial monitor settings (Windows PowerShell)
+ifeq ($(wildcard $(PROJECT_DIR)/module.mk),)
+$(error PROJECT_DIR=$(PROJECT_DIR) has no module.mk — pick one of: $(patsubst %/module.mk,%,$(wildcard Drivers/*/module.mk Projects/*/module.mk)))
+endif
+include $(PROJECT_DIR)/module.mk
+
+# nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
+# Startup files reference these names in their vector tables, so NVIC is
+# always a dependency.
+DEPS := $(filter-out $(MODULE),$(DEPS) $(filter-out $(DEPS),NVIC))
+
+# Find the module.mk of a dependency by folder name
+module_mk = $(firstword $(wildcard Drivers/$(1)/module.mk Projects/$(1)/module.mk))
+_MISSING_DEPS := $(strip $(foreach d,$(DEPS),$(if $(call module_mk,$(d)),,$(d))))
+ifneq ($(_MISSING_DEPS),)
+$(error $(PROJECT_DIR)/module.mk: unknown DEPS '$(_MISSING_DEPS)' (no Drivers/<Name>/module.mk or Projects/<Name>/module.mk))
+endif
+include $(foreach d,$(DEPS),$(call module_mk,$(d)))
+
+FLASH_ADDR ?= 0x08000000
+
+# ── Flashing configuration ────────────────────────────────
+FLASH_TOOL?=cubeprog  # options: cubeprog | openocd | stlink
+# Sanitize FLASH_TOOL in case of stray spaces from environment or edits
+_FLASH_TOOL:=$(strip $(FLASH_TOOL))
+
+# STM32_Programmer_CLI: PATH, then the standalone STM32CubeProgrammer install,
+# then the copy bundled with STM32CubeIDE.
+ifeq ($(origin CUBE_PROG),undefined)
+_CUBE_PROG_STD := $(if $(_WSL),/mnt/c,C:)/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe
+CUBE_PROG := $(or \
+	$(firstword $(call on_path,STM32_Programmer_CLI)), \
+	$(if $(call path_exists,$(_CUBE_PROG_STD)),$(_CUBE_PROG_STD)), \
+	$(lastword $(sort $(wildcard \
+		C:/ST/STM32CubeIDE*/STM32CubeIDE/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI.exe \
+		/mnt/c/ST/STM32CubeIDE*/STM32CubeIDE/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI.exe \
+		/opt/st/stm32cubeide*/plugins/*cubeprogrammer*/tools/bin/STM32_Programmer_CLI))), \
+	$(_CUBE_PROG_STD))
+endif
+# tools/seal.py, clear_tag.py and bl_upload.py read it from the environment
+export CUBE_PROG
+OPENOCD?=openocd
+STFLASH?=st-flash
+OPENOCD_SCRIPTS?=
+OPENOCD_IF?=interface/stlink-dap.cfg
+OPENOCD_TARGET?=target/stm32u5x.cfg
+OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
+
+# Serial monitor settings (Windows PowerShell, also used from WSL)
 PORT ?=
 BAUD ?= 115200
 MONITOR_SECONDS ?=
-LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
+POWERSHELL := $(if $(_WSL),powershell.exe,powershell)
+
+# C++ flags largely mirror C; disable RTTI/exceptions to keep size small
+CXXFLAGS=$(CFLAGS) -fno-exceptions -fno-rtti -fno-use-cxa-atexit
 
 # Optional external driver selection -------------------------------------------------
 # By default (when DRIVERS is empty) we build ONLY the selected PROJECT sources
@@ -159,7 +242,7 @@ CFLAGS += $(DRIVER_INCLUDES)
 SRC_C   := $(wildcard $(PROJECT_DIR)/src/*.c)
 SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
 SRC_C   += $(filter-out $(SRC_C),$(foreach d,$(DEPS),$($(d)_SRC_C)))
-CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $($(MODULE)_INCS))
+CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $(EXTRA_INCS))
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
 OBJ=$(sort $(OBJ_UNSORTED))
@@ -182,28 +265,35 @@ endif
 %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-.PHONY: help all build run clean flash flash_openocd flash_stlink flash_cubeprog
+.PHONY: help all build run clean flash flash_openocd flash_stlink flash_cubeprog check-toolchain
 
 all: build
 
-# All module wiring is resolved above (module.mk files are included before
-# any rule), so OBJ is complete when this prerequisite list is read.
+# Fail early with a clear message instead of "arm-none-eabi-gcc: not found"
+check-toolchain:
+ifeq ($(_POSIX_SH),1)
+	@command -v "$(CC)" >/dev/null 2>&1 || { \
+		echo "ERROR: $(CC) not found. Install the Arm GNU toolchain (arm-none-eabi-gcc) and add it to PATH,"; \
+		echo "       install STM32CubeIDE, or pass TOOLCHAIN_DIR=<path to the toolchain bin folder>."; \
+		exit 1; }
+endif
+
+# Module wiring is resolved above (module.mk files are included before any
+# rule), so OBJ is complete when this prerequisite list is read.
+$(OBJ): | check-toolchain
+
 build: $(OBJ)
 	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $(TARGET).elf $(LDFLAGS) $(EXTRA_LDFLAGS)
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
-	-python -c "import os; [os.remove(f) for f in '$(OBJ)'.split() if os.path.isfile(f)]"
+	-$(PYTHON) -c "import os; [os.remove(f) for f in '$(OBJ)'.split() if os.path.isfile(f)]"
+	@echo "--- Built $(PROJECT_DIR): $(TARGET).elf / .hex / .bin (load address $(FLASH_ADDR)) ---"
 
 run: build
 
 flash: build
 ifeq ($(_FLASH_TOOL),cubeprog)
 	"$(CUBE_PROG)" -c port=SWD -halt -d $(TARGET).bin $(FLASH_ADDR) -rst
-ifeq ($(strip $(FLASH_ADDR)),0x08010000)
-	@echo "  Active slot written without sealing — clearing stale CRC tag (sector 30)."
-	@echo "  Run 'make seal-active PROJECT_DIR=$(PROJECT_DIR)' to properly seal."
-	python tools/clear_tag.py
-endif
 else ifeq ($(_FLASH_TOOL),openocd)
 	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
 else ifeq ($(_FLASH_TOOL),stlink)
@@ -212,47 +302,36 @@ else
 	@echo Unknown FLASH_TOOL=$(_FLASH_TOOL). Use cubeprog, openocd, or stlink.
 	@exit 1
 endif
+	$(POST_FLASH)
 
 flash_cubeprog: FLASH_TOOL=cubeprog
 flash_cubeprog: build
 	"$(CUBE_PROG)" -c port=SWD -halt -d $(TARGET).bin $(FLASH_ADDR) -rst
+	$(POST_FLASH)
 
 flash_openocd: FLASH_TOOL=openocd
 flash_openocd: build
 	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
+	$(POST_FLASH)
 
 flash_stlink: FLASH_TOOL=stlink
 flash_stlink: build
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
+	$(POST_FLASH)
 
-# Seal the active application slot (Projects/App_Demo workflow):
-#   1. Build the application binary
-#   2. Pad to 176 KB, compute CRC-32, flash app + write CRC tag, reset board
-# Usage: make seal-active   (with PROJECT_DIR = Projects/App_Demo)
-.PHONY: seal-active
-seal-active: build
-	python tools/seal.py $(TARGET).bin
-
-# Restore Secure_Boot to 0x08000000 after testing Flash_Encrypt.
-# Flash_Encrypt overwrites the bootloader; run this target before trying
-# to test any active-slot project (App_Demo / Root_of_Trust / Secure_FW_Update).
-.PHONY: restore-bootloader
-restore-bootloader:
-	$(MAKE) flash PROJECT_DIR=Projects/Secure_Boot
-
-# Open a simple serial monitor with PowerShell
+# Open a simple serial monitor with PowerShell (Windows or WSL)
 .PHONY: monitor
 monitor:
-ifeq ($(OS),Windows_NT)
-	powershell -NoProfile -ExecutionPolicy Bypass -File "tools/monitor.ps1" $(if $(PORT),-ComPort $(PORT),) -Baud $(BAUD) $(if $(MONITOR_SECONDS),-DurationSec $(MONITOR_SECONDS),)
+ifneq ($(OS)$(_WSL),)
+	$(POWERSHELL) -NoProfile -ExecutionPolicy Bypass -File "tools/monitor.ps1" $(if $(PORT),-ComPort $(PORT),) -Baud $(BAUD) $(if $(MONITOR_SECONDS),-DurationSec $(MONITOR_SECONDS),)
 else
-	@echo "This monitor target is Windows-specific (PowerShell)."
+	@echo "This monitor target needs Windows PowerShell (Windows or WSL)."
 endif
 
 .PHONY: com-list
 com-list:
-ifeq ($(OS),Windows_NT)
-	powershell -NoProfile -Command "Get-CimInstance Win32_SerialPort | Select-Object Name,DeviceID | Format-Table -AutoSize"
+ifneq ($(OS)$(_WSL),)
+	$(POWERSHELL) -NoProfile -Command "Get-CimInstance Win32_SerialPort | Select-Object Name,DeviceID | Format-Table -AutoSize"
 else
 	@echo "Use: ls /dev/tty*"
 endif
@@ -262,15 +341,12 @@ endif
 flashmonitor-auto: all flash monitor
 
 clean:
-	-python -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
+	-$(PYTHON) -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
 
 # Print any Makefile variable, e.g. make print-PROJECT_DIR
 .PHONY: print-%
 print-%:
 	@echo $($*)
-
-# Default goal: show help when running plain `make`
-.DEFAULT_GOAL := help
 
 # Every folder with a module.mk can be built as PROJECT_DIR
 MODULE_DIRS := $(patsubst %/module.mk,%,$(wildcard Drivers/*/module.mk Projects/*/module.mk))
@@ -284,6 +360,7 @@ endef
 help:
 	@echo "Usage: make [target] [PROJECT_DIR=<dir>] [VAR=value ...]"
 	@echo "Current PROJECT_DIR: $(PROJECT_DIR)  (load address $(FLASH_ADDR))"
+	@echo "Linked modules:      $(DEPS)"
 	@echo
 	@echo "Build:"
 	@echo "  build             Build the current PROJECT_DIR (same as 'make all' / 'make run')"
@@ -295,19 +372,21 @@ help:
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
 	@echo "  debug             debug-build, then flash build_out/main.bin for VS Code debugging"
-	@echo "  seal-active       Build, then flash + CRC-seal the active slot (tools/seal.py)"
-	@echo "  bl-upload         Upload APP=<bin> through Projects/Bootloader over UART"
-	@echo "  restore-bootloader Re-flash Projects/Secure_Boot at 0x08000000"
+ifneq ($(strip $(MODULE_HELP)),)
+	@echo "$(MODULE) targets (from $(PROJECT_DIR)/module.mk):"
+	$(MODULE_HELP)
+endif
 	@echo "Serial / misc:"
-	@echo "  monitor           Open serial monitor (Windows PowerShell)"
+	@echo "  monitor           Open serial monitor (Windows PowerShell, also from WSL)"
 	@echo "                    Auto-detects USB-serial bridge when PORT is empty"
 	@echo "                    Use MONITOR_SECONDS=N for timed CI verification"
-	@echo "  com-list          List serial ports (Windows PowerShell)"
+	@echo "  com-list          List serial ports (Windows PowerShell, also from WSL)"
 	@echo "  flashmonitor-auto Build, flash, and start monitor"
 	@echo "  gen-debug-config  Write board settings into .vscode/settings.json"
 	@echo "  print-VAR         Print a Makefile variable, e.g. make print-SRC_C"
 	@echo
-	@echo "Variables: PROJECT_DIR, FLASH_TOOL=$(_FLASH_TOOL), DEBUG=1, PORT, BAUD=$(BAUD), DRIVERS"
+	@echo "Variables: PROJECT_DIR, FLASH_TOOL=$(_FLASH_TOOL), DEBUG=1, PORT, BAUD=$(BAUD), DRIVERS, TOOLCHAIN_DIR"
+	@echo "Compiler:  $(CC)"
 	@echo
 	@echo "Available PROJECT_DIR values:"
 	$(foreach d,$(MODULE_DIRS),@echo "  $(d)"$(_NEWLINE))
@@ -327,8 +406,8 @@ BUILD_OUT := build_out
 debug-build:
 	@$(MAKE) clean
 	@$(MAKE) build DEBUG=1
-	python -c "import os; os.makedirs('$(BUILD_OUT)', exist_ok=True)"
-	python -c "import shutil; shutil.copy('$(TARGET).elf', '$(BUILD_OUT)/main.elf'); shutil.copy('$(TARGET).bin', '$(BUILD_OUT)/main.bin')"
+	$(PYTHON) -c "import os; os.makedirs('$(BUILD_OUT)', exist_ok=True)"
+	$(PYTHON) -c "import shutil; shutil.copy('$(TARGET).elf', '$(BUILD_OUT)/main.elf'); shutil.copy('$(TARGET).bin', '$(BUILD_OUT)/main.bin')"
 	@echo --- Debug build ready: $(BUILD_OUT)/main.elf ---
 
 # debug: standalone build + flash (without VS Code debugger)
@@ -343,7 +422,7 @@ debug: debug-build
 # whenever BOARD changes.  Run once after changing the BOARD variable.
 .PHONY: gen-debug-config
 gen-debug-config:
-	python -c "\
+	$(PYTHON) -c "\
 import json, sys; \
 path = '.vscode/settings.json'; \
 s = json.load(open(path)) if __import__('os').path.isfile(path) else {}; \

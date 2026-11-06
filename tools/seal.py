@@ -19,6 +19,7 @@ Usage:
   python tools/seal.py Projects/App_Demo/main.bin
 """
 
+import os
 import sys
 import zlib
 import struct
@@ -27,7 +28,9 @@ import subprocess
 from pathlib import Path
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-CUBE_PROG = (
+# STM32_Programmer_CLI path; `make` exports CUBE_PROG (auto-detected, e.g. the
+# copy bundled with STM32CubeIDE). Falls back to the standalone install.
+CUBE_PROG = os.environ.get("CUBE_PROG") or (
     r"C:\Program Files\STMicroelectronics\STM32Cube"
     r"\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe"
 )

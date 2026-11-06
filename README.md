@@ -64,6 +64,9 @@ CMSIS (`core_cm4.h`) is used **only** for `NVIC_SetPriority()` / `NVIC_EnableIRQ
 - **arm-none-eabi-gcc** toolchain (GCC 12+ recommended, add to PATH)
   - Linux: `sudo apt install gcc-arm-none-eabi`
   - Windows: download from [Arm Developer](https://developer.arm.com/downloads/-/gnu-rm)
+  - Not on PATH? The Makefile falls back to the toolchain and `STM32_Programmer_CLI` bundled with
+    **STM32CubeIDE** (`C:/ST/STM32CubeIDE_*`, also from WSL via `/mnt/c/ST/...`, or `/opt/st/stm32cubeide_*`).
+    Point it elsewhere with `TOOLCHAIN_DIR=<toolchain>/bin` / `CUBE_PROG=<path>`.
 - **OpenOCD** with STM32C5 target support (add to PATH)
 - **GNU Make** (add to PATH — e.g. the one shipped with STM32CubeIDE, MSYS2 or Git-for-Windows)
 - **ST-Link USB drivers** ([STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html))
@@ -88,22 +91,51 @@ Output files (`main.elf`, `main.bin`, `main.hex`, `main.map`) are generated insi
 
 ### Module wiring (`module.mk`)
 
-Every driver/project folder has a `module.mk`. Its variables are prefixed with the folder name:
+`make build` builds the folder selected by `PROJECT_DIR`. The Makefile reads only that folder's
+`module.mk` as the project, plus the `module.mk` of every module it lists in `DEPS`.
 
-| Variable | Meaning |
-|---|---|
-| `<Name>_SRC_C` / `<Name>_INC` | Library source(s) and include dir other modules get when they depend on it |
-| `<Name>_DEPS` | Modules linked when this folder is built as `PROJECT_DIR` |
-| `<Name>_INCS` | Extra include-only directories for that build |
-| `<Name>_FLASH_ADDR` | Load address when it is not `0x08000000` |
+Each `module.mk` has two parts:
+
+1. **Library interface** (always read), prefixed with the folder name — what other modules get
+   when they list this one in their `DEPS`:
+
+   | Variable | Meaning |
+   |---|---|
+   | `<Name>_SRC_C` | Library source(s) linked into dependents |
+   | `<Name>_INC` | Library include directory |
+
+2. **Standalone build** — an `ifeq ($(MODULE),<Name>)` block that only applies when this folder
+   is `PROJECT_DIR`. It holds everything specific to building and uploading it:
+
+   | Variable / content | Meaning |
+   |---|---|
+   | `DEPS` | Modules (folder names under `Drivers/` or `Projects/`) linked into this build |
+   | `EXTRA_INCS` | Extra include-only directories |
+   | `FLASH_ADDR` | Load address when it is not `0x08000000` |
+   | `POST_FLASH` | Commands run after `make flash` (optional) |
+   | `MODULE_HELP` | Extra lines for `make help` (optional) |
+   | targets, `CFLAGS +=` … | Project-specific targets (`bl-upload`, `seal-active`, …) and flags |
 
 ```make
+# Drivers/UART/module.mk
+UART_SRC_C := Drivers/UART/src/uart.c
+UART_INC   := Drivers/UART/inc
+
+ifeq ($(MODULE),UART)
+DEPS := GPIO DMA
+endif
+
 # Projects/App_Demo/module.mk
-App_Demo_DEPS       := UART NVIC
-App_Demo_FLASH_ADDR := 0x08010000
+ifeq ($(MODULE),App_Demo)
+DEPS       := UART NVIC
+FLASH_ADDR := 0x08010000
+include tools/mk/active_slot.mk   # seal-active, restore-bootloader, clear CRC tag after flash
+endif
 ```
 
-The top-level `Makefile` includes all of them, so adding a module only means adding its folder with a `module.mk` and `linker.ld`. `NVIC` is always linked (its `nvic.c` provides the IRQ handlers every vector table refers to).
+Adding a module only means adding its folder with a `module.mk` and `linker.ld`. `NVIC` is always
+linked (its `nvic.c` provides the IRQ handlers every vector table refers to). `make help` lists the
+modules that will be linked and the targets the selected `module.mk` adds.
 
 ### Startup code
 
@@ -114,6 +146,8 @@ Each module's `startup.c` uses `_estack` / `__etext` / `__bss_start__` etc. from
 | Variable | Default | Description |
 |---|---|---|
 | `PROJECT_DIR` | set at the top of `Makefile` | Module to build / flash |
+| `TOOLCHAIN_DIR` | PATH, else STM32CubeIDE | Folder containing `arm-none-eabi-gcc` |
+| `CUBE_PROG` | PATH, standalone install, else STM32CubeIDE | `STM32_Programmer_CLI` used by `flash` and the tools/ scripts |
 | `FLASH_TOOL` | `cubeprog` | `cubeprog`, `openocd` or `stlink` |
 | `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug` sets it) |
 | `PORT` / `BAUD` | auto / `115200` | Serial port for `make monitor` / `make bl-upload` |

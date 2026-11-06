@@ -16,7 +16,9 @@ import tempfile
 import os
 import sys
 
-CUBE = r"C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
+# STM32_Programmer_CLI path; `make` exports CUBE_PROG (auto-detected, e.g. the
+# copy bundled with STM32CubeIDE). Falls back to the standalone install.
+CUBE = os.environ.get("CUBE_PROG") or r"C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
 CRC_TAG_ADDR = 0x0803C000   # sector 30 base address
 
 with tempfile.NamedTemporaryFile(suffix="_clear_tag.bin", delete=False) as f:

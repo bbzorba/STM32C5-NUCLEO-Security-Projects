@@ -17,6 +17,7 @@ Usage:
 Requires: pip install pyserial
 """
 
+import os
 import sys
 import time
 import zlib
@@ -33,7 +34,9 @@ except ImportError:
     sys.exit(1)
 
 # ── Configuration (must match Projects/Bootloader/inc/bootloader.h) ──────────
-CUBE_PROG = (
+# STM32_Programmer_CLI path; `make` exports CUBE_PROG (auto-detected, e.g. the
+# copy bundled with STM32CubeIDE). Falls back to the standalone install.
+CUBE_PROG = os.environ.get("CUBE_PROG") or (
     r"C:\Program Files\STMicroelectronics\STM32Cube"
     r"\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe"
 )
