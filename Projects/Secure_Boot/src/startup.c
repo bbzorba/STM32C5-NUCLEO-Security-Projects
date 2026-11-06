@@ -34,16 +34,6 @@ extern void RNG_IRQHandler(void);
     [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,       \
     [16 + 64] = RNG_IRQHandler
 
-#if defined(__ICCARM__)
-extern void *CSTACK$$Limit;
-#define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
-#pragma location = ".intvec"
-const isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = { VECTOR_TABLE_CONTENT };
-void Reset_Handler(void) {
-    extern void __iar_data_init3(void); __iar_data_init3();
-    SystemInit(); main(); while (1);
-}
-#else
 extern uint32_t _estack, __etext, __data_start__, __data_end__, __bss_start__, __bss_end__;
 #define _VT_STACK_TOP  ((isr_handler_t)&_estack)
 __attribute__((section(".isr_vector")))
@@ -55,6 +45,5 @@ void Reset_Handler(void) {
     while (dst < &__bss_end__)   { *dst++ = 0; }
     SystemInit(); main(); while (1);
 }
-#endif
 
 void Default_Handler(void) { while (1); }

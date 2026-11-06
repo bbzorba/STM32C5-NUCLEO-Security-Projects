@@ -2,38 +2,11 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "IAR: Build",
-      "type": "shell",
-      "command": "make",
-      "args": ["iar-build"],
-      "group": "build",
-      "presentation": { "reveal": "always", "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "IAR: Debug Build",
-      "type": "shell",
-      "command": "make",
-      "args": ["iar-build", "DEBUG=1"],
-      "group": "build",
-      "presentation": { "reveal": "always", "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
-      "label": "IAR: Build + Flash",
-      "type": "shell",
-      "command": "make",
-      "args": ["iar-debug"],
-      "group": { "kind": "build", "isDefault": true },
-      "presentation": { "reveal": "always", "panel": "shared" },
-      "problemMatcher": []
-    },
-    {
       "label": "GCC: Build",
       "type": "shell",
       "command": "make",
       "args": ["build"],
-      "group": "build",
+      "group": { "kind": "build", "isDefault": true },
       "presentation": { "reveal": "always", "panel": "shared" },
       "problemMatcher": []
     },

@@ -19,7 +19,7 @@ void SystemInit(void) {
     SystemCoreClock = 48000000UL;
 }
 
-/* ── IRQ handler forward declarations (identical for IAR and GCC) ─────── */
+/* ── IRQ handler forward declarations ─────────────────────────────────── */
 /* nvic.c provides the strong definitions for all of these. */
 extern void EXTI0_IRQHandler(void);
 extern void EXTI1_IRQHandler(void);
@@ -65,11 +65,10 @@ extern void ADC3_IRQHandler(void);
 extern void RNG_IRQHandler(void);
 
 /*
- * VECTOR_TABLE_CONTENT — shared entries for both IAR and GCC tables.
+ * VECTOR_TABLE_CONTENT — vector table entries.
  *
- * _VT_STACK_TOP is defined per-compiler before this macro is expanded:
- *   IAR : (isr_handler_t)&CSTACK$$Limit
- *   GCC : (isr_handler_t)&_estack
+ * _VT_STACK_TOP ((isr_handler_t)&_estack) is defined below, before this
+ * macro is expanded.
  */
 #define VECTOR_TABLE_CONTENT                                          \
     [0]  = _VT_STACK_TOP,                                            \
@@ -135,27 +134,6 @@ extern void RNG_IRQHandler(void);
     /* HASH (IRQn 69) */                                             \
     [16 + 69] = HASH_IRQHandler,                                    \
 
-/* ── IAR Compiler (iccarm) ─────────────────────────────────────────────── */
-#if defined(__ICCARM__)
-
-extern void *CSTACK$$Limit;
-#define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
-
-#pragma location = ".intvec"
-const isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = {
-    VECTOR_TABLE_CONTENT
-};
-
-void Reset_Handler(void) {
-    extern void __iar_data_init3(void);
-    __iar_data_init3();
-    SystemInit();
-    main();
-    while (1);
-}
-
-/* ── GCC / arm-none-eabi-gcc ────────────────────────────────────────────── */
-#else
 
 extern uint32_t _estack;
 extern uint32_t __etext;
@@ -182,7 +160,6 @@ void Reset_Handler(void) {
     while (1);
 }
 
-#endif /* __ICCARM__ */
 
 void Default_Handler(void) {
     while (1);

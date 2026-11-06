@@ -23,21 +23,18 @@ This repository provides register-level bare-metal driver and project templates 
 
 ```
 STM32C5-NUCLEO-Projects/
-├── Makefile                  # Build, flash, debug automation (all projects)
-├── stm32c562re.icf           # IAR linker configuration (shared by all projects)
-├── Drivers/
-│   ├── CMSIS/                # CMSIS core headers (core_cm4.h — used for NVIC only)
-│   ├── GPIO/                 # Register-level GPIO driver (STM32C5 port)
-│   │   ├── inc/gpio.h        # RCC_TypeDef, GPIO_ManualTypeDef, pin macros
-│   │   └── src/              # gpio.c, main.c, startup.c
-│   ├── UART/                 # Register-level UART driver (STM32C5 port, USART v2)
-│   │   ├── inc/uart.h        # USART_ManualType (ISR/RDR/TDR), IRQn_Type
-│   │   └── src/              # uart.c, main.c, startup.c
-│   └── bxCAN/                # FDCAN driver (STM32C5 port)
-│       ├── inc/bxcan.h
-│       └── src/              # bxcan.c, main.c, startup.c
+├── Makefile                  # Generic build, flash, debug automation (GNU Make)
+├── tools/                    # seal.py, clear_tag.py, bl_upload.py, monitor.ps1 …
+├── Drivers/                  # Register-level drivers, each also a standalone demo
+│   ├── GPIO/                 # e.g. one module folder:
+│   │   ├── module.mk         #   build wiring (library sources, dependencies)
+│   │   ├── linker.ld         #   GCC linker script for the standalone demo
+│   │   ├── inc/gpio.h        #   RCC_TypeDef, GPIO_ManualTypeDef, pin macros
+│   │   └── src/              #   gpio.c, main.c, startup.c
+│   └── AES/ CRC/ DMA/ FDCAN/ HASH/ NVIC/ RNG/ SysTick/ UART/
 └── Projects/                 # Application-level projects (use the Drivers above)
-    └── LED_Blink/            # LED blink demo with medical/power LED patterns
+    └── App_Demo/ Bootloader/ ECDSA/ FLASH/ RSA/ Root_of_Trust/
+        Secure_Boot/ Secure_FW_Update/
 ```
 
 ## Architecture
@@ -68,79 +65,58 @@ CMSIS (`core_cm4.h`) is used **only** for `NVIC_SetPriority()` / `NVIC_EnableIRQ
   - Linux: `sudo apt install gcc-arm-none-eabi`
   - Windows: download from [Arm Developer](https://developer.arm.com/downloads/-/gnu-rm)
 - **OpenOCD** with STM32C5 target support (add to PATH)
+- **GNU Make** (add to PATH — e.g. the one shipped with STM32CubeIDE, MSYS2 or Git-for-Windows)
 - **ST-Link USB drivers** ([STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html))
-- **IAR Embedded Workbench for ARM** (optional, v9.70+ recommended)
-  - Download from [IAR Systems](https://www.iar.com/downloads/)
-  - A free evaluation license is sufficient for building these projects
 
 ## Building
 
-### GCC (default)
+The build is plain **GNU Make + arm-none-eabi-gcc**.
 
 ```sh
-# Build the GPIO driver demo (NUCLEO LED blink)
+# Show every target, variable and buildable PROJECT_DIR (same as 'make help')
+make
+
+# Build the PROJECT_DIR selected at the top of the Makefile
+make build
+
+# Build any other module
 make build PROJECT_DIR=Drivers/GPIO
-
-# Build the UART driver demo
-make build PROJECT_DIR=Drivers/UART
-
-# Build the bxCAN (FDCAN) driver demo
-make build PROJECT_DIR=Drivers/bxCAN
+make build PROJECT_DIR=Projects/Secure_Boot
 ```
 
 Output files (`main.elf`, `main.bin`, `main.hex`, `main.map`) are generated inside the selected `PROJECT_DIR`.
 
-### IAR Embedded Workbench
+### Module wiring (`module.mk`)
 
-The IAR build uses `iccarm`, `ilinkarm`, and `ielftool` directly from the Makefile — no `.ewp` project file is needed. The same source lists, include paths, and defines used by the GCC build are automatically translated to IAR equivalents.
+Every driver/project folder has a `module.mk`. Its variables are prefixed with the folder name:
 
-**Setup:**
+| Variable | Meaning |
+|---|---|
+| `<Name>_SRC_C` / `<Name>_INC` | Library source(s) and include dir other modules get when they depend on it |
+| `<Name>_DEPS` | Modules linked when this folder is built as `PROJECT_DIR` |
+| `<Name>_INCS` | Extra include-only directories for that build |
+| `<Name>_FLASH_ADDR` | Load address when it is not `0x08000000` |
 
-1. Install IAR EWARM and note the installation path (default: `D:/iar/ewarm-9.70.4/`).
-2. If your path differs, override it on the command line or in the Makefile:
-   ```sh
-   make iar-build PROJECT_DIR=Drivers/GPIO IAR_ROOT=C:/path/to/ewarm
-   ```
-3. A shared IAR linker configuration file `stm32c562re.icf` in the repository root defines the memory layout (Flash 1024 KB @ `0x08000000`, RAM 128 KB @ `0x20000000`).
-
-**Build commands:**
-
-```sh
-# Build with IAR
-make iar-build PROJECT_DIR=Drivers/GPIO
-make iar-build PROJECT_DIR=Drivers/UART
-make iar-build PROJECT_DIR=Drivers/bxCAN
-make iar-build PROJECT_DIR=Projects/LED_Blink
-
-# Clean IAR build artifacts
-make iar-clean PROJECT_DIR=Drivers/GPIO
+```make
+# Projects/App_Demo/module.mk
+App_Demo_DEPS       := UART NVIC
+App_Demo_FLASH_ADDR := 0x08010000
 ```
 
-IAR output files are generated in `iar_out/` at the repository root (`main.out`, `main.bin`, `main.hex`, `main.map`).
+The top-level `Makefile` includes all of them, so adding a module only means adding its folder with a `module.mk` and `linker.ld`. `NVIC` is always linked (its `nvic.c` provides the IRQ handlers every vector table refers to).
 
-**How it works:**
+### Startup code
 
-Each project's `startup.c` uses `#ifdef __ICCARM__` guards to provide both IAR and GCC startup code in a single file:
-
-- **IAR path:** Uses `CSTACK$$Limit` (linker symbol from `.icf`), `#pragma location = ".intvec"` for the vector table, `#pragma weak` for IRQ handlers, and calls `__iar_data_init3()` for `.data`/`.bss` initialisation.
-- **GCC path:** Uses `_estack` / `__etext` / `__bss_start__` etc. from the GCC `linker.ld`, `__attribute__((section(".isr_vector")))`, and manual `.data` copy / `.bss` zero-fill.
-
-**Available IAR make targets:**
-
-| Target | Description |
-|---|---|
-| `iar-build` | Compile + link + generate `.bin` with IAR tools |
-| `iar-clean` | Remove IAR build artifacts (`iar_out/`) |
-| `iar-flash` | Build with IAR and flash `iar_out/main.bin` |
-| `iar-debug` | Build with IAR in debug mode (`DEBUG=1`), flash, then attach with VS Code `cspy` launch |
+Each module's `startup.c` uses `_estack` / `__etext` / `__bss_start__` etc. from its GCC `linker.ld`, places the vector table with `__attribute__((section(".isr_vector")))`, and does the `.data` copy / `.bss` zero-fill itself before calling `main()`.
 
 **Overridable variables:**
 
 | Variable | Default | Description |
 |---|---|---|
-| `IAR_ROOT` | `D:/iar/ewarm-9.70.4` | Root path of EWARM installation |
-| `IAR_ICF` | `stm32c562re.icf` | IAR linker configuration file |
-| `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug`, `make iar-debug`) |
+| `PROJECT_DIR` | set at the top of `Makefile` | Module to build / flash |
+| `FLASH_TOOL` | `cubeprog` | `cubeprog`, `openocd` or `stlink` |
+| `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug` sets it) |
+| `PORT` / `BAUD` | auto / `115200` | Serial port for `make monitor` / `make bl-upload` |
 
 ## Flashing
 
@@ -159,57 +135,11 @@ make flash PROJECT_DIR=Drivers/UART
 2. Press `F5` or open **Run and Debug**
 3. Set breakpoints and step through code normally
 
-### IAR C-SPY Debugger
+The **Debug: Active App (from Makefile)** configuration runs the `GCC: Build + Flash for Debug` task (`make debug`) first, which builds `PROJECT_DIR` with `DEBUG=1`, copies it to `build_out/main.elf` and flashes it. Without VS Code:
 
-IAR ships its own debugger, **C-SPY**, which supports ST-Link out of the box. There are two practical ways in this repository:
-
-#### Option A: From the command line (recommended for quick tests)
-
-1. Build with IAR:
-   ```sh
-   make iar-build PROJECT_DIR=Drivers/GPIO
-   ```
-2. Launch **C-SPY Batch** (`cspybat.exe`) to flash and run:
-   ```sh
-   "D:/iar/ewarm-9.70.4/common/bin/cspybat.exe" ^
-     --backend "D:/iar/ewarm-9.70.4/arm/bin/armproc.dll" ^
-     "D:/iar/ewarm-9.70.4/arm/bin/armstlink2.dll" ^
-   iar_out/main.out ^
-     --plugin "D:/iar/ewarm-9.70.4/arm/bin/armbat.dll" ^
-     --stlink_interface SWD
-   ```
-   This downloads the firmware, starts the CPU, and streams semihosting output (if any) to the terminal. Press `Ctrl+C` to stop.
-
-#### Option B: VS Code with IAR C-SPY extension (recommended)
-
-1. Build + flash debug firmware:
-   ```sh
-   make iar-debug PROJECT_DIR=Drivers/GPIO
-   ```
-2. Start the VS Code debug config **IAR C-SPY: ST-LINK** (`F5`).
-3. Ensure `program` points to `iar_out/main.out` and `workbenchPath` points to your installed EWARM root.
-4. If step controls are disabled, press **Pause** first; step buttons activate only when target is halted.
-5. If breakpoints are skipped, confirm you built the same `PROJECT_DIR` you are editing and run `make iar-debug` again.
-
-#### Option C: GCC + Cortex-Debug in VS Code
-
-Use Cortex-Debug with OpenOCD for GCC-built firmware.
-
-1. Build + flash debug firmware:
-   ```sh
-   make debug PROJECT_DIR=Drivers/GPIO
-   ```
-2. Ensure `.vscode/launch.json` contains the Cortex configuration:
-   ```jsonc
-   {
-     "name": "Cortex Debug: ST-LINK",
-     "type": "cortex-debug",
-     "request": "launch",
-     "executable": "${workspaceFolder}/build_out/main.elf",
-     "runToEntryPoint": "main"
-   }
-   ```
-3. Select **Cortex Debug: ST-LINK** in Run and Debug and press `F5`.
+```sh
+make debug PROJECT_DIR=Drivers/GPIO
+```
 
 ## Key Register Addresses (STM32C5)
 
@@ -231,7 +161,7 @@ Use Cortex-Debug with OpenOCD for GCC-built firmware.
 - **OpenOCD target not found** — ensure your OpenOCD installation includes `target/stm32u5x.cfg` (used by this repo's STM32C5 setup)
 - **Breakpoints never hit** — most common causes:
    - Built a different project than the file you are editing. Check `PROJECT_DIR` in `Makefile` or pass `PROJECT_DIR=...` on the command.
-   - Optimized build loaded. Use `make debug` or `make iar-debug` (both enforce debug-friendly options).
+   - Optimized build loaded. Use `make debug` (enforces debug-friendly options).
    - Breakpoint is hollow/unverified. Start debug first, then check it turns solid red.
 
 ## References
@@ -240,5 +170,5 @@ Use Cortex-Debug with OpenOCD for GCC-built firmware.
 - [OpenOCD Documentation](http://openocd.org/doc/html/index.html)
 - [Arm GNU Toolchain](https://developer.arm.com/downloads/-/gnu-rm)
 - [CMSIS Documentation](https://arm-software.github.io/CMSIS_5/Core/html/index.html)
-- [IAR Embedded Workbench](https://www.iar.com/ewarm) — compiler, linker, and C-SPY debugger
+- [GNU Make Manual](https://www.gnu.org/software/make/manual/)
 

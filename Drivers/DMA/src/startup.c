@@ -39,16 +39,6 @@ extern void LPDMA1_Channel6_IRQHandler(void); extern void LPDMA1_Channel7_IRQHan
     [16 + 25] = LPDMA1_Channel2_IRQHandler, [16 + 26] = LPDMA1_Channel3_IRQHandler, \
     [16 + 27] = LPDMA1_Channel4_IRQHandler, [16 + 28] = LPDMA1_Channel5_IRQHandler, \
     [16 + 29] = LPDMA1_Channel6_IRQHandler, [16 + 30] = LPDMA1_Channel7_IRQHandler
-#if defined(__ICCARM__)
-extern void *CSTACK$$Limit;
-#define _VT_STACK_TOP  ((isr_handler_t)&CSTACK$$Limit)
-#pragma location = ".intvec"
-const isr_handler_t vector_table[16 + STM32_IRQ_TABLE_SIZE] = { VECTOR_TABLE_CONTENT };
-void Reset_Handler(void) {
-    extern void __iar_data_init3(void); __iar_data_init3();
-    SystemInit(); main(); while (1);
-}
-#else
 extern uint32_t _estack, __etext, __data_start__, __data_end__, __bss_start__, __bss_end__;
 #define _VT_STACK_TOP  ((isr_handler_t)&_estack)
 __attribute__((section(".isr_vector")))
@@ -60,5 +50,4 @@ void Reset_Handler(void) {
     while (dst < &__bss_end__)   { *dst++ = 0; }
     SystemInit(); main(); while (1);
 }
-#endif
 void Default_Handler(void) { while (1); }

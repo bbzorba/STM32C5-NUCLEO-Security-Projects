@@ -272,99 +272,47 @@ print-%:
 # Default goal: show help when running plain `make`
 .DEFAULT_GOAL := help
 
+# Every folder with a module.mk can be built as PROJECT_DIR
+MODULE_DIRS := $(patsubst %/module.mk,%,$(wildcard Drivers/*/module.mk Projects/*/module.mk))
+
+define _NEWLINE
+
+
+endef
+
 # Help target: list common make targets and usage
 help:
-	@echo "Usage: make [target]"
-	@echo "Common targets:"
-	@echo "  build             Build the current PROJECT_DIR (same as 'make all')"
+	@echo "Usage: make [target] [PROJECT_DIR=<dir>] [VAR=value ...]"
+	@echo "Current PROJECT_DIR: $(PROJECT_DIR)  (load address $(FLASH_ADDR))"
+	@echo
+	@echo "Build:"
+	@echo "  build             Build the current PROJECT_DIR (same as 'make all' / 'make run')"
+	@echo "  clean             Remove build artifacts of the current PROJECT_DIR"
+	@echo "  debug-build       Clean + build with DEBUG=1, copy ELF/BIN to build_out/"
+	@echo "Flash:"
 	@echo "  flash             Build and flash using FLASH_TOOL (cubeprog/openocd/stlink)"
+	@echo "  flash_cubeprog    Flash with STM32_Programmer_CLI"
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
-	@echo "  flash_cubeprog    Flash with STM32_Programmer_CLI"
+	@echo "  debug             debug-build, then flash build_out/main.bin for VS Code debugging"
+	@echo "  seal-active       Build, then flash + CRC-seal the active slot (tools/seal.py)"
+	@echo "  bl-upload         Upload APP=<bin> through Projects/Bootloader over UART"
+	@echo "  restore-bootloader Re-flash Projects/Secure_Boot at 0x08000000"
+	@echo "Serial / misc:"
 	@echo "  monitor           Open serial monitor (Windows PowerShell)"
 	@echo "                    Auto-detects USB-serial bridge when PORT is empty"
 	@echo "                    Use MONITOR_SECONDS=N for timed CI verification"
 	@echo "  com-list          List serial ports (Windows PowerShell)"
-	@echo "  clean             Remove build artifacts"
-	@echo "  run               Alias for build"
 	@echo "  flashmonitor-auto Build, flash, and start monitor"
+	@echo "  gen-debug-config  Write board settings into .vscode/settings.json"
+	@echo "  print-VAR         Print a Makefile variable, e.g. make print-SRC_C"
+	@echo
+	@echo "Variables: PROJECT_DIR, FLASH_TOOL=$(_FLASH_TOOL), DEBUG=1, PORT, BAUD=$(BAUD), DRIVERS"
+	@echo
+	@echo "Available PROJECT_DIR values:"
+	$(foreach d,$(MODULE_DIRS),@echo "  $(d)"$(_NEWLINE))
 	@echo
 	@echo "To build immediately, run: make build"
-
-# --------------------
-# IAR toolchain integration
-# Builds the SAME source files as the GCC target using iccarm/ilinkarm directly.
-# No .ewp project file required — all configuration lives here in the Makefile.
-#
-# Tool paths:  IAR_ROOT  = root of IAR EWARM install
-#              ICCARM    = ARM C compiler
-#              ILINKARM  = ARM linker
-#              IELFTOOL  = converts .out → .hex / .bin  (like arm-none-eabi-objcopy)
-#
-# Overrideable from command line, e.g.:
-#   make iar-build IAR_ROOT=C:/IAR/EWARM9
-# --------------------
-
-IAR_ROOT   ?= D:/iar/ewarm-9.70.4
-ICCARM     := $(IAR_ROOT)/arm/bin/iccarm.exe
-ILINKARM   := $(IAR_ROOT)/arm/bin/ilinkarm.exe
-IELFTOOL   := $(IAR_ROOT)/arm/bin/ielftool.exe
-
-# IAR output directory — fixed at workspace root so VS Code debug configs stay
-# project-independent (launch.json always points to iar_out/main.out).
-IAR_OUT    := iar_out
-
-# IAR linker config — lives beside linker.ld in the project directory
-IAR_ICF    ?= stm32c562re.icf
-
-# All source files the IAR build should compile (same set as GCC, deduplicated)
-IAR_ALL_SRC := $(sort $(SRC_C) $(EXTERNAL_SRC_C))
-
-.PHONY: iar-build iar-clean iar-flash iar-debug
-iar-build:
-	@echo "----------------------------------------------------"
-	@echo "  IAR build: $(PROJECT_DIR) [iccarm V9.70, Cortex-M33]"
-	@echo "----------------------------------------------------"
-ifeq ($(_POSIX_SH),1)
-	@test -f "$(ICCARM)" || { echo "ERROR: iccarm not found at $(ICCARM)"; echo "Set IAR_ROOT, e.g.: make iar-build IAR_ROOT=C:/IAR/EWARM9"; exit 1; }
-	@test -f "$(IAR_ICF)" || { echo "ERROR: IAR linker config not found at $(IAR_ICF)"; exit 1; }
-	@mkdir -p "$(IAR_OUT)"
-else
-	@if not exist "$(ICCARM)" (echo ERROR: iccarm not found at $(ICCARM) & echo Set IAR_ROOT, e.g.: make iar-build IAR_ROOT=C:/IAR/EWARM9 & exit /b 1)
-	@if not exist "$(IAR_ICF)" (echo ERROR: IAR linker config not found at $(IAR_ICF) & exit /b 1)
-	@if not exist "$(IAR_OUT)" mkdir "$(IAR_OUT)"
-endif
-	python tools/iar_build.py \
-	  --iccarm "$(ICCARM)" \
-	  --ilinkarm "$(ILINKARM)" \
-	  --ielftool "$(IELFTOOL)" \
-	  --icf "$(IAR_ICF)" \
-	  --opt-level $(if $(filter 1,$(DEBUG)),none,size) \
-	  --outdir "$(IAR_OUT)" \
-	  --inc "$(PROJECT_DIR)/inc" \
-	  $(foreach d,$(FILTERED_DRIVER_DIRS),--inc "$(d)/inc") \
-	  --define DSTM32C5xx \
-	  $(IAR_ALL_SRC)
-
-iar-flash: iar-build
-	"$(CUBE_PROG)" -c port=SWD -halt -d "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -rst
-
-iar-clean:
-	-python -c "import shutil,os; shutil.rmtree('$(IAR_OUT)', ignore_errors=True)"
-
-iar-debug:
-	@$(MAKE) iar-build DEBUG=1
-	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(IAR_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
-	@echo ""
-	@echo "--- IAR build + flash complete: $(IAR_OUT)/main.out ---"
-	@echo "Press F5 in VS Code [select IAR C-SPY: ST-LINK] to start debugging."
-
-# TOOLCHAIN=iar redirects the standard targets
-ifeq ($(strip $(TOOLCHAIN)),iar)
-build: iar-build
-flash: iar-flash
-clean: iar-clean
-endif
 
 # GCC output mirror — keeps a project-independent copy so VS Code cortex-debug
 # launch config always finds build_out/main.elf regardless of PROJECT_DIR.
