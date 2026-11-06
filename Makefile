@@ -16,6 +16,7 @@
 #PROJECT_DIR = Projects/App_Demo
 #PROJECT_DIR = Projects/RSA
 #PROJECT_DIR = Projects/Root_of_Trust
+#PROJECT_DIR = Projects/Bootloader
 
 #TBD
 PROJECT_DIR = Projects/Secure_Boot
@@ -72,8 +73,29 @@ RM        := rm -f
 DEVNULL   := /dev/null
 endif
 
+# ── Module wiring ─────────────────────────────────────────
+# Every driver/project folder carries a module.mk. Its variables are prefixed
+# with the folder name (e.g. UART_*, Secure_Boot_*):
+#   <Name>_SRC_C       library source(s) linked into modules that depend on it
+#   <Name>_INC         library include directory
+#   <Name>_DEPS        modules linked when this folder is built as PROJECT_DIR
+#   <Name>_INCS        extra include-only directories for that build
+#   <Name>_FLASH_ADDR  load address when it is not 0x08000000
+# A new driver/project only needs its own module.mk — nothing to edit here.
+include $(wildcard Drivers/*/module.mk Projects/*/module.mk)
+
+MODULE := $(notdir $(strip $(PROJECT_DIR)))
+ifeq ($(wildcard $(PROJECT_DIR)/module.mk),)
+$(warning $(PROJECT_DIR) has no module.mk — building its own sources only)
+endif
+
+# nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
+# Startup files reference these names in their vector tables, so NVIC is
+# always a dependency.
+DEPS := $($(MODULE)_DEPS) $(filter-out $($(MODULE)_DEPS),NVIC)
+
 # Flashing configuration
-FLASH_ADDR=0x08000000
+FLASH_ADDR = $(if $($(MODULE)_FLASH_ADDR),$($(MODULE)_FLASH_ADDR),0x08000000)
 FLASH_TOOL?=cubeprog  # options: cubeprog | openocd | stlink
 # Sanitize FLASH_TOOL in case of stray spaces from environment or edits
 _FLASH_TOOL:=$(strip $(FLASH_TOOL))
@@ -108,19 +130,9 @@ MONITOR_SECONDS ?=
 LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
 
 # Optional external driver selection -------------------------------------------------
-# Include UART driver automatically for the LED_Blink project so
-# project code can use the shared UART API without adding local stubs.
-ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink)
-DRIVERS := UART
-endif
-ifeq ($(strip $(PROJECT_DIR)),Drivers/FDCAN)
-DRIVERS := UART GPIO
-endif
-ifeq ($(strip $(PROJECT_DIR)),Projects/LED_Blink_cpp)
-DRIVERS := UART_cpp GPIO_cpp
-endif
-# By default (when DRIVERS is empty) we build ONLY the selected PROJECT sources.
-# To pull in driver code under Drivers/<Name>, invoke:
+# By default (when DRIVERS is empty) we build ONLY the selected PROJECT sources
+# plus its module.mk dependencies. To pull in all driver code under
+# Drivers/<Name>, invoke:
 #   make DRIVERS="UART I2C"   (names are directory basenames)
 # We still exclude HAL, CMSIS, compat headers, and the active project if it lives
 # under Drivers/.
@@ -143,179 +155,11 @@ EXTERNAL_SRC_CPP := $(sort $(filter-out $(EXTERNAL_EXCLUDE_CPP),$(EXTERNAL_SRC_C
 
 CFLAGS += $(DRIVER_INCLUDES)
 
-# Project sources
+# Project sources + the library sources/includes of every dependency
 SRC_C   := $(wildcard $(PROJECT_DIR)/src/*.c)
 SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
-SRC := $(SRC_C) $(SRC_CPP)
-
-GPIO_SRC_C := Drivers/GPIO/src/gpio.c
-I2C_SRC_C := Drivers/I2C/src/i2c.c
-SPI_SRC_C := Drivers/SPI/src/spi.c
-UART_SRC_C := Drivers/UART/src/uart.c
-SYSTICK_SRC_C := Drivers/SysTick/src/systick.c
-CRC_SRC_C     := Drivers/CRC/src/crc.c
-AES_SRC_C     := Drivers/AES/src/aes.c
-NVIC_SRC_C	 := Drivers/NVIC/src/nvic.c
-
-# Automatically include GPIO library when project includes the following source files
-ifneq (,$(filter systick.c hc06.c pwm.c servo.c,$(notdir $(SRC))))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/UART/inc
-SRC_C += $(filter-out $(SRC_C),$(PWM_SRC_C))
-CFLAGS += -IDrivers/PWM/inc
-endif
-
-# Project-specific wiring for SysTick: needs GPIO and UART drivers
-ifeq ($(PROJECT_DIR),Drivers/SysTick)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for AES: needs GPIO and UART drivers
-ifeq ($(PROJECT_DIR),Drivers/AES)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for UART: needs GPIO and DMA drivers
-DMA_SRC_C := Drivers/DMA/src/dma.c
-ifeq ($(PROJECT_DIR),Drivers/UART)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(DMA_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/DMA/inc
-endif
-
-# Project-specific wiring for DMA: needs GPIO
-ifeq ($(PROJECT_DIR),Drivers/DMA)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for NVIC: needs GPIO + UART + DMA drivers
-NVIC_SRC_C := Drivers/NVIC/src/nvic.c
-ifeq ($(PROJECT_DIR),Drivers/NVIC)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(DMA_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/DMA/inc
-endif
-
-# Project-specific wiring for RNG: needs GPIO and UART drivers
-RNG_SRC_C := Drivers/RNG/src/rng.c
-ifeq ($(PROJECT_DIR),Drivers/RNG)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/RNG/inc
-endif
-
-# Project-specific wiring for ECDSA: needs GPIO, UART, and HASH drivers
-HASH_SRC_C  := Drivers/HASH/src/hash.c
-ECDSA_SRC_C := Projects/ECDSA/src/ecdsa.c
-ifeq ($(strip $(PROJECT_DIR)),Projects/ECDSA)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
-endif
-
-# Project-specific wiring for Secure_Boot: needs GPIO, UART, HASH, ECDSA, NVIC
-ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_Boot)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
-          -IProjects/ECDSA/inc -IDrivers/NVIC/inc
-endif
-
-FLASH_DRV_SRC_C := Projects/FLASH/src/flash.c
-
-# Project-specific wiring for Root_of_Trust: needs UART + NVIC + HASH + CRC.
-# Runs in the active slot (0x08010000); measures the bootloader at 0x08000000.
-ifeq ($(strip $(PROJECT_DIR)),Projects/Root_of_Trust)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
-CFLAGS += -IDrivers/UART/inc -IDrivers/NVIC/inc -IDrivers/HASH/inc -IDrivers/CRC/inc
-FLASH_ADDR = 0x08010000
-endif
-
-# Project-specific wiring for Secure_FW_Update: needs UART + NVIC + HASH +
-# RNG + ECDSA + CRC + the FLASH driver from Projects/FLASH.
-# Runs in the active slot (0x08010000); writes the update to the fallback slot.
-ifeq ($(strip $(PROJECT_DIR)),Projects/Secure_FW_Update)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(FLASH_DRV_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/NVIC/inc \
-          -IDrivers/HASH/inc -IDrivers/RNG/inc -IProjects/ECDSA/inc \
-          -IDrivers/CRC/inc -IProjects/FLASH/inc
-FLASH_ADDR = 0x08010000
-endif
-
-# Project-specific wiring for App_Demo: needs UART + NVIC (for IRQ dispatch)
-# Flash address is 0x08010000 (Secure Boot active slot) — NOT 0x08000000.
-ifeq ($(strip $(PROJECT_DIR)),Projects/App_Demo)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-CFLAGS   += -IDrivers/UART/inc -IDrivers/NVIC/inc
-FLASH_ADDR = 0x08010000
-endif
-
-# Project-specific wiring for Dummy_Project: needs UART
-ifeq ($(strip $(PROJECT_DIR)),Projects/Dummy_Project)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for Memory_Protection: needs GPIO, UART, HASH, RNG, and ECDSA (same as Secure_Boot)
-ifeq ($(strip $(PROJECT_DIR)),Projects/Memory_Protection)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(RNG_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(ECDSA_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc \
-          -IDrivers/RNG/inc -IProjects/ECDSA/inc
-endif
-
-# Project-specific wiring for FLASH: needs AES,CRC, UART and SysTick drivers
-ifeq ($(strip $(PROJECT_DIR)),Projects/FLASH)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(SYSTICK_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(CRC_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(AES_SRC_C))
-CFLAGS += -IDrivers/UART/inc -IDrivers/SysTick/inc -IDrivers/CRC/inc \
-          -IDrivers/AES/inc -IDrivers/GPIO/inc
-endif
-
-# Project-specific wiring for RSA: standalone demo at 0x08000000.
-# Needs UART + NVIC only (no peripheral drivers).
-ifeq ($(strip $(PROJECT_DIR)),Projects/RSA)
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-CFLAGS += -IDrivers/UART/inc -IDrivers/NVIC/inc -IDrivers/GPIO/inc
-endif
-
-# nvic.c provides strong USART+EXTI IRQ handler definitions for ALL projects.
-# Startup files reference these names in their vector tables, so nvic.c must
-# always be linked. Projects that already include nvic.c in their SRC_C
-# (e.g. Drivers/NVIC) are skipped via filter-out.
-SRC_C  += $(filter-out $(SRC_C),$(NVIC_SRC_C))
-CFLAGS += -IDrivers/NVIC/inc
-
+SRC_C   += $(filter-out $(SRC_C),$(foreach d,$(DEPS),$($(d)_SRC_C)))
+CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $($(MODULE)_INCS))
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
 OBJ=$(sort $(OBJ_UNSORTED))
@@ -327,7 +171,6 @@ LINKER := $(CXX)
 else
 LINKER := $(CC)
 endif
-TARGET=$(PROJECT_DIR)/main
 
 # Pattern rules
 %.o: %.s
@@ -339,18 +182,13 @@ TARGET=$(PROJECT_DIR)/main
 %.o: %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-.PHONY: all build run clean flash flash_openocd flash_stlink flash_cubeprog
 .PHONY: help all build run clean flash flash_openocd flash_stlink flash_cubeprog
 
 all: build
 
-# .SECONDEXPANSION defers prerequisite evaluation to a second pass that runs
-# after the entire Makefile has been read — including all project-specific
-# SRC_C wiring blocks at the bottom.  Without it, build: $(OBJ) is evaluated
-# at parse time, before those ifeq blocks append gpio.c / uart.c etc. to SRC_C,
-# so the driver .o files are never listed as prerequisites and never compiled.
-.SECONDEXPANSION:
-build: $$(OBJ)
+# All module wiring is resolved above (module.mk files are included before
+# any rule), so OBJ is complete when this prerequisite list is read.
+build: $(OBJ)
 	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $(TARGET).elf $(LDFLAGS) $(EXTRA_LDFLAGS)
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
@@ -382,6 +220,10 @@ flash_cubeprog: build
 flash_openocd: FLASH_TOOL=openocd
 flash_openocd: build
 	"$(OPENOCD)" $(if $(OPENOCD_SCRIPTS),-s "$(OPENOCD_SCRIPTS)") -f $(OPENOCD_IF) $(OPENOCD_EXTRA) -f $(OPENOCD_TARGET) -c "program $(TARGET).elf verify reset exit"
+
+flash_stlink: FLASH_TOOL=stlink
+flash_stlink: build
+	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 
 # Seal the active application slot (Projects/App_Demo workflow):
 #   1. Build the application binary
@@ -419,10 +261,6 @@ endif
 .PHONY: flashmonitor-auto
 flashmonitor-auto: all flash monitor
 
-flash_stlink: FLASH_TOOL=stlink
-flash_stlink: build
-	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
-
 clean:
 	-python -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
 
@@ -452,172 +290,6 @@ help:
 	@echo "  flashmonitor-auto Build, flash, and start monitor"
 	@echo
 	@echo "To build immediately, run: make build"
-# End of Makefile
-
-# Project-specific wiring for HC06_Servo_Controller: needs GPIO, UART, PWM, Servo, HC06
-ifeq ($(PROJECT_DIR),Projects/HC06_Servo_Controller)
-# Include required drivers and servo/hc06 helpers
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(PWM_SRC_C))
-SRC_C += $(filter-out $(SRC_C),Projects/Servo_Motor/src/servo.c)
-SRC_C += $(filter-out $(SRC_C),Projects/HC06_Bluetooth/src/hc06.c)
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/PWM/inc -IProjects/Servo_Motor/inc -IProjects/HC06_Bluetooth/inc
-endif
-
-# Project-specific wiring for MLX90614_Temp: needs I2C driver
-ifeq ($(PROJECT_DIR),Projects/MLX90614_Temp)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(I2C_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/I2C/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for HC06_MLX90614_Temp: needs MLX90614, HC06, GPIO, I2C
-ifeq ($(PROJECT_DIR),Projects/HC06_MLX90614_Temp)
-SRC_C += $(filter-out $(SRC_C),$(MLX90614_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HC_06_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(I2C_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/I2C/inc -IDrivers/UART/inc -IProjects/MLX90614_Temp/inc -IProjects/HC06_Bluetooth/inc
-endif
-
-# Project-specific wiring for BME68x: needs GPIO, I2C, UART drivers
-ifeq ($(PROJECT_DIR),Projects/BME68x_Env_Sensor)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(I2C_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/I2C/inc -IDrivers/UART/inc -IProjects/BME68x_Env_Sensor/inc
-endif
-
-# Project-specific wiring for HC06_BME68x_Env_Sensor: needs BME68x, HC06, GPIO, I2C
-ifeq ($(PROJECT_DIR),Projects/HC06_BME68x_Env_Sensor)
-SRC_C += $(filter-out $(SRC_C),$(BME68X_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HC_06_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(I2C_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/I2C/inc -IDrivers/UART/inc -IProjects/BME68x_Env_Sensor/inc -IProjects/HC06_Bluetooth/inc
-endif
-
-# Project-specific wiring for PWM: needs GPIO & UART drivers
-ifeq ($(PROJECT_DIR),Drivers/PWM)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for SPI: needs GPIO driver
-ifeq ($(PROJECT_DIR),Drivers/SPI)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc
-endif
-
-# Project-specific wiring for SPI_cpp: needs GPIO_cpp driver
-ifeq ($(PROJECT_DIR),Drivers/SPI_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-CFLAGS  += -IDrivers/GPIO_cpp/inc
-endif
-
-# Project-specific wiring for TSL2591_Light: needs I2C & UART drivers
-ifeq ($(PROJECT_DIR),Projects/TSL2591_Light)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-CLEAR_UNUSED :=
-SRC_C += $(filter-out $(SRC_C),$(I2C_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/I2C/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for FDCAN: needs GPIO & UART drivers
-ifeq ($(PROJECT_DIR),Drivers/FDCAN)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for LIS302DL_Accelerometer: needs GPIO, SPI & UART drivers
-ifeq ($(PROJECT_DIR),Projects/LIS302DL_Accelerometer)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(SPI_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/SPI/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for Button_LED_Blink_semaphore: same deps as mutex variant
-ifeq ($(PROJECT_DIR),Projects/Button_LED_Blink_semaphore)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(SPI_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(LED_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/SPI/inc -IDrivers/UART/inc -IProjects/LED_Blink/inc
-endif
-
-# Project-specific wiring for Button_LED_Blink_semaphore_cpp: same deps as mutex variant
-ifeq ($(PROJECT_DIR),Projects/Button_LED_Blink_semaphore_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(SPI_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(LED_SRC_CPP))
-CFLAGS += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc -IProjects/LED_Blink_cpp/inc
-endif
-
-# Project-specific wiring for Button_LED_Blink_mutex: needs LED_Blink, GPIO, SPI & UART drivers
-ifeq ($(PROJECT_DIR),Projects/Button_LED_Blink_mutex)
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(SPI_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(LED_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/SPI/inc -IDrivers/UART/inc -IProjects/LED_Blink/inc
-endif
-
-# Project-specific wiring for Button_LED_Blink_mutex_cpp: needs LED_Blink, GPIO, SPI & UART drivers
-ifeq ($(PROJECT_DIR),Projects/Button_LED_Blink_mutex_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(SPI_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(LED_SRC_CPP))
-CFLAGS += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc -IProjects/LED_Blink_cpp/inc
-endif
-
-# Project-specific wiring for Button_LED_Blink_semaphore_cpp: needs LED_Blink, GPIO, SPI & UART drivers
-ifeq ($(PROJECT_DIR),Projects/Button_LED_Blink_semaphore_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(SPI_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(LED_SRC_CPP))
-CFLAGS += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc -IProjects/LED_Blink_cpp/inc
-endif
-
-# Project-specific wiring for LIS302DL_Accelerometer_cpp: needs GPIO_cpp, SPI_cpp & UART_cpp drivers
-ifeq ($(PROJECT_DIR),Projects/LIS302DL_Accelerometer_cpp)
-SRC_CPP += $(filter-out $(SRC_CPP),$(GPIO_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(SPI_SRC_CPP))
-SRC_CPP += $(filter-out $(SRC_CPP),$(UART_SRC_CPP))
-CFLAGS  += -IDrivers/GPIO_cpp/inc -IDrivers/SPI_cpp/inc -IDrivers/UART_cpp/inc
-endif
-
-# Project-specific wiring for HASH: needs GPIO and UART drivers
-ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/HASH))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for CRC: needs GPIO and UART drivers
-ifneq (,$(filter $(strip $(PROJECT_DIR)),Drivers/CRC))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc
-endif
-
-# Project-specific wiring for ECDSA: needs HASH, GPIO and UART drivers
-ifneq (,$(filter $(strip $(PROJECT_DIR)),Projects/ECDSA))
-SRC_C += $(filter-out $(SRC_C),$(GPIO_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(UART_SRC_C))
-SRC_C += $(filter-out $(SRC_C),$(HASH_SRC_C))
-CFLAGS += -IDrivers/GPIO/inc -IDrivers/UART/inc -IDrivers/HASH/inc
-endif
 
 # --------------------
 # IAR toolchain integration
