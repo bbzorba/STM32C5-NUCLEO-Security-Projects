@@ -7,8 +7,10 @@
  * (sectors 8-29) with its CRC-32 tag in sector 30 — the same map used by
  * Secure_Boot, App_Demo and tools/seal.py.
  *
- *   1. After reset, wait BL_WAIT_MS for 'u' on USART2 (ST-LINK VCP)
- *   2. 'u' received → receive a new image (tools/bl_upload.py)
+ *   1. B1 held during reset → stay in the bootloader (LD1 blinks)
+ *   2. Otherwise open a BL_WAIT_MS (5 s) window, LD1 on:
+ *        'u' on USART2 (ST-LINK VCP) → receive a new image (tools/bl_upload.py)
+ *        B1 pressed                  → cancel auto-boot, stay in the bootloader
  *   3. Verify the active slot (tag + CRC-32 + vector table)
  *   4. Valid → jump to the application, otherwise stay here and wait
  */
@@ -29,33 +31,43 @@ int main(void)
     USART_constructor(&huart, USART_2, RX_AND_TX, __115200);
     BL_Init(&hbl, &huart);
 
+    /* Sample B1 first, before the banner, so a press during reset is not missed */
+    uint8_t stay = BL_ButtonPressed(&hbl);
+
     /* ── Banner ────────────────────────────────────────────────────── */
-    USART_WriteString(&huart, "\r\n=== UART BOOTLOADER v1.0 ===\r\n");
+    USART_WriteString(&huart, "\r\n=== UART BOOTLOADER v1.1 ===\r\n");
     USART_WriteString(&huart, "MCU    : STM32C562RE  Cortex-M33  48 MHz\r\n");
     USART_WriteString(&huart, "Self   : sectors  0-7   0x08000000  64 KB\r\n");
     USART_WriteString(&huart, "Active : sectors  8-29  0x08010000  176 KB\r\n");
     USART_WriteString(&huart, "Tag    : sector  30     0x0803C000  CRC-32\r\n");
-    USART_WriteString(&huart, "Update : send 'u' within 3 s (tools/bl_upload.py)\r\n");
+    USART_WriteString(&huart, "Update : send 'u' within 5 s (tools/bl_upload.py)\r\n");
+    USART_WriteString(&huart, "Stay   : hold B1 during reset, or press it within 5 s\r\n");
     USART_WriteString(&huart, "=============================\r\n");
-    /* Host waits for this exact line before sending 'u' */
-    USART_WriteString(&huart, "[BL] READY\r\n");
+    if (stay)
+        USART_WriteString(&huart, "[BL] B1 held — staying in bootloader\r\n");
 
-    /* ── Update window ─────────────────────────────────────────────── */
-    if (BL_WaitForUpdateRequest(&hbl, BL_WAIT_MS))
-        BL_RunUpdate();
-
-    /* ── Boot ──────────────────────────────────────────────────────── */
     while (1) {
+        /* Host waits for this exact line before sending 'u' */
+        USART_WriteString(&huart, "[BL] READY\r\n");
+
+        BL_Trigger trig = BL_WaitForUpdateRequest(&hbl, stay ? BL_WAIT_FOREVER : BL_WAIT_MS);
+
+        if (trig == BL_TRIGGER_BUTTON) {
+            USART_WriteString(&huart, "[BL] B1 pressed — auto-boot cancelled, waiting for update\r\n");
+            stay = 1U;
+            continue;
+        }
+        if (trig == BL_TRIGGER_UART)
+            BL_RunUpdate();
+
+        /* Window expired or update finished — try to boot */
         if (BL_VerifyActiveSlot(&hbl) == BL_OK) {
             USART_WriteString(&huart, "[BL] Jumping to application ...\r\n");
             BL_JumpToApplication(&hbl, BL_ACTIVE_ADDR);   /* never returns */
         }
 
         /* No bootable image — stay in the bootloader until one arrives */
-        USART_WriteString(&huart,
-            "[BL] No valid application — waiting for update\r\n"
-            "[BL] READY\r\n");
-        while (!BL_WaitForUpdateRequest(&hbl, BL_WAIT_MS)) {}
-        BL_RunUpdate();
+        USART_WriteString(&huart, "[BL] No valid application — waiting for update\r\n");
+        stay = 1U;
     }
 }

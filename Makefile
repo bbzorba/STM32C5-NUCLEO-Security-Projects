@@ -16,10 +16,10 @@
 #PROJECT_DIR = Projects/App_Demo
 #PROJECT_DIR = Projects/RSA
 #PROJECT_DIR = Projects/Root_of_Trust
-#PROJECT_DIR = Projects/Bootloader
+PROJECT_DIR = Projects/Bootloader
 
 #TBD
-PROJECT_DIR = Projects/Secure_Boot
+#PROJECT_DIR = Projects/Secure_Boot
 #PROJECT_DIR = Projects/Secure_FW_Update
 
 # Default goal: show help when running plain `make`
@@ -203,8 +203,17 @@ OPENOCD_IF?=interface/stlink-dap.cfg
 OPENOCD_TARGET?=target/stm32u5x.cfg
 OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 
-# Serial monitor settings (Windows PowerShell, also used from WSL)
+# Serial port settings (monitor, bl-upload)
+#   PORT          forces a port (e.g. make bl-upload PORT=COM4)
+#   DEFAULT_PORT  used when the ST-LINK virtual COM port is not auto-detected.
+#                 Set it to your board's port — see `make com-list`, or the
+#                 "STMicroelectronics STLink Virtual COM Port" in Device Manager.
 PORT ?=
+ifneq ($(OS)$(_WSL),)
+DEFAULT_PORT ?= COM5
+else
+DEFAULT_PORT ?= /dev/ttyACM0
+endif
 BAUD ?= 115200
 MONITOR_SECONDS ?=
 POWERSHELL := $(if $(_WSL),powershell.exe,powershell)
@@ -277,6 +286,10 @@ ifeq ($(_POSIX_SH),1)
 		echo "       install STM32CubeIDE, or pass TOOLCHAIN_DIR=<path to the toolchain bin folder>."; \
 		exit 1; }
 endif
+	@echo "=== Building PROJECT_DIR=$(PROJECT_DIR) -> $(TARGET).elf (load address $(FLASH_ADDR))"
+	@echo "    project sources : $(wildcard $(PROJECT_DIR)/src/*.c $(PROJECT_DIR)/src/*.cpp)"
+	@echo "    library modules : $(DEPS)  (driver code only - their main.c/startup.c are not built)"
+	@echo "    library sources : $(strip $(filter-out $(PROJECT_DIR)/%,$(SRC_C)) $(EXTERNAL_SRC_C) $(EXTERNAL_SRC_CPP))"
 
 # Module wiring is resolved above (module.mk files are included before any
 # rule), so OBJ is complete when this prerequisite list is read.
@@ -318,6 +331,23 @@ flash_stlink: FLASH_TOOL=stlink
 flash_stlink: build
 	"$(STFLASH)" --reset write $(TARGET).bin $(FLASH_ADDR)
 	$(POST_FLASH)
+
+# ── Upload through Projects/Bootloader (UART, ST-LINK VCP) ───────────────
+# Works with any PROJECT_DIR; Projects/Bootloader must already be on the board
+# (make flash PROJECT_DIR=Projects/Bootloader).
+#   make bl-upload                      build + upload BL_APP_DIR
+#   make bl-upload APP=<file.bin>       upload a ready binary (linked at 0x08010000)
+# BL_APP_DIR is the selected project when it runs in the active slot
+# (FLASH_ADDR 0x08010000), otherwise Projects/App_Demo.
+# Port: PORT if given, else the auto-detected ST-LINK VCP, else DEFAULT_PORT.
+BL_APP_DIR ?= $(if $(filter 0x08010000,$(FLASH_ADDR)),$(PROJECT_DIR),Projects/App_Demo)
+APP ?=
+.PHONY: bl-upload
+bl-upload:
+ifeq ($(strip $(APP)),)
+	@$(MAKE) --no-print-directory build PROJECT_DIR=$(BL_APP_DIR)
+endif
+	$(PYTHON) tools/bl_upload.py $(or $(APP),$(BL_APP_DIR)/main.bin) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) --reset
 
 # Open a simple serial monitor with PowerShell (Windows or WSL)
 .PHONY: monitor
@@ -372,6 +402,8 @@ help:
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
 	@echo "  debug             debug-build, then flash build_out/main.bin for VS Code debugging"
+	@echo "  bl-upload         Build + upload $(or $(APP),$(BL_APP_DIR)) through Projects/Bootloader over UART"
+	@echo "                    (APP=<bin> for a ready binary; port: PORT, auto, else DEFAULT_PORT=$(DEFAULT_PORT))"
 ifneq ($(strip $(MODULE_HELP)),)
 	@echo "$(MODULE) targets (from $(PROJECT_DIR)/module.mk):"
 	$(MODULE_HELP)

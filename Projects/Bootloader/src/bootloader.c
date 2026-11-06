@@ -2,19 +2,6 @@
 
 extern uint32_t SystemCoreClock;   /* defined in startup.c */
 
-/* ── Core registers (Cortex-M33) ─────────────────────────────────── */
-#define DEMCR_REG           (*(volatile uint32_t *)0xE000EDFCU)
-#define DEMCR_TRCENA        (1U << 24)
-#define DWT_CTRL_REG        (*(volatile uint32_t *)0xE0001000U)
-#define DWT_CTRL_CYCCNTENA  (1U << 0)
-#define DWT_CYCCNT_REG      (*(volatile uint32_t *)0xE0001004U)
-#define SCB_VTOR_REG        (*(volatile uint32_t *)0xE000ED08U)
-#define SYST_CSR_REG        (*(volatile uint32_t *)0xE000E010U)
-#define NVIC_ICPR_BASE      ((volatile uint32_t *)0xE000E280U)   /* Clear Pending (ICER/ISER in core_cm4.h) */
-#define NVIC_REG_COUNT      (NVIC_IRQ_COUNT / 32U)
-
-#define BL_FLASH_WORD_SIZE  16U   /* 128-bit flash programming granularity */
-
 /* ── Internal helpers ────────────────────────────────────────────── */
 
 static void BL_SendByte(BL_HandleTypeDef *hbl, uint8_t byte)
@@ -129,25 +116,69 @@ void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart)
     FLASH_Init(&hbl->hflash);
     CRC_Constructor(&hbl->hcrc);
 
+    /* B1 (PC13): input with pull-up, pressed = low */
+    hbl->btn_cfg.Pin       = BL_BTN_PIN;
+    hbl->btn_cfg.Mode      = GPIO_MODE_INPUT;
+    hbl->btn_cfg.Pull      = GPIO_PULLUP;
+    hbl->btn_cfg.Speed     = GPIO_SPEED_LOW;
+    hbl->btn_cfg.Alternate = 0U;
+    GPIO_constructor(&hbl->hbtn, BL_BTN_PORT, &hbl->btn_cfg);
+
+    /* LD1 (PA5): push-pull output, off */
+    hbl->led_cfg.Pin       = BL_LED_PIN;
+    hbl->led_cfg.Mode      = GPIO_MODE_OUTPUT_PP;
+    hbl->led_cfg.Pull      = GPIO_NOPULL;
+    hbl->led_cfg.Speed     = GPIO_SPEED_LOW;
+    hbl->led_cfg.Alternate = 0U;
+    GPIO_constructor(&hbl->hled, BL_LED_PORT, &hbl->led_cfg);
+    GPIO_WritePin(&hbl->hled, BL_LED_PIN, GPIO_PIN_RESET);
+
     /* DWT cycle counter drives all millisecond timeouts */
     DEMCR_REG      |= DEMCR_TRCENA;
     DWT_CYCCNT_REG  = 0U;
     DWT_CTRL_REG   |= DWT_CTRL_CYCCNTENA;
+
+    /* B1 has an RC filter: wait before the first BL_ButtonPressed() sample */
+    while (DWT_CYCCNT_REG < BL_BTN_SETTLE_MS * (SystemCoreClock / 1000U)) {}
 }
 
-uint8_t BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
+uint8_t BL_ButtonPressed(BL_HandleTypeDef *hbl)
 {
-    uint32_t start = DWT_CYCCNT_REG;
-    uint32_t limit = timeout_ms * (SystemCoreClock / 1000U);
+    return GPIO_ReadPin(&hbl->hbtn, BL_BTN_PIN) == GPIO_PIN_RESET;   /* active low */
+}
+
+BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
+{
+    const uint32_t cycles_per_ms = SystemCoreClock / 1000U;
+    const uint8_t  forever       = (timeout_ms == BL_WAIT_FOREVER);
+    uint32_t start      = DWT_CYCCNT_REG;
+    uint32_t blink_last = start;
+    uint32_t ready_last = start;
     uint8_t  byte;
 
     BL_FlushRx(hbl);
-    while ((DWT_CYCCNT_REG - start) < limit) {
-        /* Short polls so the overall window still ends on time */
-        if (BL_ReadByte(hbl, &byte, 10U) == BL_OK && byte == BL_CMD_UPDATE)
-            return 1U;
+    GPIO_WritePin(&hbl->hled, BL_LED_PIN, GPIO_PIN_SET);
+
+    while (forever || (DWT_CYCCNT_REG - start) < timeout_ms * cycles_per_ms) {
+        /* Short polls so the window still ends on time and B1 stays responsive */
+        if (BL_ReadByte(hbl, &byte, BL_POLL_MS) == BL_OK && byte == BL_CMD_UPDATE)
+            return BL_TRIGGER_UART;
+
+        if (forever) {
+            if ((DWT_CYCCNT_REG - blink_last) >= BL_LED_BLINK_MS * cycles_per_ms) {
+                blink_last = DWT_CYCCNT_REG;
+                GPIO_TogglePin(&hbl->hled, BL_LED_PIN);
+            }
+            /* A host may open the port after the first READY — keep announcing */
+            if ((DWT_CYCCNT_REG - ready_last) >= BL_READY_REPEAT_MS * cycles_per_ms) {
+                ready_last = DWT_CYCCNT_REG;
+                USART_WriteString(hbl->huart, "[BL] READY\r\n");
+            }
+        } else if (BL_ButtonPressed(hbl)) {
+            return BL_TRIGGER_BUTTON;
+        }
     }
-    return 0U;
+    return BL_TRIGGER_NONE;
 }
 
 BL_Status BL_ReceiveImage(BL_HandleTypeDef *hbl)
@@ -284,6 +315,8 @@ void BL_JumpToApplication(BL_HandleTypeDef *hbl, uint32_t app_base)
 {
     uint32_t app_msp = *(volatile uint32_t *)(app_base + 0U);
     uint32_t app_pc  = *(volatile uint32_t *)(app_base + 4U);
+
+    GPIO_WritePin(&hbl->hled, BL_LED_PIN, GPIO_PIN_RESET);
 
     while (!(hbl->huart->regs->ISR & USART_ISR_TC));
     hbl->huart->regs->CR1 = 0U;

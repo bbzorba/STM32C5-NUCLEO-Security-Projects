@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
-#include "uart.h"     /* console + firmware update link (USART2)   */
+#include "uart.h"     /* console + firmware update link (USART2), pulls in gpio.h */
 #include "crc.h"      /* hardware CRC-32 (active slot integrity)   */
 #include "flash.h"    /* sector erase / unlock / lock              */
 
@@ -20,6 +20,7 @@
 #define BL_ACTIVE_SIZE          (22U * BL_SECTOR_SIZE)    /* 176 KB                             */
 #define BL_TAG_ADDR             0x0803C000U               /* sector 30 — CRC-32 tag of slot     */
 #define BL_TAG_BLANK            0xFFFFFFFFU               /* erased tag word = slot not sealed  */
+#define BL_FLASH_WORD_SIZE      16U                       /* 128-bit flash programming granularity */
 
 /* RAM window used to sanity-check the application's initial MSP */
 #define BL_RAM_START            0x20000000U
@@ -35,8 +36,36 @@
 #define BL_ACK                  0x79U                     /* same values as ST AN3155           */
 #define BL_NACK                 0x1FU
 #define BL_CHUNK_SIZE           256U                      /* multiple of the 16-byte flash word */
-#define BL_WAIT_MS              3000U                     /* update window after reset          */
 #define BL_BYTE_TIMEOUT_MS      2000U                     /* inter-byte timeout during update   */
+
+/* ── Entry into update mode ─────────────────────────────────────────────
+ *   - every reset opens a BL_WAIT_MS window: 'u' on USART2 starts an update,
+ *     pressing B1 cancels the auto-boot and stays in the bootloader
+ *   - B1 held during reset: stay in the bootloader until an update arrives
+ *   - no valid application: stay in the bootloader until an update arrives
+ * LD1 is solid on during the window and blinks while the bootloader stays. */
+#define BL_WAIT_MS              5000U                     /* update window after reset          */
+#define BL_WAIT_FOREVER         0xFFFFFFFFU               /* stay until an update request       */
+#define BL_POLL_MS              10U                       /* UART poll slice inside the window  */
+#define BL_LED_BLINK_MS         250U                      /* LD1 half-period while staying      */
+#define BL_READY_REPEAT_MS      1000U                     /* re-send "[BL] READY" while staying */
+#define BL_BTN_SETTLE_MS        10U                       /* let the B1 pull-up / RC filter settle */
+
+#define BL_BTN_PORT             GPIO_C                    /* B1 user button (blue)              */
+#define BL_BTN_PIN              GPIO_PIN_13               /*   PC13, active low, pull-up        */
+#define BL_LED_PORT             GPIO_A                    /* LD1 user LED (green)               */
+#define BL_LED_PIN              GPIO_PIN_5                /*   PA5, active high                 */
+
+/* ── Cortex-M33 core registers ─────────────────────────────────────── */
+#define DEMCR_REG               (*(volatile uint32_t *)0xE000EDFCU)
+#define DEMCR_TRCENA            (1U << 24)
+#define DWT_CTRL_REG            (*(volatile uint32_t *)0xE0001000U)
+#define DWT_CTRL_CYCCNTENA      (1U << 0)
+#define DWT_CYCCNT_REG          (*(volatile uint32_t *)0xE0001004U)
+#define SCB_VTOR_REG            (*(volatile uint32_t *)0xE000ED08U)
+#define SYST_CSR_REG            (*(volatile uint32_t *)0xE000E010U)
+#define NVIC_ICPR_BASE          ((volatile uint32_t *)0xE000E280U)   /* Clear Pending (ICER/ISER in core_cm4.h) */
+#define NVIC_REG_COUNT          (NVIC_IRQ_COUNT / 32U)
 
 /* ── Status codes ─────────────────────────────────────────────────── */
 typedef enum {
@@ -49,20 +78,40 @@ typedef enum {
     BL_ERR_NO_IMAGE  = 6,   /* vector table does not look like an image   */
 } BL_Status;
 
+/* ── What ended an update window ──────────────────────────────────── */
+typedef enum {
+    BL_TRIGGER_NONE   = 0,  /* window expired, nothing requested          */
+    BL_TRIGGER_UART   = 1,  /* host sent BL_CMD_UPDATE on USART2          */
+    BL_TRIGGER_BUTTON = 2,  /* B1 pressed — stay in the bootloader        */
+} BL_Trigger;
+
 /* ── Handle ───────────────────────────────────────────────────────── */
 typedef struct {
     USART_HandleType    *huart;   /* console + update link                  */
     FLASH_HandleTypeDef  hflash;  /* owns the FLASH controller              */
     CRC_HandleTypeDef    hcrc;    /* owns the hardware CRC peripheral       */
+    GPIO_HandleTypeDef   hbtn;    /* B1 — bootloader-mode request           */
+    GPIO_InitTypeDef     btn_cfg;
+    GPIO_HandleTypeDef   hled;    /* LD1 — bootloader-mode indicator        */
+    GPIO_InitTypeDef     led_cfg;
 } BL_HandleTypeDef;
 
 /* ── API ─────────────────────────────────────────────────────────── */
 
-/* Bind the UART, initialise FLASH + CRC and start the DWT cycle counter */
+/* Bind the UART, initialise FLASH + CRC + B1 + LD1, start the DWT cycle counter */
 void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart);
 
-/* Returns 1 when the host sent BL_CMD_UPDATE within timeout_ms, else 0 */
-uint8_t BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms);
+/* 1 while B1 is held down */
+uint8_t BL_ButtonPressed(BL_HandleTypeDef *hbl);
+
+/*
+ * Wait for an update request.
+ *   timeout_ms != BL_WAIT_FOREVER : LD1 on; returns UART on 'u', BUTTON when
+ *                                   B1 is pressed, NONE when the window ends
+ *   timeout_ms == BL_WAIT_FOREVER : LD1 blinks, "[BL] READY" repeats every
+ *                                   BL_READY_REPEAT_MS; returns only on 'u'
+ */
+BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms);
 
 /*
  * Receive a new application into the active slot (protocol above):
