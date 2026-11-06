@@ -9,7 +9,9 @@
  *
  *   1. B1 held during reset → stay in the bootloader (LD1 blinks)
  *   2. Otherwise open a BL_WAIT_MS (5 s) window, LD1 on:
- *        'u' on USART2 (ST-LINK VCP) → receive a new image (tools/bl_upload.py)
+ *        'u' on USART2 (ST-LINK VCP)          → receive a new image over UART
+ *        'u' on USB CDC (USB-C user connector) → receive a new image over USB
+ *                                               (both: tools/bl_upload.py)
  *        B1 pressed                  → cancel auto-boot, stay in the bootloader
  *   3. Verify the active slot (tag + CRC-32 + vector table)
  *   4. Valid → jump to the application, otherwise stay here and wait
@@ -23,7 +25,7 @@ static void BL_RunUpdate(void)
     char buf[48];
     BL_Status st = BL_ReceiveImage(&hbl);
     snprintf(buf, sizeof(buf), "\r\n[BL] Update : %s\r\n", BL_StatusString(st));
-    USART_WriteString(&huart, buf);
+    BL_Log(&hbl, buf);
 }
 
 int main(void)
@@ -35,39 +37,40 @@ int main(void)
     uint8_t stay = BL_ButtonPressed(&hbl);
 
     /* ── Banner ────────────────────────────────────────────────────── */
-    USART_WriteString(&huart, "\r\n=== UART BOOTLOADER v1.1 ===\r\n");
+    USART_WriteString(&huart, "\r\n=== UART + USB BOOTLOADER v1.2 ===\r\n");
     USART_WriteString(&huart, "MCU    : STM32C562RE  Cortex-M33  48 MHz\r\n");
     USART_WriteString(&huart, "Self   : sectors  0-7   0x08000000  64 KB\r\n");
     USART_WriteString(&huart, "Active : sectors  8-29  0x08010000  176 KB\r\n");
     USART_WriteString(&huart, "Tag    : sector  30     0x0803C000  CRC-32\r\n");
     USART_WriteString(&huart, "Update : send 'u' within 5 s (tools/bl_upload.py)\r\n");
+    USART_WriteString(&huart, "Links  : USART2 (ST-LINK VCP) | USB CDC (USB-C user port)\r\n");
     USART_WriteString(&huart, "Stay   : hold B1 during reset, or press it within 5 s\r\n");
     USART_WriteString(&huart, "=============================\r\n");
     if (stay)
-        USART_WriteString(&huart, "[BL] B1 held — staying in bootloader\r\n");
+        BL_Log(&hbl, "[BL] B1 held — staying in bootloader\r\n");
 
     while (1) {
         /* Host waits for this exact line before sending 'u' */
-        USART_WriteString(&huart, "[BL] READY\r\n");
+        BL_Log(&hbl, "[BL] READY\r\n");
 
         BL_Trigger trig = BL_WaitForUpdateRequest(&hbl, stay ? BL_WAIT_FOREVER : BL_WAIT_MS);
 
         if (trig == BL_TRIGGER_BUTTON) {
-            USART_WriteString(&huart, "[BL] B1 pressed — auto-boot cancelled, waiting for update\r\n");
+            BL_Log(&hbl, "[BL] B1 pressed — auto-boot cancelled, waiting for update\r\n");
             stay = 1U;
             continue;
         }
-        if (trig == BL_TRIGGER_UART)
+        if (trig == BL_TRIGGER_UART || trig == BL_TRIGGER_USB)
             BL_RunUpdate();
 
         /* Window expired or update finished — try to boot */
         if (BL_VerifyActiveSlot(&hbl) == BL_OK) {
-            USART_WriteString(&huart, "[BL] Jumping to application ...\r\n");
+            BL_Log(&hbl, "[BL] Jumping to application ...\r\n");
             BL_JumpToApplication(&hbl, BL_ACTIVE_ADDR);   /* never returns */
         }
 
         /* No bootable image — stay in the bootloader until one arrives */
-        USART_WriteString(&huart, "[BL] No valid application — waiting for update\r\n");
+        BL_Log(&hbl, "[BL] No valid application — waiting for update\r\n");
         stay = 1U;
     }
 }

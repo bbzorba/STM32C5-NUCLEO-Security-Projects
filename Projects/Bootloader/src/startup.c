@@ -8,8 +8,9 @@ typedef void (*isr_handler_t)(void);
 uint32_t SystemCoreClock = 48000000UL;
 void SystemInit(void) { SystemCoreClock = 48000000UL; }
 /* Bootloader: FLASH IRQ (IRQn 5, sector-erase EOP) from flash.c,
-   EXTI + USART handlers from nvic.c. */
+   USB_DRD_FS IRQ (IRQn 62) from usb_cdc.c, EXTI + USART handlers from nvic.c. */
 extern void FLASH_IRQHandler(void);
+extern void USB_DRD_FS_IRQHandler(void);
 extern void EXTI0_IRQHandler(void);  extern void EXTI1_IRQHandler(void);
 extern void EXTI2_IRQHandler(void);  extern void EXTI3_IRQHandler(void);
 extern void EXTI4_IRQHandler(void);  extern void EXTI5_IRQHandler(void);
@@ -39,7 +40,8 @@ extern void UART5_IRQHandler(void);
     [16 + 21] = EXTI14_IRQHandler, [16 + 22] = EXTI15_IRQHandler,       \
     [16 + 51] = USART1_IRQHandler, [16 + 52] = USART2_IRQHandler,       \
     [16 + 53] = USART3_IRQHandler, [16 + 54] = UART4_IRQHandler,        \
-    [16 + 55] = UART5_IRQHandler
+    [16 + 55] = UART5_IRQHandler,                                       \
+    [16 + 62] = USB_DRD_FS_IRQHandler
 
 extern uint32_t _estack, __etext, __data_start__, __data_end__, __bss_start__, __bss_end__;
 #define _VT_STACK_TOP  ((isr_handler_t)&_estack)

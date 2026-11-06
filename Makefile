@@ -144,9 +144,10 @@ LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--
 # and uploading that folder:
 #   DEPS        modules (driver/project folder names) linked into this build
 #   EXTRA_INCS  extra include-only directories
+#   EXTRA_SRC_C extra source files built into this project only
 #   FLASH_ADDR  load address when it is not 0x08000000
 #   POST_FLASH  commands run after `make flash` (optional)
-#   MODULE_HELP @echo lines appended to `make help` (optional)
+#   MODULE_HELP non-empty when the module adds targets (shown in `make help`)
 #   plus any project-specific targets (bl-upload, seal-active, …) and
 #   additions to CFLAGS / LDFLAGS.
 # Outside that block every module.mk exports its library interface, prefixed
@@ -251,6 +252,7 @@ CFLAGS += $(DRIVER_INCLUDES)
 SRC_C   := $(wildcard $(PROJECT_DIR)/src/*.c)
 SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
 SRC_C   += $(filter-out $(SRC_C),$(foreach d,$(DEPS),$($(d)_SRC_C)))
+SRC_C   += $(filter-out $(SRC_C),$(EXTRA_SRC_C))
 CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $(EXTRA_INCS))
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
@@ -339,15 +341,21 @@ flash_stlink: build
 #   make bl-upload APP=<file.bin>       upload a ready binary (linked at 0x08010000)
 # BL_APP_DIR is the selected project when it runs in the active slot
 # (FLASH_ADDR 0x08010000), otherwise Projects/App_Demo.
-# Port: PORT if given, else the auto-detected ST-LINK VCP, else DEFAULT_PORT.
+# Link: LINK=auto (default: USB CDC when the bootloader's USB-C port is
+#       present, else UART), LINK=usb or LINK=uart.
+# Port: PORT if given, else auto-detected (USB CDC CAFE:B0C5 / ST-LINK VCP),
+#       else DEFAULT_PORT (UART).
+# WSL : USBIPD=1 when the board's USB devices are attached to WSL with usbipd.
 BL_APP_DIR ?= $(if $(filter 0x08010000,$(FLASH_ADDR)),$(PROJECT_DIR),Projects/App_Demo)
 APP ?=
+LINK ?= auto
+USBIPD ?= 0
 .PHONY: bl-upload
 bl-upload:
 ifeq ($(strip $(APP)),)
 	@$(MAKE) --no-print-directory build PROJECT_DIR=$(BL_APP_DIR)
 endif
-	$(PYTHON) tools/bl_upload.py $(or $(APP),$(BL_APP_DIR)/main.bin) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) --reset
+	$(PYTHON) tools/bl_upload.py $(or $(APP),$(BL_APP_DIR)/main.bin) --link $(LINK) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) $(if $(filter 1,$(USBIPD)),--wsl-usbipd) --reset
 
 # Open a simple serial monitor with PowerShell (Windows or WSL)
 .PHONY: monitor
@@ -373,6 +381,17 @@ flashmonitor-auto: all flash monitor
 clean:
 	-$(PYTHON) -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
 
+# ── Git submodules: Drivers/TinyUSB, Drivers/stm32c5xx-dfp, Drivers/CMSIS_6 ──
+# submodules         fetch the versions pinned by this repository (after git clone)
+# submodules-update  move each one to the newest commit of its branch (.gitmodules);
+#                    commit the result to pin the new versions for everyone
+.PHONY: submodules submodules-update
+submodules:
+	git submodule update --init --depth 1
+submodules-update:
+	git submodule update --init --remote --depth 1
+	git submodule status
+
 # Print any Makefile variable, e.g. make print-PROJECT_DIR
 .PHONY: print-%
 print-%:
@@ -396,18 +415,34 @@ help:
 	@echo "  build             Build the current PROJECT_DIR (same as 'make all' / 'make run')"
 	@echo "  clean             Remove build artifacts of the current PROJECT_DIR"
 	@echo "  debug-build       Clean + build with DEBUG=1, copy ELF/BIN to build_out/"
-	@echo "Flash:"
-	@echo "  flash             Build and flash using FLASH_TOOL (cubeprog/openocd/stlink)"
+	@echo "Flash over SWD (ST-LINK cable):"
+	@echo "  flash             Build and flash PROJECT_DIR with FLASH_TOOL (cubeprog/openocd/stlink)"
 	@echo "  flash_cubeprog    Flash with STM32_Programmer_CLI"
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
 	@echo "  debug             debug-build, then flash build_out/main.bin for VS Code debugging"
-	@echo "  bl-upload         Build + upload $(or $(APP),$(BL_APP_DIR)) through Projects/Bootloader over UART"
-	@echo "                    (APP=<bin> for a ready binary; port: PORT, auto, else DEFAULT_PORT=$(DEFAULT_PORT))"
+	@echo
+	@echo "Upload through Projects/Bootloader (flash it once first: make flash PROJECT_DIR=Projects/Bootloader):"
+	@echo "  bl-upload         Build + upload $(or $(APP),$(BL_APP_DIR)) to the active slot 0x08010000"
+	@echo "      LINK=auto     USB CDC if the bootloader's USB port is present, else UART (default)"
+	@echo "      LINK=usb      USB CDC, USB-C user connector (VID:PID CAFE:B0C5)"
+	@echo "      LINK=uart     USART2 through the ST-LINK virtual COM port"
+	@echo "      APP=<bin>     upload a ready binary instead of building one"
+	@echo "      PORT=<port>   force a port (COM4, /dev/ttyACM0); DEFAULT_PORT=$(DEFAULT_PORT) is the UART fallback"
+	@echo "      USBIPD=1      WSL2 with the board's USB devices attached through usbipd"
+	@echo "    e.g. make bl-upload LINK=usb"
+	@echo "         make bl-upload LINK=uart PORT=COM4 APP=Projects/Root_of_Trust/main.bin"
+	@echo "  Details: Projects/Bootloader/README.md"
+	@echo
+	@echo "Active-slot apps (PROJECT_DIR = Projects/App_Demo | Root_of_Trust | Secure_FW_Update):"
+	@echo "  seal-active       Build, flash over SWD + CRC-seal the active slot (tools/seal.py)"
+	@echo "  restore-bootloader Re-flash Projects/Secure_Boot at 0x08000000"
 ifneq ($(strip $(MODULE_HELP)),)
-	@echo "$(MODULE) targets (from $(PROJECT_DIR)/module.mk):"
-	$(MODULE_HELP)
+	@echo "  -> available now ($(PROJECT_DIR) is selected)"
+else
+	@echo "  -> not available with PROJECT_DIR=$(PROJECT_DIR)"
 endif
+	@echo
 	@echo "Serial / misc:"
 	@echo "  monitor           Open serial monitor (Windows PowerShell, also from WSL)"
 	@echo "                    Auto-detects USB-serial bridge when PORT is empty"
@@ -416,6 +451,8 @@ endif
 	@echo "  flashmonitor-auto Build, flash, and start monitor"
 	@echo "  gen-debug-config  Write board settings into .vscode/settings.json"
 	@echo "  print-VAR         Print a Makefile variable, e.g. make print-SRC_C"
+	@echo "  submodules        Fetch TinyUSB / stm32c5xx-dfp / CMSIS_6 (git submodules)"
+	@echo "  submodules-update Update them to the newest upstream commits"
 	@echo
 	@echo "Variables: PROJECT_DIR, FLASH_TOOL=$(_FLASH_TOOL), DEBUG=1, PORT, BAUD=$(BAUD), DRIVERS, TOOLCHAIN_DIR"
 	@echo "Compiler:  $(CC)"

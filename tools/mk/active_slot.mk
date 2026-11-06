@@ -26,7 +26,5 @@ seal-active: build
 restore-bootloader:
 	$(MAKE) flash PROJECT_DIR=Projects/Secure_Boot
 
-define MODULE_HELP
-@echo "  seal-active       Build, then flash + CRC-seal the active slot (tools/seal.py)"
-@echo "  restore-bootloader Re-flash Projects/Secure_Boot at 0x08000000"
-endef
+# Listed in `make help` (section "Active-slot apps"); MODULE_HELP marks them available
+MODULE_HELP := active-slot

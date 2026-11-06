@@ -1,0 +1,15 @@
+[submodule "Drivers/TinyUSB"]
+	path = Drivers/TinyUSB
+	url = https://github.com/hathach/tinyusb.git
+	shallow = true
+	branch = master
+[submodule "Drivers/stm32c5xx-dfp"]
+	path = Drivers/stm32c5xx-dfp
+	url = https://github.com/STMicroelectronics/stm32c5xx-dfp.git
+	shallow = true
+	branch = main
+[submodule "Drivers/CMSIS_6"]
+	path = Drivers/CMSIS_6
+	url = https://github.com/ARM-software/CMSIS_6.git
+	shallow = true
+	branch = main

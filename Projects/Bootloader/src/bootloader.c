@@ -6,28 +6,58 @@ extern uint32_t SystemCoreClock;   /* defined in startup.c */
 
 static void BL_SendByte(BL_HandleTypeDef *hbl, uint8_t byte)
 {
-    USART_x_Write(hbl->huart, byte);
+    if (hbl->link == BL_LINK_USB)
+        USB_CDC_Write(&byte, 1U);
+    else
+        USART_x_Write(hbl->huart, byte);
 }
 
-/*
- * Polled receive with timeout (DWT cycle counter).
- * Error flags (ORE/FE/NE/PE) are cleared so a glitch on the line cannot
- * stall reception.
- */
-static BL_Status BL_ReadByte(BL_HandleTypeDef *hbl, uint8_t *byte, uint32_t timeout_ms)
+/* Non-blocking UART receive (clears ORE/FE/NE/PE so a glitch cannot stall it) */
+static uint8_t BL_UartPoll(BL_HandleTypeDef *hbl, uint8_t *byte)
 {
     USART_ManualType *regs = hbl->huart->regs;
+    if (regs->ISR & USART_ISR_ERR_MASK)
+        regs->ICR = USART_ICR_PECF | USART_ICR_FECF | USART_ICR_NECF | USART_ICR_ORECF;
+    if (!(regs->ISR & USART_ISR_RXNE))
+        return 0U;
+    *byte = (uint8_t)(regs->RDR & 0xFFU);
+    return 1U;
+}
+
+#if BL_USB_VBUS_SENSE
+/* D+ pull-up follows VBUS: attach when a host powers the cable, detach otherwise */
+static void BL_VbusPoll(BL_HandleTypeDef *hbl)
+{
+    uint8_t vbus = GPIO_ReadPin(&hbl->hvbus, BL_USB_VBUS_PIN) == GPIO_PIN_SET;
+    if (vbus != hbl->vbus) {
+        hbl->vbus = vbus;
+        if (vbus) USB_CDC_Connect(); else USB_CDC_Disconnect();
+    }
+}
+#else
+#define BL_VbusPoll(hbl)  ((void)(hbl))
+#endif
+
+/* Keep USB alive while the bootloader waits or receives */
+static void BL_Service(BL_HandleTypeDef *hbl)
+{
+    BL_VbusPoll(hbl);
+    USB_CDC_Task();
+}
+
+/* Polled receive on the update link with timeout (DWT cycle counter) */
+static BL_Status BL_ReadByte(BL_HandleTypeDef *hbl, uint8_t *byte, uint32_t timeout_ms)
+{
     uint32_t start = DWT_CYCCNT_REG;
     uint32_t limit = timeout_ms * (SystemCoreClock / 1000U);
 
-    while (!(regs->ISR & USART_ISR_RXNE)) {
-        if (regs->ISR & USART_ISR_ERR_MASK)
-            regs->ICR = USART_ICR_PECF | USART_ICR_FECF | USART_ICR_NECF | USART_ICR_ORECF;
+    for (;;) {
+        BL_Service(hbl);
+        if (hbl->link == BL_LINK_USB ? USB_CDC_ReadByte(byte) : BL_UartPoll(hbl, byte))
+            return BL_OK;
         if ((DWT_CYCCNT_REG - start) >= limit)
             return BL_ERR_TIMEOUT;
     }
-    *byte = (uint8_t)(regs->RDR & 0xFFU);
-    return BL_OK;
 }
 
 static BL_Status BL_ReadBytes(BL_HandleTypeDef *hbl, uint8_t *buf, uint32_t len)
@@ -50,13 +80,13 @@ static BL_Status BL_ReadWord(BL_HandleTypeDef *hbl, uint32_t *word)
     return BL_OK;
 }
 
-/* Discard anything left in RDR and clear error flags */
+/* Discard anything already received on both links */
 static void BL_FlushRx(BL_HandleTypeDef *hbl)
 {
-    USART_ManualType *regs = hbl->huart->regs;
-    regs->ICR = USART_ICR_PECF | USART_ICR_FECF | USART_ICR_NECF | USART_ICR_ORECF;
-    while (regs->ISR & USART_ISR_RXNE)
-        (void)regs->RDR;
+    uint8_t byte;
+    while (BL_UartPoll(hbl, &byte)) {}
+    USB_CDC_Task();
+    USB_CDC_FlushRx();
 }
 
 /*
@@ -113,6 +143,7 @@ static uint32_t BL_ComputeSlotCrc(BL_HandleTypeDef *hbl)
 void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart)
 {
     hbl->huart = huart;
+    hbl->link  = BL_LINK_UART;
     FLASH_Init(&hbl->hflash);
     CRC_Constructor(&hbl->hcrc);
 
@@ -140,6 +171,26 @@ void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart)
 
     /* B1 has an RC filter: wait before the first BL_ButtonPressed() sample */
     while (DWT_CYCCNT_REG < BL_BTN_SETTLE_MS * (SystemCoreClock / 1000U)) {}
+
+    /* USB CDC on the USB-C user connector — enumerates while we wait */
+    USB_CDC_Init();
+#if BL_USB_VBUS_SENSE
+    hbl->vbus_cfg.Pin       = BL_USB_VBUS_PIN;
+    hbl->vbus_cfg.Mode      = GPIO_MODE_INPUT;
+    hbl->vbus_cfg.Pull      = GPIO_NOPULL;
+    hbl->vbus_cfg.Speed     = GPIO_SPEED_LOW;
+    hbl->vbus_cfg.Alternate = 0U;
+    GPIO_constructor(&hbl->hvbus, BL_USB_VBUS_PORT, &hbl->vbus_cfg);
+    hbl->vbus = 1U;               /* tusb_init() attached the pull-up */
+    BL_VbusPoll(hbl);             /* detach right away when no VBUS */
+#endif
+}
+
+void BL_Log(BL_HandleTypeDef *hbl, const char *str)
+{
+    USART_WriteString(hbl->huart, str);
+    if (USB_CDC_IsOpen())
+        USB_CDC_WriteString(str);
 }
 
 uint8_t BL_ButtonPressed(BL_HandleTypeDef *hbl)
@@ -151,28 +202,46 @@ BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
 {
     const uint32_t cycles_per_ms = SystemCoreClock / 1000U;
     const uint8_t  forever       = (timeout_ms == BL_WAIT_FOREVER);
-    uint32_t start      = DWT_CYCCNT_REG;
-    uint32_t blink_last = start;
-    uint32_t ready_last = start;
+    uint32_t now        = DWT_CYCCNT_REG;
+    uint32_t deadline   = now + timeout_ms * cycles_per_ms;
+    uint32_t blink_last = now;
+    uint32_t ready_last = now;
     uint8_t  byte;
 
     BL_FlushRx(hbl);
     GPIO_WritePin(&hbl->hled, BL_LED_PIN, GPIO_PIN_SET);
 
-    while (forever || (DWT_CYCCNT_REG - start) < timeout_ms * cycles_per_ms) {
-        /* Short polls so the window still ends on time and B1 stays responsive */
-        if (BL_ReadByte(hbl, &byte, BL_POLL_MS) == BL_OK && byte == BL_CMD_UPDATE)
+    while (forever || (int32_t)(DWT_CYCCNT_REG - deadline) < 0) {
+        BL_Service(hbl);
+        now = DWT_CYCCNT_REG;
+
+        /* 'u' on either link starts the update on that link */
+        if (BL_UartPoll(hbl, &byte) && byte == BL_CMD_UPDATE) {
+            hbl->link = BL_LINK_UART;
             return BL_TRIGGER_UART;
+        }
+        if (USB_CDC_ReadByte(&byte) && byte == BL_CMD_UPDATE) {
+            hbl->link = BL_LINK_USB;
+            return BL_TRIGGER_USB;
+        }
+
+        /* A host opened the USB COM port: announce, and leave it time to answer */
+        if (USB_CDC_TakeOpenEvent()) {
+            USB_CDC_WriteString("[BL] READY\r\n");
+            uint32_t grace = now + BL_USB_OPEN_GRACE_MS * cycles_per_ms;
+            if (!forever && (int32_t)(grace - deadline) > 0)
+                deadline = grace;
+        }
 
         if (forever) {
-            if ((DWT_CYCCNT_REG - blink_last) >= BL_LED_BLINK_MS * cycles_per_ms) {
-                blink_last = DWT_CYCCNT_REG;
+            if ((now - blink_last) >= BL_LED_BLINK_MS * cycles_per_ms) {
+                blink_last = now;
                 GPIO_TogglePin(&hbl->hled, BL_LED_PIN);
             }
-            /* A host may open the port after the first READY — keep announcing */
-            if ((DWT_CYCCNT_REG - ready_last) >= BL_READY_REPEAT_MS * cycles_per_ms) {
-                ready_last = DWT_CYCCNT_REG;
-                USART_WriteString(hbl->huart, "[BL] READY\r\n");
+            /* A host may open a port after the first READY — keep announcing */
+            if ((now - ready_last) >= BL_READY_REPEAT_MS * cycles_per_ms) {
+                ready_last = now;
+                BL_Log(hbl, "[BL] READY\r\n");
             }
         } else if (BL_ButtonPressed(hbl)) {
             return BL_TRIGGER_BUTTON;
@@ -270,25 +339,25 @@ BL_Status BL_VerifyActiveSlot(BL_HandleTypeDef *hbl)
     uint32_t tag = *(volatile uint32_t *)BL_TAG_ADDR;
     uint32_t crc, msp, pc;
 
-    USART_WriteString(hbl->huart, "[BL] Active slot — 0x08010000\r\n");
+    BL_Log(hbl, "[BL] Active slot — 0x08010000\r\n");
 
     /* Step 1: tag present? */
     snprintf(buf, sizeof(buf), "  CRC tag @ 0x0803C000 : %08lX\r\n", (unsigned long)tag);
-    USART_WriteString(hbl->huart, buf);
+    BL_Log(hbl, buf);
     if (tag == BL_TAG_BLANK) {
-        USART_WriteString(hbl->huart, "  CRC  : no tag — slot not sealed\r\n");
+        BL_Log(hbl, "  CRC  : no tag — slot not sealed\r\n");
         return BL_ERR_NO_TAG;
     }
 
     /* Step 2: integrity */
     crc = BL_ComputeSlotCrc(hbl);
     snprintf(buf, sizeof(buf), "  Computed CRC         : %08lX\r\n", (unsigned long)crc);
-    USART_WriteString(hbl->huart, buf);
+    BL_Log(hbl, buf);
     if (crc != tag) {
-        USART_WriteString(hbl->huart, "  CRC  : MISMATCH — image corrupted\r\n");
+        BL_Log(hbl, "  CRC  : MISMATCH — image corrupted\r\n");
         return BL_ERR_CRC;
     }
-    USART_WriteString(hbl->huart, "  CRC  : OK\r\n");
+    BL_Log(hbl, "  CRC  : OK\r\n");
 
     /* Step 3: vector table sanity (MSP in SRAM, Thumb reset vector in slot) */
     msp = *(volatile uint32_t *)(BL_ACTIVE_ADDR + 0U);
@@ -297,15 +366,16 @@ BL_Status BL_VerifyActiveSlot(BL_HandleTypeDef *hbl)
         !(pc & 1U) || pc < BL_ACTIVE_ADDR || pc >= BL_ACTIVE_ADDR + BL_ACTIVE_SIZE) {
         snprintf(buf, sizeof(buf), "  MSP  : 0x%08lX  PC : 0x%08lX — INVALID\r\n",
                  (unsigned long)msp, (unsigned long)pc);
-        USART_WriteString(hbl->huart, buf);
+        BL_Log(hbl, buf);
         return BL_ERR_NO_IMAGE;
     }
-    USART_WriteString(hbl->huart, "  MSP  : valid\r\n");
+    BL_Log(hbl, "  MSP  : valid\r\n");
     return BL_OK;
 }
 
 /*
  * Hand control to the image at app_base:
+ *   - drain + detach USB (pull-up off, USB/CRS reset) — the host sees an unplug
  *   - wait for the console to drain, then disable USART2 so the
  *     application's USART_constructor starts from a clean peripheral
  *   - stop SysTick, disable + clear every NVIC interrupt (FLASH IRQ included)
@@ -317,6 +387,12 @@ void BL_JumpToApplication(BL_HandleTypeDef *hbl, uint32_t app_base)
     uint32_t app_pc  = *(volatile uint32_t *)(app_base + 4U);
 
     GPIO_WritePin(&hbl->hled, BL_LED_PIN, GPIO_PIN_RESET);
+
+    /* Let the host read the last USB bytes, then detach + reset USB and CRS */
+    uint32_t drain = DWT_CYCCNT_REG;
+    while ((DWT_CYCCNT_REG - drain) < BL_USB_DRAIN_MS * (SystemCoreClock / 1000U))
+        USB_CDC_Task();
+    USB_CDC_Deinit();
 
     while (!(hbl->huart->regs->ISR & USART_ISR_TC));
     hbl->huart->regs->CR1 = 0U;

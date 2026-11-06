@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-bl_upload.py — Upload an application through Projects/Bootloader (USART2 / ST-LINK VCP).
+bl_upload.py — Upload an application through Projects/Bootloader.
+
+Links (same protocol on both, picked with --link, default auto):
+  uart  USART2 through the ST-LINK virtual COM port (ST-LINK USB cable)
+  usb   USB CDC ACM of the bootloader itself, USB-C user connector
+        (VID:PID CAFE:B0C5, "C562 Bootloader CDC")
+  auto  usb when the bootloader's USB port is present, else uart
 
 What it does:
   1. Opens the serial port and (optionally) resets the board.
@@ -14,6 +20,7 @@ What it does:
 Usage:
   python3 tools/bl_upload.py Projects/App_Demo/main.bin [--port PORT] [--reset]
   make bl-upload                       (builds + uploads Projects/App_Demo)
+  make bl-upload LINK=usb              (force the USB-C link)
   make bl-upload APP=path/to/app.bin   (uploads a ready binary)
 
   PORT: COM5 (Windows), /dev/ttyACM0 (Linux). Auto-detected when omitted;
@@ -23,9 +30,10 @@ Where it runs:
   Windows       COM port of the ST-LINK VCP.
   Linux         /dev/ttyACM* — your user needs access to it (group 'dialout'
                 or 'uucp', depending on the distribution).
-  WSL2          The ST-LINK is a Windows device, invisible to WSL2. Unless it
-                was attached to WSL with usbipd (then it is /dev/ttyACM*), the
-                script re-runs itself with the Windows Python (python.exe).
+  WSL2          USB devices belong to Windows. A device attached to WSL with
+                usbipd shows up as /dev/ttyACM*; otherwise the script re-runs
+                itself with the Windows Python (python.exe). With
+                --wsl-usbipd (make bl-upload USBIPD=1) it always stays in WSL.
 
 Reset (--reset), first available of:
   STM32_Programmer_CLI ($CUBE_PROG, PATH, STM32CubeProgrammer / STM32CubeIDE
@@ -65,6 +73,8 @@ ST_VID           = 0x0483          # STMicroelectronics USB vendor ID
 # ST-LINK VCP product IDs (V2-1, V3, V3E, V3SET, V3MINIE, V3PWR …). 0x5740 is
 # NOT here: that is an STM32's own USB CDC port (another board / application).
 STLINK_PIDS      = {0x374B, 0x374E, 0x374F, 0x3752, 0x3753, 0x3754, 0x3755, 0x3757}
+BL_USB_VID       = 0xCAFE          # Drivers/USB_CDC/inc/usb_cdc.h
+BL_USB_PID       = 0xB0C5
 # ─────────────────────────────────────────────────────────────────────────────
 
 IS_WINDOWS = os.name == "nt"
@@ -101,6 +111,24 @@ def st_ports() -> list[str]:
         if (p.vid == ST_VID and p.pid in STLINK_PIDS) or "stlink" in text or "st-link" in text:
             found.append(p.device)
     return found
+
+
+def bl_usb_ports() -> list[str]:
+    """Serial ports of the bootloader's own USB CDC (USB-C user connector)."""
+    return [p.device for p in serial.tools.list_ports.comports()
+            if p.vid == BL_USB_VID and p.pid == BL_USB_PID]
+
+
+def wait_for_port(find, timeout_s: float) -> str | None:
+    """Poll until find() returns a port (USB re-enumerates after a reset)."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        ports = find()
+        if ports:
+            time.sleep(0.3)            # let the OS finish setting the port up
+            return ports[0]
+        time.sleep(0.2)
+    return None
 
 
 def find_cube_prog() -> str | None:
@@ -166,7 +194,7 @@ def rerun_with_windows_python() -> int:
     out, i = [], 0
     while i < len(args):
         a = args[i]
-        if a in ("--port", "--fallback-port", "--wait"):
+        if a in ("--port", "--fallback-port", "--wait", "--link"):
             out += [a, args[i + 1]]
             i += 2
             continue
@@ -218,20 +246,32 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Upload an image via Projects/Bootloader")
     ap.add_argument("binary", help="application .bin linked at 0x08010000")
     ap.add_argument("--port", help="serial port, e.g. COM5 or /dev/ttyACM0 "
-                                   "(default: auto-detect the ST-LINK VCP)")
-    ap.add_argument("--fallback-port", help="port to use when auto-detection finds no ST-LINK")
+                                   "(default: auto-detect the bootloader USB port or the ST-LINK VCP)")
+    ap.add_argument("--link", choices=("auto", "uart", "usb"), default="auto",
+                    help="uart = ST-LINK VCP, usb = bootloader USB CDC (USB-C user port)")
+    ap.add_argument("--fallback-port", help="UART port to use when no ST-LINK is detected")
+    ap.add_argument("--wsl-usbipd", action="store_true",
+                    help="WSL: the board's USB devices are attached to WSL with usbipd — "
+                         "stay in WSL and wait for /dev/ttyACM* instead of using Windows")
     ap.add_argument("--reset", action="store_true", help="reset the board over SWD first")
     ap.add_argument("--wait", type=float, default=30.0, help="seconds to wait for READY")
     args = ap.parse_args()
 
-    # WSL2: COMx ports and the ST-LINK itself live on the Windows side
+    # WSL2: COMx ports (and devices not attached with usbipd) live on Windows
     if IS_WSL:
         if args.port and args.port.upper().startswith("COM"):
             return rerun_with_windows_python()
-        linux_fallback = (args.fallback_port or "").startswith("/dev/") \
-            and os.path.exists(args.fallback_port)
-        if not args.port and not linux_fallback and (serial is None or not st_ports()):
-            return rerun_with_windows_python()
+        if not args.port:
+            linux_fallback = (args.fallback_port or "").startswith("/dev/") \
+                and os.path.exists(args.fallback_port)
+            local = []
+            if serial is not None:
+                if args.link in ("auto", "usb"):
+                    local += bl_usb_ports()
+                if args.link in ("auto", "uart"):
+                    local += st_ports()
+            if not local and not args.wsl_usbipd and not (args.link != "usb" and linux_fallback):
+                return rerun_with_windows_python()
 
     need_pyserial()
 
@@ -246,8 +286,11 @@ def main() -> int:
               f"({ACTIVE_SLOT_SIZE // 1024} KB)")
         return 1
 
-    port = args.port
-    if not port:
+    # Pick the link + port
+    link, port = args.link, args.port
+    if link == "auto":
+        link = "usb" if (not port and bl_usb_ports()) else "uart"
+    if not port and link == "uart":
         ports = st_ports()
         if ports:
             port = ports[0]
@@ -263,8 +306,25 @@ def main() -> int:
     padded    = binary + b"\xff" * (ACTIVE_SLOT_SIZE - len(binary))
     crc_value = zlib.crc32(padded) & 0xFFFFFFFF
 
+    # USB: the CDC port only exists while the bootloader runs — reset first,
+    # then wait for it to (re-)enumerate
+    if link == "usb" and not port:
+        if args.reset:
+            print("\n[0/4] Resetting board ...")
+            if not reset_board():
+                print("  Press RESET on the board now (hold B1 to stay in the bootloader) ...")
+        elif not bl_usb_ports():
+            print("\nWaiting for the bootloader USB port — connect the USB-C user port "
+                  "and reset the board (hold B1 to stay in the bootloader) ...")
+        port = wait_for_port(bl_usb_ports, args.wait)
+        if not port:
+            raise RuntimeError("bootloader USB CDC port (CAFE:B0C5) did not appear — is the "
+                               "USB-C user connector plugged in? (WSL: usbipd attach --auto-attach)")
+        args.reset = False             # already done
+
     print(f"\n=== Bootloader upload: {bin_path.name} ===")
-    print(f"  Port        : {port} @ {BAUD}")
+    print(f"  Link        : {'USB CDC (USB-C user port)' if link == 'usb' else 'UART (ST-LINK VCP)'}")
+    print(f"  Port        : {port}" + ("" if link == "usb" else f" @ {BAUD}"))
     print(f"  Binary size : {len(binary):,} bytes  ({len(binary) / 1024:.1f} KB)")
     print(f"  CRC-32      : 0x{crc_value:08X} (padded to {ACTIVE_SLOT_SIZE // 1024} KB)")
 
@@ -283,6 +343,8 @@ def main() -> int:
             print("\n[0/4] Resetting board ...")
             if not reset_board():
                 print(f"  Press RESET on the board now (waiting up to {args.wait:.0f} s) ...")
+        elif link == "usb":
+            print("\nUSB port open — waiting for the bootloader ...")
         else:
             print(f"\nReset the board now, or hold B1 while resetting "
                   f"(waiting up to {args.wait:.0f} s) ...")
@@ -313,10 +375,14 @@ def main() -> int:
         print("\n=== UPLOADED ===  Board output:\n")
         ser.timeout = 0.2
         end = time.monotonic() + 3.0
-        while time.monotonic() < end:
-            line = ser.readline()
-            if line:
-                print("   ", line.decode(errors="replace").rstrip())
+        try:
+            while time.monotonic() < end:
+                line = ser.readline()
+                if line:
+                    print("   ", line.decode(errors="replace").rstrip())
+        except (serial.SerialException, OSError):
+            # USB link: the bootloader detaches USB when it jumps to the application
+            print("    (USB port closed — bootloader jumped to the application)")
     return 0
 
 

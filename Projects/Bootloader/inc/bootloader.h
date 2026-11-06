@@ -8,6 +8,7 @@
 #include "uart.h"     /* console + firmware update link (USART2), pulls in gpio.h */
 #include "crc.h"      /* hardware CRC-32 (active slot integrity)   */
 #include "flash.h"    /* sector erase / unlock / lock              */
+#include "usb_cdc.h"  /* USB CDC ACM update link (USB-C user port) */
 
 #define __IO volatile
 
@@ -26,7 +27,9 @@
 #define BL_RAM_START            0x20000000U
 #define BL_RAM_END              0x20020000U               /* 128 KB SRAM                        */
 
-/* ── Update protocol (USART2 / ST-LINK VCP, 115200 8N1) ──────────────────
+/* ── Update protocol — same bytes on both links ─────────────────────────
+ *   UART : USART2 / ST-LINK VCP, 115200 8N1
+ *   USB  : CDC ACM on the USB-C user connector (PA11/PA12), any baud
  *   host -> 'u'                       board -> ACK
  *   host -> image size (u32 LE)       board -> erase slot + tag, ACK
  *   host -> data chunk (<=256 bytes)  board -> program, ACK   (repeat)
@@ -39,8 +42,10 @@
 #define BL_BYTE_TIMEOUT_MS      2000U                     /* inter-byte timeout during update   */
 
 /* ── Entry into update mode ─────────────────────────────────────────────
- *   - every reset opens a BL_WAIT_MS window: 'u' on USART2 starts an update,
- *     pressing B1 cancels the auto-boot and stays in the bootloader
+ *   - every reset opens a BL_WAIT_MS window: 'u' on USART2 or USB CDC starts
+ *     an update on that link (replies go back on the same link),
+ *     pressing B1 cancels the auto-boot and stays in the bootloader;
+ *     opening the USB COM port re-sends READY and grants BL_USB_OPEN_GRACE_MS
  *   - B1 held during reset: stay in the bootloader until an update arrives
  *   - no valid application: stay in the bootloader until an update arrives
  * LD1 is solid on during the window and blinks while the bootloader stays. */
@@ -49,12 +54,27 @@
 #define BL_POLL_MS              10U                       /* UART poll slice inside the window  */
 #define BL_LED_BLINK_MS         250U                      /* LD1 half-period while staying      */
 #define BL_READY_REPEAT_MS      1000U                     /* re-send "[BL] READY" while staying */
+#define BL_USB_OPEN_GRACE_MS    3000U                     /* window left after the USB port opens */
+#define BL_USB_DRAIN_MS         50U                       /* let the host read the last USB bytes */
 #define BL_BTN_SETTLE_MS        10U                       /* let the B1 pull-up / RC filter settle */
 
 #define BL_BTN_PORT             GPIO_C                    /* B1 user button (blue)              */
 #define BL_BTN_PIN              GPIO_PIN_13               /*   PC13, active low, pull-up        */
 #define BL_LED_PORT             GPIO_A                    /* LD1 user LED (green)               */
 #define BL_LED_PIN              GPIO_PIN_5                /*   PA5, active high                 */
+
+/* ── Optional USB VBUS sensing ─────────────────────────────────────────
+ * The USB_DRD_FS device has no VBUS detector of its own; host presence is
+ * seen through enumeration (USB_CDC_IsMounted) and the COM port being opened
+ * (DTR) instead. If the board routes VBUS to a GPIO (through a divider), set
+ * BL_USB_VBUS_SENSE to 1 and give that pin: the D+ pull-up is then only
+ * enabled while VBUS is high (USB spec rule for self-powered devices).
+ * Off by default — the NUCLEO-C562RE (MB2213) VBUS-sense pin is not confirmed. */
+#ifndef BL_USB_VBUS_SENSE
+#define BL_USB_VBUS_SENSE       0
+#endif
+/* #define BL_USB_VBUS_PORT     GPIO_x */
+/* #define BL_USB_VBUS_PIN      GPIO_PIN_n */
 
 /* ── Cortex-M33 core registers ─────────────────────────────────────── */
 #define DEMCR_REG               (*(volatile uint32_t *)0xE000EDFCU)
@@ -83,33 +103,47 @@ typedef enum {
     BL_TRIGGER_NONE   = 0,  /* window expired, nothing requested          */
     BL_TRIGGER_UART   = 1,  /* host sent BL_CMD_UPDATE on USART2          */
     BL_TRIGGER_BUTTON = 2,  /* B1 pressed — stay in the bootloader        */
+    BL_TRIGGER_USB    = 3,  /* host sent BL_CMD_UPDATE on USB CDC         */
 } BL_Trigger;
+
+/* ── Link the update runs on ──────────────────────────────────────── */
+typedef enum {
+    BL_LINK_UART = 0,       /* USART2 — ST-LINK virtual COM port          */
+    BL_LINK_USB  = 1,       /* USB CDC ACM — USB-C user connector         */
+} BL_Link;
 
 /* ── Handle ───────────────────────────────────────────────────────── */
 typedef struct {
-    USART_HandleType    *huart;   /* console + update link                  */
+    USART_HandleType    *huart;   /* console + UART update link             */
+    BL_Link              link;    /* link of the running update             */
     FLASH_HandleTypeDef  hflash;  /* owns the FLASH controller              */
     CRC_HandleTypeDef    hcrc;    /* owns the hardware CRC peripheral       */
     GPIO_HandleTypeDef   hbtn;    /* B1 — bootloader-mode request           */
     GPIO_InitTypeDef     btn_cfg;
     GPIO_HandleTypeDef   hled;    /* LD1 — bootloader-mode indicator        */
     GPIO_InitTypeDef     led_cfg;
+#if BL_USB_VBUS_SENSE
+    GPIO_HandleTypeDef   hvbus;   /* USB VBUS sense input                   */
+    GPIO_InitTypeDef     vbus_cfg;
+    uint8_t              vbus;    /* last VBUS state                        */
+#endif
 } BL_HandleTypeDef;
 
 /* ── API ─────────────────────────────────────────────────────────── */
 
-/* Bind the UART, initialise FLASH + CRC + B1 + LD1, start the DWT cycle counter */
+/* Bind the UART, initialise FLASH + CRC + B1 + LD1 + USB CDC, start the DWT counter */
 void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart);
 
 /* 1 while B1 is held down */
 uint8_t BL_ButtonPressed(BL_HandleTypeDef *hbl);
 
 /*
- * Wait for an update request.
- *   timeout_ms != BL_WAIT_FOREVER : LD1 on; returns UART on 'u', BUTTON when
- *                                   B1 is pressed, NONE when the window ends
+ * Wait for an update request on USART2 and USB CDC.
+ *   timeout_ms != BL_WAIT_FOREVER : LD1 on; returns UART / USB on 'u' (and sets
+ *                                   hbl->link), BUTTON when B1 is pressed,
+ *                                   NONE when the window ends
  *   timeout_ms == BL_WAIT_FOREVER : LD1 blinks, "[BL] READY" repeats every
- *                                   BL_READY_REPEAT_MS; returns only on 'u'
+ *                                   BL_READY_REPEAT_MS; returns only on 'u' (UART / USB)
  */
 BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms);
 
@@ -135,5 +169,8 @@ BL_Status BL_VerifyActiveSlot(BL_HandleTypeDef *hbl);
 void BL_JumpToApplication(BL_HandleTypeDef *hbl, uint32_t app_base);
 
 const char *BL_StatusString(BL_Status st);
+
+/* Console line on USART2, and on USB CDC while its COM port is open */
+void BL_Log(BL_HandleTypeDef *hbl, const char *str);
 
 #endif /* __BOOTLOADER_H */

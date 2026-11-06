@@ -31,7 +31,11 @@ STM32C5-NUCLEO-Projects/
 │   │   ├── linker.ld         #   GCC linker script for the standalone demo
 │   │   ├── inc/gpio.h        #   RCC_TypeDef, GPIO_ManualTypeDef, pin macros
 │   │   └── src/              #   gpio.c, main.c, startup.c
-│   └── AES/ CRC/ DMA/ FDCAN/ HASH/ NVIC/ RNG/ SysTick/ UART/
+│   ├── AES/ CRC/ DMA/ FDCAN/ HASH/ NVIC/ RNG/ SysTick/ UART/
+│   ├── USB_CDC/              # USB CDC ACM (virtual COM port) on the USB-C user port — TinyUSB glue
+│   ├── TinyUSB/              # git submodule: hathach/tinyusb (USB stack + CDC ACM class)
+│   ├── stm32c5xx-dfp/        # git submodule: ST CMSIS device headers (needed by TinyUSB's ST port)
+│   └── CMSIS_6/              # git submodule: Arm CMSIS core headers (core_cm33.h)
 └── Projects/                 # Application-level projects (use the Drivers above)
     └── App_Demo/ Bootloader/ ECDSA/ FLASH/ RSA/ Root_of_Trust/
         Secure_Boot/ Secure_FW_Update/
@@ -59,6 +63,9 @@ CMSIS (`core_cm4.h`) is used **only** for `NVIC_SetPriority()` / `NVIC_EnableIRQ
 
 ## Prerequisites
 
+- **Clone with submodules** (TinyUSB, stm32c5xx-dfp, CMSIS_6 — used by `Drivers/USB_CDC`):
+  `git clone --recurse-submodules --shallow-submodules <repo>`, or in an existing clone `make submodules`.
+  `make submodules-update` moves them to the newest upstream commits (commit the result to pin them).
 - **VS Code** (latest)
 - **Cortex-Debug extension** (`marus25.cortex-debug`)
 - **arm-none-eabi-gcc** toolchain (GCC 12+ recommended, add to PATH)
@@ -151,6 +158,9 @@ Each module's `startup.c` uses `_estack` / `__etext` / `__bss_start__` etc. from
 | `FLASH_TOOL` | `cubeprog` | `cubeprog`, `openocd` or `stlink` |
 | `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug` sets it) |
 | `PORT` / `BAUD` | auto / `115200` | Serial port for `make monitor` / `make bl-upload` |
+| `DEFAULT_PORT` | `COM5` / `/dev/ttyACM0` | UART port `make bl-upload` falls back to when no ST-LINK is detected |
+| `LINK` | `auto` | `make bl-upload` link: `usb` (USB-C user port), `uart` (ST-LINK VCP) or `auto` |
+| `USBIPD` | `0` | `1` = WSL with the board's USB devices attached through usbipd |
 
 ## Flashing
 
@@ -160,6 +170,56 @@ Connect the NUCLEO board via USB (ST-Link), then:
 make flash PROJECT_DIR=Drivers/GPIO
 make flash PROJECT_DIR=Drivers/UART
 ```
+
+## Bootloader (UART + USB)
+
+Full guide with every upload command: [Projects/Bootloader/README.md](Projects/Bootloader/README.md).
+
+`Projects/Bootloader` sits at `0x08000000` and boots the application in the active slot
+(`0x08010000`, CRC-32 tag in sector 30). After every reset it waits 5 s (LD1 on) for an update:
+
+| Entry | What happens |
+|---|---|
+| `u` on USART2 (ST-LINK VCP, PA2/PA3) | Update over UART |
+| `u` on USB CDC (USB-C user connector, PA11/PA12) | Update over USB — opening the COM port re-sends `[BL] READY` and adds 3 s |
+| B1 pressed in the window, or held during reset | Stay in the bootloader (LD1 blinks, `[BL] READY` every second) |
+| Nothing | Verify tag + CRC + vector table, then jump to the application |
+
+```sh
+make flash PROJECT_DIR=Projects/Bootloader     # once, over SWD
+make bl-upload                                 # build + upload Projects/App_Demo (LINK=auto)
+make bl-upload LINK=usb                        # through the USB-C user connector
+make bl-upload LINK=uart PORT=COM4             # through the ST-LINK virtual COM port
+make bl-upload APP=path/to/app.bin             # a ready binary linked at 0x08010000
+```
+
+The USB device is `C562 Bootloader CDC`, VID:PID `CAFE:B0C5` (TinyUSB test VID — development only).
+It only exists while the bootloader runs: the bootloader detaches USB before jumping to the application.
+Integrity is a CRC-32 only — there is no authentication (see `Projects/Secure_Boot`).
+
+### WSL2 + usbipd
+
+WSL2 cannot see USB devices until they are attached with [usbipd-win](https://github.com/dorssel/usbipd-win).
+Keep the **ST-LINK on Windows** (flashing, SWD reset and the Makefile use the Windows STM32CubeProgrammer)
+and attach only the **USB-C user port** to WSL:
+
+```powershell
+# Windows, PowerShell as administrator — once
+winget install usbipd
+usbipd list                               # find the BUSID of "USB Serial Device" CAFE:B0C5
+                                          # (hold B1 + RESET so the bootloader enumerates)
+usbipd bind --busid <BUSID>               # share it (once per device)
+usbipd attach --wsl --busid <BUSID> --auto-attach   # keep running: re-attaches after every reset
+```
+
+```sh
+# WSL
+sudo usermod -aG dialout $USER            # serial access to /dev/ttyACM*, then log in again
+ls /dev/ttyACM*                           # appears while the bootloader runs
+make bl-upload LINK=usb USBIPD=1
+```
+
+Without usbipd, `bl_upload.py` re-runs itself with the Windows Python and uses the COM ports directly.
 
 ## Debugging in VS Code
 
