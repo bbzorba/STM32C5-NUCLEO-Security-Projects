@@ -1,0 +1,11 @@
+# Line endings: stored as LF in the repository, checked out as the platform
+# prefers (CRLF on Windows with core.autocrlf=true, LF in WSL/Linux).
+# Keeps Windows git and WSL git from seeing every file as modified.
+* text=auto
+
+# Build outputs and other binary files: never converted
+*.bin  binary
+*.elf  binary
+*.pdf  binary
+*.png  binary
+*.jpg  binary

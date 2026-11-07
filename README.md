@@ -66,6 +66,8 @@ CMSIS (`core_cm4.h`) is used **only** for `NVIC_SetPriority()` / `NVIC_EnableIRQ
 - **Clone with submodules** (TinyUSB, stm32c5xx-dfp, CMSIS_6 — used by `Drivers/USB_CDC`):
   `git clone --recurse-submodules --shallow-submodules <repo>`, or in an existing clone `make submodules`.
   `make submodules-update` moves them to the newest upstream commits (commit the result to pin them).
+- **Line endings** are normalized by `.gitattributes` (LF in the repository), so Windows git and
+  WSL/Linux git can both be used on the same working copy without every file showing as modified.
 - **VS Code** (latest)
 - **Cortex-Debug extension** (`marus25.cortex-debug`)
 - **arm-none-eabi-gcc** toolchain (GCC 12+ recommended, add to PATH)
