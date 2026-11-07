@@ -19,6 +19,8 @@ Usage:
   python tools/seal.py Projects/App_Demo/main.bin
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import zlib

@@ -176,6 +176,7 @@ make flash PROJECT_DIR=Drivers/UART
 ## Bootloader (UART + USB)
 
 Full guide with every upload command: [Projects/Bootloader/README.md](Projects/Bootloader/README.md).
+How it works (block diagram, boot decision, protocol): [Projects/Bootloader/ARCHITECTURE.md](Projects/Bootloader/ARCHITECTURE.md).
 
 `Projects/Bootloader` sits at `0x08000000` and boots the application in the active slot
 (`0x08010000`, CRC-32 tag in sector 30). After every reset it waits 5 s (LD1 on) for an update:

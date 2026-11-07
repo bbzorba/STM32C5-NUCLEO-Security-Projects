@@ -47,6 +47,8 @@ Requires pyserial:
   Windows       : py -m pip install pyserial
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import glob
