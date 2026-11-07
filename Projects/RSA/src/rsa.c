@@ -11,9 +11,8 @@ static void bn_from_be(bn_t *r, const uint8_t *src, int num_limbs)
     int num_bytes = num_limbs * 4;
     memset(r->d, 0, RSA_MAX_LIMBS * sizeof(uint32_t));
     for (int i = 0; i < num_bytes; i++) {
-        int limb  = (num_bytes - 1 - i) / 4;
-        int shift = ((num_bytes - 1 - i) % 4) * 8;
-        r->d[limb] |= (uint32_t)src[i] << shift;
+        unsigned pos = (unsigned)(num_bytes - 1 - i);   /* byte index from the LSB */
+        r->d[pos / 4U] |= (uint32_t)src[i] << ((pos % 4U) * 8U);
     }
 }
 
@@ -21,9 +20,8 @@ static void bn_to_be(uint8_t *dst, const bn_t *a, int num_limbs)
 {
     int num_bytes = num_limbs * 4;
     for (int i = 0; i < num_bytes; i++) {
-        int limb  = (num_bytes - 1 - i) / 4;
-        int shift = ((num_bytes - 1 - i) % 4) * 8;
-        dst[i] = (uint8_t)(a->d[limb] >> shift);
+        unsigned pos = (unsigned)(num_bytes - 1 - i);   /* byte index from the LSB */
+        dst[i] = (uint8_t)(a->d[pos / 4U] >> ((pos % 4U) * 8U));
     }
 }
 
