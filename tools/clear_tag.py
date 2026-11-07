@@ -21,15 +21,29 @@ import sys
 CUBE = os.environ.get("CUBE_PROG") or r"C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe"
 CRC_TAG_ADDR = 0x0803C000   # sector 30 base address
 
-with tempfile.NamedTemporaryFile(suffix="_clear_tag.bin", delete=False) as f:
+# WSL running the Windows STM32_Programmer_CLI.exe: that program cannot open
+# Linux paths such as /tmp/..., so temp files go to the current directory
+# (on the Windows drive) and are passed as Windows paths.
+_WIN_TOOL_FROM_WSL = os.name != "nt" and CUBE.lower().endswith(".exe")
+TMP_DIR = os.getcwd() if _WIN_TOOL_FROM_WSL else None
+
+
+def tool_path(path) -> str:
+    """Path as STM32_Programmer_CLI sees it."""
+    if _WIN_TOOL_FROM_WSL:
+        return subprocess.run(["wslpath", "-w", os.path.abspath(str(path))],
+                              capture_output=True, text=True, check=True).stdout.strip()
+    return str(path)
+
+with tempfile.NamedTemporaryFile(suffix="_clear_tag.bin", delete=False, dir=TMP_DIR) as f:
     f.write(b"\xff\xff\xff\xff")
     tmp = f.name
 
 try:
     result = subprocess.run(
         [CUBE, "-c", "port=SWD", "freq=4000",
-         "-d", tmp, hex(CRC_TAG_ADDR), "-rst"],
-        capture_output=True, text=True
+         "-d", tool_path(tmp), hex(CRC_TAG_ADDR), "-rst"],
+        capture_output=True, text=True, errors="replace"
     )
     if result.returncode == 0:
         print("  CRC tag cleared (sector 30 blank — use 'make seal-active' to seal).")

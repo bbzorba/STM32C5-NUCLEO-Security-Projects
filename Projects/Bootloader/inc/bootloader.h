@@ -40,6 +40,7 @@
 #define BL_NACK                 0x1FU
 #define BL_CHUNK_SIZE           256U                      /* multiple of the 16-byte flash word */
 #define BL_BYTE_TIMEOUT_MS      2000U                     /* inter-byte timeout during update   */
+#define BL_USART_CR1_FIFOEN     (1UL << 29)               /* USART CR1.FIFOEN: 8-byte RX FIFO   */
 
 /* ── Entry into update mode ─────────────────────────────────────────────
  *   - every reset opens a BL_WAIT_MS window: 'u' on USART2 or USB CDC starts
@@ -55,11 +56,14 @@
 #define BL_LED_BLINK_MS         250U                      /* LD1 half-period while staying      */
 #define BL_READY_REPEAT_MS      1000U                     /* re-send "[BL] READY" while staying */
 #define BL_USB_OPEN_GRACE_MS    3000U                     /* window left after the USB port opens */
+#define BL_USB_READY_DELAY_MS   150U                      /* first READY after the USB port opens */
 #define BL_USB_DRAIN_MS         50U                       /* let the host read the last USB bytes */
-#define BL_BTN_SETTLE_MS        10U                       /* let the B1 pull-up / RC filter settle */
+#define BL_BTN_SETTLE_MS        10U                       /* let the B1 pull-down / RC filter settle */
 
 #define BL_BTN_PORT             GPIO_C                    /* B1 user button (blue)              */
-#define BL_BTN_PIN              GPIO_PIN_13               /*   PC13, active low, pull-up        */
+#define BL_BTN_PIN              GPIO_PIN_13               /*   PC13, active HIGH: the MB2213     */
+#define BL_BTN_PULL             GPIO_PULLDOWN             /*   board pulls it down, B1 drives   */
+#define BL_BTN_ACTIVE           GPIO_PIN_SET              /*   it to VDD (measured over SWD)    */
 #define BL_LED_PORT             GPIO_A                    /* LD1 user LED (green)               */
 #define BL_LED_PIN              GPIO_PIN_5                /*   PA5, active high                 */
 

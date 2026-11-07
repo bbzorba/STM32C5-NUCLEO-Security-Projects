@@ -211,7 +211,7 @@ OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 #                 "STMicroelectronics STLink Virtual COM Port" in Device Manager.
 PORT ?=
 ifneq ($(OS)$(_WSL),)
-DEFAULT_PORT ?= COM5
+DEFAULT_PORT ?= COM12
 else
 DEFAULT_PORT ?= /dev/ttyACM0
 endif

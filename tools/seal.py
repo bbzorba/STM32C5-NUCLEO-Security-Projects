@@ -39,6 +39,20 @@ SWD_CONNECT = ["-c", "port=SWD", "freq=4000"]
 ACTIVE_ADDR      = 0x08010000
 ACTIVE_SLOT_SIZE = 22 * 8192       # 176 KB (sectors 8-29)
 TAG_ADDR         = 0x0803C000      # sector 30 — CRC tag for active slot
+
+# WSL running the Windows STM32_Programmer_CLI.exe: that program cannot open
+# Linux paths such as /tmp/..., so temp files go to the current directory
+# (on the Windows drive) and are passed as Windows paths.
+_WIN_TOOL_FROM_WSL = os.name != "nt" and CUBE_PROG.lower().endswith(".exe")
+TMP_DIR = os.getcwd() if _WIN_TOOL_FROM_WSL else None
+
+
+def tool_path(path) -> str:
+    """Path as STM32_Programmer_CLI sees it."""
+    if _WIN_TOOL_FROM_WSL:
+        return subprocess.run(["wslpath", "-w", os.path.abspath(str(path))],
+                              capture_output=True, text=True, check=True).stdout.strip()
+    return str(path)
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -48,7 +62,7 @@ def cube(args: list[str], *, reset_after: bool = False) -> None:
     if reset_after:
         cmd += ["-rst"]
     print("  $", " ".join(f'"{a}"' if " " in a else a for a in cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
     # Show relevant lines (avoid flooding with progress bars)
     for line in result.stdout.splitlines():
         stripped = line.strip()
@@ -87,8 +101,8 @@ def main() -> None:
     # ── Step 2: Flash the padded binary at 0x08010000 ────────────────────────
     # Writing a full 176 KB file forces CubeProgrammer to erase all of
     # sectors 8-29 before writing — guarantees a clean, predictable slot.
-    padded_path = Path(tempfile.mktemp(suffix="_app_padded.bin"))
-    tag_path    = Path(tempfile.mktemp(suffix="_crc_tag.bin"))
+    padded_path = Path(tempfile.mktemp(suffix="_app_padded.bin", dir=TMP_DIR))
+    tag_path    = Path(tempfile.mktemp(suffix="_crc_tag.bin", dir=TMP_DIR))
     try:
         padded_path.write_bytes(padded)
         # Little-endian 32-bit value — matches uint32_t read on Cortex-M33 (LE)
@@ -96,12 +110,12 @@ def main() -> None:
 
         print(f"\n[1/2] Flashing {ACTIVE_SLOT_SIZE // 1024} KB at "
               f"0x{ACTIVE_ADDR:08X} (erases sectors 8-29 only)...")
-        cube(["-d", str(padded_path), f"0x{ACTIVE_ADDR:08X}"])
+        cube(["-d", tool_path(padded_path), f"0x{ACTIVE_ADDR:08X}"])
 
         # ── Step 3: Write CRC tag to sector 30 ───────────────────────────────
         print(f"\n[2/2] Writing CRC tag 0x{crc_value:08X} "
               f"to 0x{TAG_ADDR:08X} (sector 30)...")
-        cube(["-d", str(tag_path), f"0x{TAG_ADDR:08X}"], reset_after=True)
+        cube(["-d", tool_path(tag_path), f"0x{TAG_ADDR:08X}"], reset_after=True)
 
     finally:
         padded_path.unlink(missing_ok=True)

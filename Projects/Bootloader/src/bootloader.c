@@ -144,13 +144,20 @@ void BL_Init(BL_HandleTypeDef *hbl, USART_HandleType *huart)
 {
     hbl->huart = huart;
     hbl->link  = BL_LINK_UART;
+
+    /* USART2 RX FIFO (8 bytes): the UART link is polled, and USB servicing can
+       delay a poll by ~170 us (measured) — longer than the ~87 us one byte takes
+       at 115200 baud. FIFOEN may only change while the USART is disabled. */
+    huart->regs->CR1 &= ~USART_CR1_UE;
+    huart->regs->CR1 |=  BL_USART_CR1_FIFOEN;
+    huart->regs->CR1 |=  USART_CR1_UE;
     FLASH_Init(&hbl->hflash);
     CRC_Constructor(&hbl->hcrc);
 
-    /* B1 (PC13): input with pull-up, pressed = low */
+    /* B1 (PC13): input, pressed = high (external pull-down on the board) */
     hbl->btn_cfg.Pin       = BL_BTN_PIN;
     hbl->btn_cfg.Mode      = GPIO_MODE_INPUT;
-    hbl->btn_cfg.Pull      = GPIO_PULLUP;
+    hbl->btn_cfg.Pull      = BL_BTN_PULL;
     hbl->btn_cfg.Speed     = GPIO_SPEED_LOW;
     hbl->btn_cfg.Alternate = 0U;
     GPIO_constructor(&hbl->hbtn, BL_BTN_PORT, &hbl->btn_cfg);
@@ -195,7 +202,7 @@ void BL_Log(BL_HandleTypeDef *hbl, const char *str)
 
 uint8_t BL_ButtonPressed(BL_HandleTypeDef *hbl)
 {
-    return GPIO_ReadPin(&hbl->hbtn, BL_BTN_PIN) == GPIO_PIN_RESET;   /* active low */
+    return GPIO_ReadPin(&hbl->hbtn, BL_BTN_PIN) == BL_BTN_ACTIVE;
 }
 
 BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
@@ -225,9 +232,12 @@ BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
             return BL_TRIGGER_USB;
         }
 
-        /* A host opened the USB COM port: announce, and leave it time to answer */
+        /* A host opened the USB COM port: announce READY BL_USB_READY_DELAY_MS
+           later (Windows serial libraries purge their RX buffer right after
+           asserting DTR, an immediate READY would be lost), then every
+           BL_READY_REPEAT_MS; and leave the host time to answer */
         if (USB_CDC_TakeOpenEvent()) {
-            USB_CDC_WriteString("[BL] READY\r\n");
+            ready_last = now - (BL_READY_REPEAT_MS - BL_USB_READY_DELAY_MS) * cycles_per_ms;
             uint32_t grace = now + BL_USB_OPEN_GRACE_MS * cycles_per_ms;
             if (!forever && (int32_t)(grace - deadline) > 0)
                 deadline = grace;
@@ -243,8 +253,15 @@ BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
                 ready_last = now;
                 BL_Log(hbl, "[BL] READY\r\n");
             }
-        } else if (BL_ButtonPressed(hbl)) {
-            return BL_TRIGGER_BUTTON;
+        } else {
+            /* USB port open during the window: repeat READY there too, so a host
+               that flushed its input after opening still sees one */
+            if (USB_CDC_IsOpen() && (now - ready_last) >= BL_READY_REPEAT_MS * cycles_per_ms) {
+                ready_last = now;
+                USB_CDC_WriteString("[BL] READY\r\n");
+            }
+            if (BL_ButtonPressed(hbl))
+                return BL_TRIGGER_BUTTON;
         }
     }
     return BL_TRIGGER_NONE;

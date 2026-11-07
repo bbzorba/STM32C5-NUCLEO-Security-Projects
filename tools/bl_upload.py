@@ -168,7 +168,7 @@ def reset_board() -> bool:
         return False
     for cmd in cmds:
         print("  $", " ".join(f'"{a}"' if " " in a else a for a in cmd))
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
         if result.returncode == 0:
             return True
         print((result.stdout + result.stderr).strip()[-600:])
@@ -338,7 +338,10 @@ def main() -> int:
         raise RuntimeError(msg)
 
     with ser:
-        ser.reset_input_buffer()
+        # UART: drop stale bytes. USB: keep them — opening the port is what makes
+        # the bootloader send "[BL] READY", flushing here would discard it.
+        if link != "usb":
+            ser.reset_input_buffer()
         if args.reset:
             print("\n[0/4] Resetting board ...")
             if not reset_board():
@@ -352,25 +355,40 @@ def main() -> int:
         wait_ready(ser, args.wait)
         ser.reset_input_buffer()
 
-        print("\n[1/4] Requesting update ...")
-        ser.write(CMD_UPDATE)
-        expect_ack(ser, ACK_TIMEOUT_S, "update request")
+        try:
+            print("\n[1/4] Requesting update ...")
+            ser.write(CMD_UPDATE)
+            expect_ack(ser, ACK_TIMEOUT_S, "update request")
 
-        print("[2/4] Sending size, erasing active slot ...")
-        ser.write(struct.pack("<I", len(binary)))
-        expect_ack(ser, ERASE_TIMEOUT_S, "erase")
+            print("[2/4] Sending size, erasing active slot ...")
+            ser.write(struct.pack("<I", len(binary)))
+            expect_ack(ser, ERASE_TIMEOUT_S, "erase")
 
-        print("[3/4] Programming ...")
-        for off in range(0, len(binary), CHUNK_SIZE):
-            ser.write(binary[off:off + CHUNK_SIZE])
-            expect_ack(ser, ACK_TIMEOUT_S, f"chunk @ +0x{off:05X}")
-            done = min(off + CHUNK_SIZE, len(binary))
-            print(f"\r      {done:>7,} / {len(binary):,} bytes", end="", flush=True)
-        print()
+            print("[3/4] Programming ...")
+            for off in range(0, len(binary), CHUNK_SIZE):
+                ser.write(binary[off:off + CHUNK_SIZE])
+                expect_ack(ser, ACK_TIMEOUT_S, f"chunk @ +0x{off:05X}")
+                done = min(off + CHUNK_SIZE, len(binary))
+                print(f"\r      {done:>7,} / {len(binary):,} bytes", end="", flush=True)
+            print()
 
-        print("[4/4] Verifying CRC + sealing ...")
-        ser.write(struct.pack("<I", crc_value))
-        expect_ack(ser, ERASE_TIMEOUT_S, "CRC verify")
+            print("[4/4] Verifying CRC + sealing ...")
+            ser.write(struct.pack("<I", crc_value))
+            expect_ack(ser, ERASE_TIMEOUT_S, "CRC verify")
+
+        except RuntimeError:
+            # Show why the bootloader gave up ("[BL] Update : TIMEOUT" …)
+            ser.timeout = 0.2
+            end = time.monotonic() + 1.5
+            print("\n    Board output after the error:")
+            try:
+                while time.monotonic() < end:
+                    line = ser.readline()
+                    if line:
+                        print("     ", line.decode(errors="replace").rstrip())
+            except (serial.SerialException, OSError):
+                pass
+            raise
 
         print("\n=== UPLOADED ===  Board output:\n")
         ser.timeout = 0.2

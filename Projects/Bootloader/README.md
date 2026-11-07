@@ -49,8 +49,15 @@ and the application starts with the peripherals in their reset state.
 
 - **USB driver:** the USB link is a CDC ACM virtual COM port (TinyUSB, `Drivers/USB_CDC`).
   Windows, Linux and macOS have built-in drivers, so nothing needs installing.
-- **USB port lifetime:** the USB COM port exists only while the bootloader is running. It disappears
-  when the bootloader jumps to the application.
+- **USB port lifetime:** the USB COM port exists only while the bootloader is running. Every reset
+  therefore gives a Windows "device connected" sound, and about 5 s later "device disconnected"
+  when the bootloader jumps to the application. That is expected — not a power or cable problem.
+- **READY on USB:** about 150 ms after the PC opens the COM port, then every second. It is not sent
+  immediately, because Windows serial libraries (pyserial, PuTTY …) purge their receive buffer right
+  after they assert DTR, so an immediate READY would be lost.
+- **UART FIFO:** the bootloader enables the 8-byte USART2 RX FIFO. Servicing USB can delay a UART
+  poll by up to ~170 µs (measured), longer than one byte at 115200 baud (87 µs). Without the FIFO,
+  UART uploads lost bytes and timed out while a PC was attached to the USB-C port.
 - **No wiring:** neither link needs wires — both use the board's own USB connectors.
 - **Powering from the USB-C port:** a USB-C ↔ USB-C cable does **not** power the board on its own.
   Use a USB-A ↔ USB-C cable, or keep the ST-LINK cable plugged in too.
@@ -108,7 +115,7 @@ make bl-upload DEFAULT_PORT=COM7              # fallback when no ST-LINK is dete
 make com-list                                 # list the serial ports (Windows / WSL)
 ```
 
-Set your board's port once in the top-level `Makefile` (`DEFAULT_PORT ?= COM5`). Windows shows it in
+Set your board's port once in the top-level `Makefile` (`DEFAULT_PORT ?= COM12` — the ST-LINK port of the board used here). Windows shows it in
 Device Manager as *STMicroelectronics STLink Virtual COM Port*.
 
 ### Without the SWD reset (bootloader already waiting)
@@ -161,26 +168,61 @@ Python needs **pyserial**:
 ### WSL2 + usbipd
 
 Keep the **ST-LINK on Windows**: `make flash` and the SWD reset use the Windows
-STM32CubeProgrammer. Attach only the **USB-C user port** to WSL.
+STM32CubeProgrammer. Attach only the **USB-C user port** (the bootloader's `CAFE:B0C5` device)
+to WSL. Installing usbipd and `usbipd bind` need administrator rights, once.
+
+**1. Windows — install (PowerShell as administrator, once)**
 
 ```powershell
-# Windows, PowerShell as administrator — once
-winget install usbipd
-# Hold B1 + press RESET so the bootloader's USB device is present, then:
-usbipd list                                          # note the BUSID of CAFE:B0C5 "USB Serial Device"
-usbipd bind --busid <BUSID>                          # once per device
-usbipd attach --wsl --busid <BUSID> --auto-attach    # leave running: re-attaches after every reset
+winget install --exact dorssel.usbipd-win
+# close and reopen PowerShell so `usbipd` is on PATH
 ```
+
+**2. Make the bootloader's USB device appear.** Run one of these:
+- Hold B1 and press RESET.
+- Erase the CRC tag over SWD, then reset, so the bootloader stays:
+  `STM32_Programmer_CLI -c port=SWD -e 30 -rst`
+
+**3. Windows — share it (PowerShell as administrator, once per device)**
+
+```powershell
+usbipd list                     # find the line "CAFE:B0C5  USB Serial Device (COMx)" and note its BUSID, e.g. 2-3
+usbipd bind --busid 2-3         # shared from now on (survives reboots)
+```
+
+**4. Windows — attach to WSL (normal PowerShell, every session)**
+
+```powershell
+usbipd attach --wsl --busid 2-3 --auto-attach
+# leave this window open: the device disappears on every jump to the application
+# and reappears on every reset — --auto-attach re-attaches it to WSL each time
+```
+
+**5. WSL — once**
 
 ```sh
-# WSL
-sudo usermod -aG dialout $USER                       # once, then log in again
-ls /dev/ttyACM*                                      # present while the bootloader runs
-make bl-upload LINK=usb USBIPD=1
+sudo usermod -aG dialout $USER      # serial access, then close and reopen the WSL terminal
+sudo apt install python3-serial     # pyserial (if not installed yet)
 ```
 
-If re-attaching after the SWD reset takes longer than the bootloader window (5 s + 3 s), hold B1
-while resetting so the bootloader keeps waiting.
+**6. WSL — upload**
+
+```sh
+ls /dev/ttyACM*                                  # present while the bootloader runs
+make bl-upload LINK=usb USBIPD=1                 # build + upload Projects/App_Demo over USB
+make bl-upload LINK=usb USBIPD=1 APP=x.bin       # a ready binary
+```
+
+| Check | Expected |
+|---|---|
+| `usbipd list` (Windows) | `CAFE:B0C5` shows **Attached** while the bootloader runs |
+| `lsusb` (WSL, package `usbutils`) | `cafe:b0c5` listed |
+| `dmesg \| tail` (WSL) | `cdc_acm … ttyACM0: USB ACM device` |
+
+- **Timing:** if re-attaching after the SWD reset takes longer than the bootloader window
+  (5 s + 3 s once the port is opened), hold B1 while resetting so the bootloader keeps waiting.
+- **UART from WSL:** `LINK=uart` keeps working without usbipd, because the ST-LINK stays on Windows
+  and `bl_upload.py` uses the Windows Python for it. Drop `USBIPD=1` for UART uploads.
 
 ## 7. Other ways to load an application
 
@@ -211,7 +253,7 @@ host -> CRC-32 of the image padded    board -> compares with the hardware CRC,
 | `BL_WAIT_MS` | `5000` | Update window after reset |
 | `BL_USB_OPEN_GRACE_MS` | `3000` | Extra time after the USB COM port is opened |
 | `BL_READY_REPEAT_MS` | `1000` | `[BL] READY` period while staying in the bootloader |
-| `BL_BTN_PORT` / `BL_BTN_PIN` | PC13 | B1, active low |
+| `BL_BTN_PORT` / `BL_BTN_PIN` / `BL_BTN_ACTIVE` | PC13, high | B1 — active **high** on the NUCLEO-C562RE (external pull-down) |
 | `BL_LED_PORT` / `BL_LED_PIN` | PA5 | LD1 |
 | `BL_USB_VBUS_SENSE` | `0` | `1` + `BL_USB_VBUS_PORT` / `BL_USB_VBUS_PIN`: D+ pull-up only while VBUS is present. The NUCLEO-C562RE VBUS-sense pin is not confirmed yet — check the MB2213 schematic |
 
@@ -223,6 +265,9 @@ USB identity (VID/PID, strings) is in `Drivers/USB_CDC/inc/usb_cdc.h`.
 |---|---|
 | `bootloader READY not seen` | Is `Projects/Bootloader` flashed? Hold B1 + RESET and retry. Is the port right (`make com-list`)? |
 | USB port `CAFE:B0C5` never appears | Cable in the USB-C **user** connector (not ST-LINK)? Board powered? With WSL: is `usbipd attach --auto-attach` running? |
+| Windows plays connect / disconnect sounds | Normal: the USB device exists only while the bootloader runs (see section 3) |
+| "Unknown USB Device (Device Descriptor Request Failed)" | Bootloader firmware older than the UID fix — reflash `Projects/Bootloader` |
+| UART upload: `NACK`, board says `Update : TIMEOUT` | Bootloader firmware without the USART2 RX FIFO fix — reflash `Projects/Bootloader` |
 | `cannot open /dev/ttyACM0: Permission denied` | `sudo usermod -aG dialout $USER`, then log in again |
 | `pyserial is not installed` | See the install table in section 5 |
 | Upload OK but the app does not start | Is the app linked at `0x08010000`? Watch the UART log: tag / CRC / MSP lines |

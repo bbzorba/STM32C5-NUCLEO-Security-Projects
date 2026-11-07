@@ -72,12 +72,21 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         desc_str[1] = 0x0409;                   /* English (US) */
         len = 1;
     } else if (index == STRID_SERIAL) {
-        /* 96-bit unique ID as 24 hex characters */
+        /* 96-bit unique ID as 24 hex characters.
+         * The UID area only accepts 32-bit reads — byte loads (ldrb) at
+         * UID_BASE raise a precise BusFault on the STM32C562 (measured:
+         * CFSR 0x8200, BFAR 0x08FFF800). Same word access as TinyUSB's
+         * hw/bsp/stm32c5 and ST's LL_GetUID_Word0(). */
         static const char hex[] = "0123456789ABCDEF";
-        const uint8_t *uid = (const uint8_t *)UID_BASE;
-        for (uint8_t i = 0; i < 12U; i++) {
-            desc_str[1 + 2U * i]      = hex[uid[i] >> 4];
-            desc_str[1 + 2U * i + 1U] = hex[uid[i] & 0x0FU];
+        const volatile uint32_t *uid = (const volatile uint32_t *)UID_BASE;
+        for (uint8_t w = 0; w < 3U; w++) {
+            uint32_t word = uid[w];
+            for (uint8_t b = 0; b < 4U; b++) {
+                uint8_t byte = (uint8_t)(word >> (8U * b));
+                uint8_t i    = (uint8_t)(4U * w + b);
+                desc_str[1 + 2U * i]      = hex[byte >> 4];
+                desc_str[1 + 2U * i + 1U] = hex[byte & 0x0FU];
+            }
         }
         len = 24;
     } else {

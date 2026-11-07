@@ -12,6 +12,8 @@
 
 static USART_HandleType huart;
 
+#define GREETING_DELAY_MS  200U
+
 int main(void)
 {
     USART_constructor(&huart, USART_2, RX_AND_TX, __115200);
@@ -21,6 +23,8 @@ int main(void)
     USART_WriteString(&huart, "USB started — connect the USB-C user port\r\n");
 
     uint8_t was_mounted = 0U;
+    uint8_t  greet = 0U;
+    uint32_t greet_at = 0U;
     while (1) {
         USB_CDC_Task();
 
@@ -32,6 +36,13 @@ int main(void)
         }
         if (USB_CDC_TakeOpenEvent()) {
             USART_WriteString(&huart, "USB: COM port opened\r\n");
+            greet_at = USB_CDC_Millis() + GREETING_DELAY_MS;
+            greet    = 1U;
+        }
+        /* Greet a little after the open: Windows serial libraries (pyserial,
+           PuTTY …) purge their RX buffer right after asserting DTR */
+        if (greet && (int32_t)(USB_CDC_Millis() - greet_at) >= 0) {
+            greet = 0U;
             USB_CDC_WriteString("\r\nC562 USB CDC echo — type something\r\n");
         }
 
