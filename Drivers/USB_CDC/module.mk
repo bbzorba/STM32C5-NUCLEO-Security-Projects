@@ -30,7 +30,7 @@ USB_CDC_PRIVATE_CFLAGS := -DSTM32C562xx \
 	-I$(TUSB_SRC) \
 	-IDrivers/stm32c5xx-dfp/Include \
 	-IDrivers/CMSIS_6/CMSIS/Core/Include
-$(patsubst %.c,%.o,$(USB_CDC_SRC_C)): CFLAGS += $(USB_CDC_PRIVATE_CFLAGS)
+$(addprefix $(OBJ_DIR)/,$(USB_CDC_SRC_C:.c=.o)): CFLAGS += $(USB_CDC_PRIVATE_CFLAGS)
 
 # Standalone build (PROJECT_DIR = Drivers/USB_CDC): echo demo, log on USART2
 ifeq ($(MODULE),USB_CDC)

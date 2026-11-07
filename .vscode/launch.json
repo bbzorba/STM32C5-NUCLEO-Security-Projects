@@ -8,7 +8,7 @@
       "servertype": "openocd",
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "GCC: Build + Flash for Debug",
-      "executable": "${workspaceFolder}/build_out/main.elf",
+      "executable": "${workspaceFolder}/build/debug/active.elf",
       "device": "${config:stm32.device}",
       "interface": "swd",
       "noFileLoad": true,

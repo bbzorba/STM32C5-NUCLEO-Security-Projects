@@ -5,7 +5,8 @@
 ifeq ($(MODULE),Secure_FW_Update)
 DEPS       := UART NVIC HASH RNG ECDSA CRC FLASH
 EXTRA_INCS := Drivers/GPIO/inc
-FLASH_ADDR := 0x08010000
+# linker/app_slot.ld, 0x08010000
+LAYOUT     := app_slot
 # seal-active / restore-bootloader + clear the stale CRC tag after `make flash`
 include tools/mk/active_slot.mk
 endif

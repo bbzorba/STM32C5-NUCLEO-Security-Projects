@@ -117,11 +117,13 @@ jobs:
         env:
           MODULE: ${{ matrix.module }}
         run: |
+          # make build writes build/<PROJECT_DIR>/<module>.elf .bin .hex .map
+          target=$(make -s print-TARGET PROJECT_DIR="$MODULE")
           mkdir -p out
-          cp "$MODULE"/main.elf "$MODULE"/main.bin "$MODULE"/main.hex "$MODULE"/main.map build.log out/
+          cp "$target".elf "$target".bin "$target".hex "$target".map build.log out/
           echo "$MODULE" > out/module.txt
           make -s print-FLASH_ADDR PROJECT_DIR="$MODULE" > out/flash_addr.txt
-          arm-none-eabi-size "$MODULE"/main.elf | tee out/size.txt
+          arm-none-eabi-size "$target".elf | tee out/size.txt
           echo "name=fw-${MODULE//\//-}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v7
         with:
@@ -167,8 +169,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           status=0
           for d in dist/fw-*/; do
-            python3 tools/ci/verify_build.py "$d" "$(cat "$d/module.txt")" "$(cat "$d/flash_addr.txt")" \
-              --manifest manifest.jsonl || status=1
+            python3 tools/ci/verify_build.py "$d"/*.elf "$(cat "$d/flash_addr.txt")" \
+              --name "$(cat "$d/module.txt")" --manifest manifest.jsonl || status=1
           done
           exit $status
       - name: Assemble bundle
@@ -177,7 +179,7 @@ jobs:
           for d in dist/fw-*/; do
             m=$(cat "$d/module.txt")
             mkdir -p "firmware/$m"
-            cp "$d"/main.elf "$d"/main.bin "$d"/main.hex "$d"/main.map "$d"/size.txt "firmware/$m/"
+            cp "$d"/*.elf "$d"/*.bin "$d"/*.hex "$d"/*.map "$d"/size.txt "firmware/$m/"
           done
           jq -s --arg sha "$GITHUB_SHA" --arg gcc "$ARM_GCC_VERSION" \
             '{commit: $sha, toolchain: ("Arm GNU Toolchain " + $gcc), images: .}' \

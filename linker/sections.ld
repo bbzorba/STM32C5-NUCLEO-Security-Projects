@@ -1,10 +1,14 @@
+/* Output sections shared by every image. The layout script that includes
+ * this file defines the FLASH and RAM regions.
+ *
+ * Symbols used by the startup code: _estack, __etext, __data_start__,
+ * __data_end__, __bss_start__, __bss_end__.
+ * Stack: __stack_size__ bytes are reserved after .bss so a RAM overflow fails
+ * at link time. Default 1 KB; a module sets STACK_SIZE in its module.mk.
+ */
 ENTRY(Reset_Handler)
 
-MEMORY 
-{
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K   /* sectors 0–7 only */
-    RAM   (rw) : ORIGIN = 0x20000000, LENGTH = 128K
-}
+PROVIDE(__stack_size__ = 0x400);
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
@@ -52,6 +56,6 @@ SECTIONS
   {
     . = ALIGN(8);
     _stack = .;
-    . += 0x400;
+    . += __stack_size__;
   } >RAM
 }

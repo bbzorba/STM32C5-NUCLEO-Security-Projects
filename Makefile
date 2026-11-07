@@ -136,7 +136,8 @@ ifeq ($(strip $(DEBUG)),1)
 CFLAGS := $(filter-out -O2,$(CFLAGS)) -Og -g3 -fno-inline
 endif
 
-LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
+LDFLAGS=-Llinker -T$(LDSCRIPT) -Wl,--defsym=__stack_size__=$(STACK_SIZE) \
+	--specs=nano.specs --specs=nosys.specs -Wl,--gc-sections
 
 # ── Module wiring ─────────────────────────────────────────
 # Only the selected PROJECT_DIR/module.mk is read as the project. It declares,
@@ -145,7 +146,11 @@ LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--
 #   DEPS        modules (driver/project folder names) linked into this build
 #   EXTRA_INCS  extra include-only directories
 #   EXTRA_SRC_C extra source files built into this project only
-#   FLASH_ADDR  load address when it is not 0x08000000
+#   LAYOUT      memory layout / linker script in linker/ (default standalone):
+#                 standalone  whole flash from 0x08000000
+#                 bootloader  boot region, 64 KB from 0x08000000
+#                 app_slot    active slot, 176 KB from 0x08010000
+#   STACK_SIZE  stack reserved by the linker (default 0x400)
 #   POST_FLASH  commands run after `make flash` (optional)
 #   MODULE_HELP non-empty when the module adds targets (shown in `make help`)
 #   plus any project-specific targets (bl-upload, seal-active, …) and
@@ -156,6 +161,19 @@ LDFLAGS=-T$(PROJECT_DIR)/linker.ld --specs=nano.specs --specs=nosys.specs -Wl,--
 #   <Name>_INC     library include directory
 override PROJECT_DIR := $(patsubst ./%,%,$(patsubst %/,%,$(strip $(PROJECT_DIR))))
 MODULE := $(notdir $(PROJECT_DIR))
+
+# ── Build output ──────────────────────────────────────────
+# Everything generated goes to build/ (git-ignored), never into the sources:
+#   build/<PROJECT_DIR>/<MODULE>.elf .bin .hex .map    DEBUG=1: build/debug/<PROJECT_DIR>/
+#   build/<PROJECT_DIR>/obj/<source path>.o .d
+# Defined before the module.mk files are read: they may set target-specific
+# flags on $(OBJ_DIR)/<source>.o (see Drivers/USB_CDC/module.mk).
+BUILD_ROOT := build
+build_dir   = $(BUILD_ROOT)/$(if $(filter 1,$(DEBUG)),debug/)$(1)
+target_of   = $(call build_dir,$(1))/$(notdir $(1))
+BUILD_DIR  := $(call build_dir,$(PROJECT_DIR))
+OBJ_DIR    := $(BUILD_DIR)/obj
+TARGET     := $(call target_of,$(PROJECT_DIR))
 
 ifeq ($(wildcard $(PROJECT_DIR)/module.mk),)
 $(error PROJECT_DIR=$(PROJECT_DIR) has no module.mk — pick one of: $(patsubst %/module.mk,%,$(wildcard Drivers/*/module.mk Projects/*/module.mk)))
@@ -175,7 +193,22 @@ $(error $(PROJECT_DIR)/module.mk: unknown DEPS '$(_MISSING_DEPS)' (no Drivers/<N
 endif
 include $(foreach d,$(DEPS),$(call module_mk,$(d)))
 
-FLASH_ADDR ?= 0x08000000
+# ── Memory layout ─────────────────────────────────────────
+# One linker script per layout in linker/, all sharing linker/memory_map.ld
+# (addresses) and linker/sections.ld (output sections).
+LAYOUT     ?= standalone
+STACK_SIZE ?= 0x400
+LDSCRIPT   := linker/$(LAYOUT).ld
+ifeq ($(wildcard $(LDSCRIPT)),)
+$(error $(PROJECT_DIR)/module.mk: LAYOUT=$(LAYOUT) has no $(LDSCRIPT) — use standalone, bootloader or app_slot)
+endif
+# Load address used by `make flash` — must match the layout's FLASH ORIGIN
+# (checked in CI by tools/ci/verify_build.py)
+FLASH_ADDR_standalone := 0x08000000
+FLASH_ADDR_bootloader := 0x08000000
+FLASH_ADDR_app_slot   := 0x08010000
+FLASH_ADDR := $(FLASH_ADDR_$(LAYOUT))
+
 
 # ── Flashing configuration ────────────────────────────────
 FLASH_TOOL?=cubeprog  # options: cubeprog | openocd | stlink
@@ -256,8 +289,7 @@ SRC_C   += $(filter-out $(SRC_C),$(EXTRA_SRC_C))
 CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $(EXTRA_INCS))
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
-OBJ=$(sort $(OBJ_UNSORTED))
-TARGET=$(PROJECT_DIR)/main
+OBJ=$(addprefix $(OBJ_DIR)/,$(sort $(OBJ_UNSORTED)))
 
 # Use C++ linker if there are any C++ sources (project or external driver), else C linker
 ifneq (,$(strip $(SRC_CPP) $(EXTERNAL_SRC_CPP)))
@@ -266,15 +298,27 @@ else
 LINKER := $(CC)
 endif
 
-# Pattern rules
-%.o: %.s
+ifeq ($(_POSIX_SH),1)
+MKDIR_P = mkdir -p
+else
+MKDIR_P = $(PYTHON) -c "import os, sys; os.makedirs(sys.argv[1], exist_ok=True)"
+endif
+
+# Pattern rules: objects mirror the source tree under $(OBJ_DIR). -MMD -MP
+# writes header dependencies (.d), so only what changed is rebuilt.
+$(OBJ_DIR)/%.o: %.s
+	@$(MKDIR_P) $(@D)
 	$(CC) -c $(CFLAGS) $< -o $@
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+$(OBJ_DIR)/%.o: %.c
+	@$(MKDIR_P) $(@D)
+	$(CC) -c $(CFLAGS) -MMD -MP $< -o $@
 
-%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+$(OBJ_DIR)/%.o: %.cpp
+	@$(MKDIR_P) $(@D)
+	$(CXX) -c $(CXXFLAGS) -MMD -MP $< -o $@
+
+-include $(OBJ:.o=.d)
 
 .PHONY: help all build run clean flash flash_openocd flash_stlink flash_cubeprog check-toolchain
 
@@ -288,21 +332,29 @@ ifeq ($(_POSIX_SH),1)
 		echo "       install STM32CubeIDE, or pass TOOLCHAIN_DIR=<path to the toolchain bin folder>."; \
 		exit 1; }
 endif
-	@echo "=== Building PROJECT_DIR=$(PROJECT_DIR) -> $(TARGET).elf (load address $(FLASH_ADDR))"
+	@echo "=== Building PROJECT_DIR=$(PROJECT_DIR) -> $(TARGET).elf (layout $(LAYOUT), load address $(FLASH_ADDR))"
 	@echo "    project sources : $(wildcard $(PROJECT_DIR)/src/*.c $(PROJECT_DIR)/src/*.cpp)"
 	@echo "    library modules : $(DEPS)  (driver code only - their main.c/startup.c are not built)"
 	@echo "    library sources : $(strip $(filter-out $(PROJECT_DIR)/%,$(SRC_C)) $(EXTERNAL_SRC_C) $(EXTERNAL_SRC_CPP))"
 
 # Module wiring is resolved above (module.mk files are included before any
-# rule), so OBJ is complete when this prerequisite list is read.
-$(OBJ): | check-toolchain
+# rule), so OBJ is complete when this prerequisite list is read. Objects also
+# depend on the build configuration, so a flag change rebuilds them.
+$(OBJ): Makefile $(PROJECT_DIR)/module.mk | check-toolchain
 
-build: $(OBJ)
-	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $(TARGET).elf $(LDFLAGS) $(EXTRA_LDFLAGS)
-	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex
-	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
-	-$(PYTHON) -c "import os; [os.remove(f) for f in '$(OBJ)'.split() if os.path.isfile(f)]"
-	@echo "--- Built $(PROJECT_DIR): $(TARGET).elf / .hex / .bin (load address $(FLASH_ADDR)) ---"
+LINKER_SCRIPTS := $(LDSCRIPT) linker/memory_map.ld linker/sections.ld
+
+$(TARGET).elf: $(OBJ) $(LINKER_SCRIPTS) Makefile $(PROJECT_DIR)/module.mk
+	$(LINKER) $(CFLAGS) $(OBJ) -Wl,-Map=$(TARGET).map -o $@ $(LDFLAGS) $(EXTRA_LDFLAGS)
+
+$(TARGET).hex: $(TARGET).elf
+	$(OBJCOPY) -O ihex $< $@
+
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) -O binary $< $@
+
+build: $(TARGET).bin $(TARGET).hex
+	@echo "--- Built $(PROJECT_DIR): $(TARGET).elf / .hex / .bin (layout $(LAYOUT), load address $(FLASH_ADDR)) ---"
 
 run: build
 
@@ -355,7 +407,7 @@ bl-upload:
 ifeq ($(strip $(APP)),)
 	@$(MAKE) --no-print-directory build PROJECT_DIR=$(BL_APP_DIR)
 endif
-	$(PYTHON) tools/bl_upload.py $(or $(APP),$(BL_APP_DIR)/main.bin) --link $(LINK) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) $(if $(filter 1,$(USBIPD)),--wsl-usbipd) --reset
+	$(PYTHON) tools/bl_upload.py $(or $(APP),$(call target_of,$(BL_APP_DIR)).bin) --link $(LINK) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) $(if $(filter 1,$(USBIPD)),--wsl-usbipd) --reset
 
 # Open a simple serial monitor with PowerShell (Windows or WSL)
 .PHONY: monitor
@@ -378,8 +430,13 @@ endif
 .PHONY: flashmonitor-auto
 flashmonitor-auto: all flash monitor
 
+# clean: the selected PROJECT_DIR (release + debug); clean-all: all of build/
+.PHONY: clean-all
 clean:
-	-$(PYTHON) -c "import os; [os.remove(f) for f in ('$(OBJ) $(TARGET).elf $(TARGET).hex $(TARGET).bin $(TARGET).map').split() if os.path.isfile(f)]"
+	-$(PYTHON) -c "import shutil; [shutil.rmtree(d, ignore_errors=True) for d in ('$(BUILD_ROOT)/$(PROJECT_DIR)', '$(BUILD_ROOT)/debug/$(PROJECT_DIR)')]"
+
+clean-all:
+	-$(PYTHON) -c "import shutil; shutil.rmtree('$(BUILD_ROOT)', ignore_errors=True)"
 
 # ── Git submodules: Drivers/TinyUSB, Drivers/stm32c5xx-dfp, Drivers/CMSIS_6 ──
 # submodules         fetch the versions pinned by this repository (after git clone)
@@ -408,19 +465,21 @@ endef
 # Help target: list common make targets and usage
 help:
 	@echo "Usage: make [target] [PROJECT_DIR=<dir>] [VAR=value ...]"
-	@echo "Current PROJECT_DIR: $(PROJECT_DIR)  (load address $(FLASH_ADDR))"
+	@echo "Current PROJECT_DIR: $(PROJECT_DIR)  (layout $(LAYOUT), load address $(FLASH_ADDR))"
+	@echo "Output:              $(TARGET).elf / .bin / .hex / .map"
 	@echo "Linked modules:      $(DEPS)"
 	@echo
 	@echo "Build:"
 	@echo "  build             Build the current PROJECT_DIR (same as 'make all' / 'make run')"
-	@echo "  clean             Remove build artifacts of the current PROJECT_DIR"
-	@echo "  debug-build       Clean + build with DEBUG=1, copy ELF/BIN to build_out/"
+	@echo "  clean             Remove build/ output of the current PROJECT_DIR"
+	@echo "  clean-all         Remove the whole build/ folder"
+	@echo "  debug-build       Build with DEBUG=1, copy ELF/BIN to $(BUILD_OUT)/ for VS Code"
 	@echo "Flash over SWD (ST-LINK cable):"
 	@echo "  flash             Build and flash PROJECT_DIR with FLASH_TOOL (cubeprog/openocd/stlink)"
 	@echo "  flash_cubeprog    Flash with STM32_Programmer_CLI"
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
-	@echo "  debug             debug-build, then flash build_out/main.bin for VS Code debugging"
+	@echo "  debug             debug-build, then flash $(BUILD_OUT)/active.bin for VS Code debugging"
 	@echo
 	@echo "Upload through Projects/Bootloader (flash it once first: make flash PROJECT_DIR=Projects/Bootloader):"
 	@echo "  bl-upload         Build + upload $(or $(APP),$(BL_APP_DIR)) to the active slot 0x08010000"
@@ -431,7 +490,7 @@ help:
 	@echo "      PORT=<port>   force a port (COM4, /dev/ttyACM0); DEFAULT_PORT=$(DEFAULT_PORT) is the UART fallback"
 	@echo "      USBIPD=1      WSL2 with the board's USB devices attached through usbipd"
 	@echo "    e.g. make bl-upload LINK=usb"
-	@echo "         make bl-upload LINK=uart PORT=COM4 APP=Projects/Root_of_Trust/main.bin"
+	@echo "         make bl-upload LINK=uart PORT=COM4 APP=build/Projects/Root_of_Trust/Root_of_Trust.bin"
 	@echo "  Details: Projects/Bootloader/README.md"
 	@echo
 	@echo "Active-slot apps (PROJECT_DIR = Projects/App_Demo | Root_of_Trust | Secure_FW_Update):"
@@ -462,28 +521,28 @@ endif
 	@echo
 	@echo "To build immediately, run: make build"
 
-# GCC output mirror — keeps a project-independent copy so VS Code cortex-debug
-# launch config always finds build_out/main.elf regardless of PROJECT_DIR.
-BUILD_OUT := build_out
+# Project-independent copy of the debug build, so the VS Code cortex-debug
+# launch config always finds build/debug/active.elf whatever PROJECT_DIR is.
+BUILD_OUT    := $(BUILD_ROOT)/debug
+DEBUG_TARGET := $(BUILD_ROOT)/debug/$(PROJECT_DIR)/$(MODULE)
 
 .PHONY: debug-build debug
 
-# debug-build: compile with debug flags, copy ELF to build_out/.
+# debug-build: build with DEBUG=1 (own folder build/debug/<PROJECT_DIR>, so
+# -Og objects never mix with the -O2 ones), copy ELF/BIN to build/debug/active.*.
 # Does NOT flash — cortex-debug's GDB 'load' command flashes via OpenOCD
 # so that GDB's breakpoint table stays in sync with the target.
 
 debug-build:
-	@$(MAKE) clean
-	@$(MAKE) build DEBUG=1
-	$(PYTHON) -c "import os; os.makedirs('$(BUILD_OUT)', exist_ok=True)"
-	$(PYTHON) -c "import shutil; shutil.copy('$(TARGET).elf', '$(BUILD_OUT)/main.elf'); shutil.copy('$(TARGET).bin', '$(BUILD_OUT)/main.bin')"
-	@echo --- Debug build ready: $(BUILD_OUT)/main.elf ---
+	@$(MAKE) --no-print-directory build DEBUG=1
+	$(PYTHON) -c "import shutil; shutil.copy('$(DEBUG_TARGET).elf', '$(BUILD_OUT)/active.elf'); shutil.copy('$(DEBUG_TARGET).bin', '$(BUILD_OUT)/active.bin')"
+	@echo --- Debug build ready: $(BUILD_OUT)/active.elf  [$(PROJECT_DIR)] ---
 
 # debug: standalone build + flash (without VS Code debugger)
 debug: debug-build
-	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/main.bin" $(FLASH_ADDR) -v -hardRst
+	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/active.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
-	@echo "--- GCC build + flash complete: $(BUILD_OUT)/main.elf ---"
+	@echo "--- GCC build + flash complete: $(BUILD_OUT)/active.elf ---"
 	@echo "Press F5 in VS Code [select Cortex Debug: ST-LINK] to start debugging."
 
 # gen-debug-config: writes board-specific stm32.* keys into .vscode/settings.json

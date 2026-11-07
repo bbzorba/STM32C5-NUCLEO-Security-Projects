@@ -70,7 +70,7 @@ make bl-upload LINK=auto          # default: USB if the bootloader's USB port al
 ```sh
 make bl-upload                                        # Projects/App_Demo (built first)
 make bl-upload PROJECT_DIR=Projects/Root_of_Trust     # build + upload another app
-make bl-upload APP=Projects/App_Demo/main.bin         # upload a ready binary, no build
+make bl-upload APP=build/Projects/App_Demo/App_Demo.bin   # upload a ready binary, no build
 make bl-upload APP=/path/to/my_app.bin LINK=usb       # any .bin linked at 0x08010000
 ```
 
@@ -100,8 +100,8 @@ Use this when USB0 is not connected to this PC, or to control the timing yoursel
 2. Run the tool without `--reset`:
 
 ```sh
-python3 tools/bl_upload.py Projects/App_Demo/main.bin --link usb
-python3 tools/bl_upload.py Projects/App_Demo/main.bin --link uart --port COM4
+python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link usb
+python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link uart --port COM4
 ```
 
 ### `tools/bl_upload.py` options
@@ -208,7 +208,7 @@ sudo apt install python3-serial     # pyserial
 ```sh
 make bl-upload LINK=usb USBIPD=1                 # build + upload Projects/App_Demo over USB
 make bl-upload LINK=usb USBIPD=1 APP=x.bin       # a ready binary
-python3 tools/bl_upload.py Projects/App_Demo/main.bin --link usb --wsl-usbipd   # without USB0: press RESET
+python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link usb --wsl-usbipd   # without USB0: press RESET
 ```
 
 | Check | Expected while the bootloader runs |

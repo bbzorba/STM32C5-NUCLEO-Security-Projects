@@ -1,0 +1,5 @@
+# Build output (make build / debug-build): build/<PROJECT_DIR>/ and build/debug/
+/build/
+
+# Python caches (tools/)
+__pycache__/

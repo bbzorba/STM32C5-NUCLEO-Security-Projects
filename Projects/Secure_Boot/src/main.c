@@ -22,9 +22,9 @@ static const uint8_t TRUSTED_PUB_Y[32] = {
 };
 
 /*
- * Pre-computed SHA-256 of Projects/App_Demo/main.bin (5280 bytes).
+ * Pre-computed SHA-256 of the App_Demo image (5280 bytes, build/Projects/App_Demo/App_Demo.bin).
  * Generated OFFLINE with Python before flashing:
- *   hashlib.sha256(open("Projects/App_Demo/main.bin","rb").read()).hexdigest()
+ *   hashlib.sha256(open("build/Projects/App_Demo/App_Demo.bin","rb").read()).hexdigest()
  *   => 3a3580e4918be501641c6da69712fd6499b4c0e748b76251ac64e70a2c4c107e
  *
  * This constant is NEVER computed at runtime.  It is embedded in the bootloader
@@ -38,7 +38,7 @@ static const uint8_t APP_SIG_R[32] = {
     0xacU, 0x64U, 0xe7U, 0x0aU, 0x2cU, 0x4cU, 0x10U, 0x7eU
 };
 static const uint8_t APP_SIG_S[32] = { 0x01U }; /* stub: sig_s not used by verifier */
-#define APP_DEMO_SIZE   5280U   /* exact byte count of Projects/App_Demo/main.bin */
+#define APP_DEMO_SIZE   5280U   /* exact byte count of App_Demo.bin */
 
 /*
  * Simulation test vector — a small in-memory image used when App_Demo is not

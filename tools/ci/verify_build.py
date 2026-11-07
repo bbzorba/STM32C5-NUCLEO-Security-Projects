@@ -2,17 +2,20 @@
 """
 Check one module's build output against the STM32C562RE memory map.
 
-  python3 tools/ci/verify_build.py <build dir> <module dir> <FLASH_ADDR> [--manifest FILE]
+  python3 tools/ci/verify_build.py <image.elf> <FLASH_ADDR> [--name NAME] [--manifest FILE]
 
-<build dir> holds main.elf + main.bin, <module dir> is e.g. Projects/App_Demo
-(its linker.ld is read), FLASH_ADDR is what `make print-FLASH_ADDR` reports.
+<image>.bin and <image>.map must sit next to the ELF (make build writes all
+three to build/<PROJECT_DIR>/). FLASH_ADDR is what `make print-FLASH_ADDR`
+reports. The FLASH region is read from the map file's "Memory Configuration",
+i.e. as the linker resolved it from linker/<layout>.ld + memory_map.ld.
 
 Checks:
-  1. linker.ld FLASH ORIGIN == FLASH_ADDR    (make flash writes where it was linked)
-  2. lowest flash LOAD segment == FLASH_ADDR (ELF matches the linker script)
-  3. main.bin == flash image of the ELF       (objcopy output is complete)
-  4. size <= linker FLASH LENGTH and <= the 512 KB chip
-  5. vector table: initial MSP in SRAM, Thumb reset vector inside the image
+  1. FLASH region ORIGIN == FLASH_ADDR        (make flash writes where it was linked)
+  2. FLASH region lies inside the 512 KB chip
+  3. lowest flash LOAD segment == FLASH_ADDR  (vector table at the region start)
+  4. .bin == flash image of the ELF           (objcopy output is complete)
+  5. size <= FLASH region LENGTH
+  6. vector table: initial MSP in SRAM, Thumb reset vector inside the image
 
 Prints a report, appends a JSON line to --manifest and a row to
 $GITHUB_STEP_SUMMARY when set. Exit code 1 on any failed check.
@@ -39,22 +42,13 @@ ACTIVE_SLOT_SIZE = 176 * 1024
 PT_LOAD          = 1
 
 
-def parse_size(text: str) -> int:
-    m = re.fullmatch(r"\s*(0x[0-9a-fA-F]+|\d+)\s*([KkMm]?)\s*", text)
+def map_flash_region(map_file: Path) -> tuple[int, int]:
+    """ORIGIN and LENGTH of the FLASH region from the map's "Memory Configuration"."""
+    m = re.search(r"^Memory Configuration\s*$.*?^FLASH\s+(0x[0-9a-fA-F]+)\s+(0x[0-9a-fA-F]+)",
+                  map_file.read_text(errors="replace"), flags=re.M | re.S)
     if not m:
-        raise ValueError(f"cannot parse size '{text}'")
-    value = int(m.group(1), 0)
-    return value * {"": 1, "k": 1024, "m": 1024 * 1024}[m.group(2).lower()]
-
-
-def linker_flash_region(linker: Path) -> tuple[int, int]:
-    """ORIGIN and LENGTH of the FLASH region in a GNU ld script."""
-    text = re.sub(r"/\*.*?\*/", "", linker.read_text(), flags=re.S)
-    m = re.search(r"^\s*FLASH\s*\([^)]*\)\s*:\s*ORIGIN\s*=\s*([^,]+),\s*LENGTH\s*=\s*([^\s;]+)",
-                  text, flags=re.M)
-    if not m:
-        raise ValueError(f"{linker}: no FLASH region found")
-    return int(m.group(1).strip(), 0), parse_size(m.group(2))
+        raise ValueError(f"{map_file}: no FLASH region in 'Memory Configuration'")
+    return int(m.group(1), 16), int(m.group(2), 16)
 
 
 def flash_segments(elf: bytes) -> list[tuple[int, int, int]]:
@@ -75,17 +69,17 @@ def flash_segments(elf: bytes) -> list[tuple[int, int, int]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
-    ap.add_argument("build_dir", type=Path)
-    ap.add_argument("module_dir", type=Path)
+    ap.add_argument("elf", type=Path)
     ap.add_argument("flash_addr", type=lambda s: int(s, 0))
+    ap.add_argument("--name", help="module name for the report (default: ELF file name)")
     ap.add_argument("--manifest", type=Path)
     args = ap.parse_args()
 
-    module = args.module_dir.as_posix().rstrip("/")
-    elf = (args.build_dir / "main.elf").read_bytes()
-    binary = (args.build_dir / "main.bin").read_bytes()
-    origin, length = linker_flash_region(args.module_dir / "linker.ld")
-    budget = min(length, CHIP_FLASH_START + CHIP_FLASH_SIZE - origin)
+    module = args.name or args.elf.stem
+    elf = args.elf.read_bytes()
+    binary = args.elf.with_suffix(".bin").read_bytes()
+    origin, length = map_flash_region(args.elf.with_suffix(".map"))
+    chip_end = CHIP_FLASH_START + CHIP_FLASH_SIZE
 
     failures: list[str] = []
 
@@ -96,7 +90,10 @@ def main() -> int:
 
     print(f"=== {module}  (FLASH_ADDR 0x{args.flash_addr:08X}) ===")
     check(origin == args.flash_addr,
-          f"linker.ld FLASH ORIGIN 0x{origin:08X} == FLASH_ADDR")
+          f"FLASH region ORIGIN 0x{origin:08X} == FLASH_ADDR")
+    check(CHIP_FLASH_START <= origin and origin + length <= chip_end,
+          f"FLASH region 0x{origin:08X} + {length // 1024} KB inside the "
+          f"{CHIP_FLASH_SIZE // 1024} KB chip")
 
     segs = flash_segments(elf)
     check(bool(segs), "ELF has LOAD segments in flash")
@@ -106,11 +103,9 @@ def main() -> int:
         for addr, off, size in segs:
             image[addr - base:addr - base + size] = elf[off:off + size]
         check(base == args.flash_addr, f"ELF load address 0x{base:08X} == FLASH_ADDR")
-        check(bytes(image) == binary, f"main.bin matches the ELF flash image ({len(image):,} bytes)")
+        check(bytes(image) == binary, f".bin matches the ELF flash image ({len(image):,} bytes)")
 
-    check(len(binary) <= budget,
-          f"size {len(binary):,} B <= budget {budget:,} B "
-          f"(linker {length // 1024} KB, chip {CHIP_FLASH_SIZE // 1024} KB)")
+    check(len(binary) <= length, f"size {len(binary):,} B <= FLASH region {length:,} B")
 
     if len(binary) >= 8:
         msp, reset = struct.unpack_from("<II", binary, 0)
@@ -124,7 +119,7 @@ def main() -> int:
         "module": module,
         "flash_addr": f"0x{args.flash_addr:08X}",
         "bin_size": len(binary),
-        "budget": budget,
+        "budget": length,
         "sha256": hashlib.sha256(binary).hexdigest(),
         "ok": not failures,
     }
@@ -142,7 +137,7 @@ def main() -> int:
     if summary:
         with open(summary, "a") as f:
             f.write(f"| {'✅' if not failures else '❌'} | `{module}` | `{record['flash_addr']}` "
-                    f"| {len(binary):,} | {100 * len(binary) / budget:.1f} % "
+                    f"| {len(binary):,} | {100 * len(binary) / length:.1f} % "
                     f"| {record.get('slot_crc32', '')} |\n")
 
     print(f"  -> {'OK' if not failures else f'{len(failures)} check(s) failed'}\n")

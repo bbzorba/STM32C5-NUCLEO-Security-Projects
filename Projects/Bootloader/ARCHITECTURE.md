@@ -71,7 +71,9 @@ sees a plug-in after every reset and an unplug when the application starts.
 | `0x08010000` | 8–29 (176 KB) | Active slot — the application, linked at this address |
 | `0x0803C000` | 30 | CRC-32 tag of the active slot (`0xFFFFFFFF` = not sealed) |
 
-The same map is used by `Projects/Secure_Boot` and `tools/seal.py`. Apps for this slot:
+The addresses are defined once for the linker in `linker/memory_map.ld`. The bootloader links with
+`LAYOUT := bootloader` (`linker/bootloader.ld`), its applications with `LAYOUT := app_slot`
+(`linker/app_slot.ld`). The same map is used by `Projects/Secure_Boot` and `tools/seal.py`. Apps for this slot:
 `Projects/App_Demo`, `Projects/Root_of_Trust`, `Projects/Secure_FW_Update`.
 
 ## 4. Boot decision

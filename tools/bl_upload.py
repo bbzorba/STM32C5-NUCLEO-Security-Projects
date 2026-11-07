@@ -18,7 +18,7 @@ What it does:
   6. Prints the bootloader / application output that follows.
 
 Usage:
-  python3 tools/bl_upload.py Projects/App_Demo/main.bin [--port PORT] [--reset]
+  python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin [--port PORT] [--reset]
   make bl-upload                       (builds + uploads Projects/App_Demo)
   make bl-upload LINK=usb              (force the USB-C link)
   make bl-upload APP=path/to/app.bin   (uploads a ready binary)

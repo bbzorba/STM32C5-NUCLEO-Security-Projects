@@ -16,7 +16,7 @@ What it does:
      the application.
 
 Usage:
-  python tools/seal.py Projects/App_Demo/main.bin
+  python tools/seal.py build/Projects/App_Demo/App_Demo.bin
 """
 
 from __future__ import annotations
