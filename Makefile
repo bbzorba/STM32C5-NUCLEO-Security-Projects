@@ -13,10 +13,10 @@
 #PROJECT_DIR = Projects/ECDSA
 #PROJECT_DIR = Projects/FLASH
 #PROJECT_DIR = Drivers/SysTick
-#PROJECT_DIR = Projects/App_Demo
+PROJECT_DIR = Projects/App_Demo
 #PROJECT_DIR = Projects/RSA
 #PROJECT_DIR = Projects/Root_of_Trust
-PROJECT_DIR = Projects/Bootloader
+#PROJECT_DIR = Projects/Bootloader
 
 #TBD
 #PROJECT_DIR = Projects/Secure_Boot
@@ -211,7 +211,7 @@ OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 #                 "STMicroelectronics STLink Virtual COM Port" in Device Manager.
 PORT ?=
 ifneq ($(OS)$(_WSL),)
-DEFAULT_PORT ?= COM12
+DEFAULT_PORT ?= COM13
 else
 DEFAULT_PORT ?= /dev/ttyACM0
 endif
