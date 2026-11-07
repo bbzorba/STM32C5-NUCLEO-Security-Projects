@@ -123,14 +123,14 @@ def main() -> None:
         padded_path.unlink(missing_ok=True)
         tag_path.unlink(missing_ok=True)
 
-    print(f"\n=== SEALED ===")
+    print("\n=== SEALED ===")
     print(f"  Active slot  0x{ACTIVE_ADDR:08X}  CRC tag: 0x{crc_value:08X}")
-    print(f"  Board reset — bootloader will now verify and jump to your application.")
-    print(f"\nExpected bootloader output:")
+    print("  Board reset — bootloader will now verify and jump to your application.")
+    print("\nExpected bootloader output:")
     print(f"  CRC tag @ 0x0803C000 : {crc_value:08X}")
     print(f"  Computed CRC         : {crc_value:08X}")
-    print(f"  CRC  : OK")
-    print(f"  MSP  : valid — jumping to application")
+    print("  CRC  : OK")
+    print("  MSP  : valid — jumping to application")
 
 
 if __name__ == "__main__":

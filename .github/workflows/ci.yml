@@ -1,0 +1,190 @@
+# CI for the STM32C5 NUCLEO projects — runs on GitHub-hosted runners only.
+#
+#   lint ──┬── build (one job per module) ── verify + firmware bundle
+#          └── host-tools tests (Python 3.8 + 3.12)
+#
+# Flashing and bootloader uploads need the board, so they stay manual tests.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Same compiler as the local builds (Arm GNU Toolchain, arm-none-eabi)
+  ARM_GCC_VERSION: 14.3.rel1
+  ARM_GCC_SHA256: 8f6903f8ceb084d9227b9ef991490413014d991874a1e34074443c2a72b14dbd
+  ARM_GCC_TARBALL: arm-gnu-toolchain.tar.xz
+
+jobs:
+  lint:
+    name: Lint (cppcheck, ruff)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install linters
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cppcheck
+          pipx install ruff==0.8.6
+      - name: Lint
+        run: tools/ci/lint.sh
+
+  modules:
+    name: List modules
+    runs-on: ubuntu-24.04
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        # Every folder with a module.mk is a buildable PROJECT_DIR
+        run: |
+          list=$(for f in Drivers/*/module.mk Projects/*/module.mk; do dirname "$f"; done | jq -R . | jq -sc .)
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "$list" | jq .
+
+  toolchain:
+    name: Fetch toolchain
+    runs-on: ubuntu-24.04
+    steps:
+      - id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ARM_GCC_TARBALL }}
+          key: arm-gnu-toolchain-${{ env.ARM_GCC_VERSION }}-x86_64-${{ env.ARM_GCC_SHA256 }}
+      - name: Download Arm GNU Toolchain ${{ env.ARM_GCC_VERSION }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 3 -o "$ARM_GCC_TARBALL" \
+            "https://developer.arm.com/-/media/Files/downloads/gnu/$ARM_GCC_VERSION/binrel/arm-gnu-toolchain-$ARM_GCC_VERSION-x86_64-arm-none-eabi.tar.xz"
+          echo "$ARM_GCC_SHA256  $ARM_GCC_TARBALL" | sha256sum -c -
+
+  build:
+    name: Build ${{ matrix.module }}
+    needs: [lint, modules, toolchain]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.modules.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true          # TinyUSB, stm32c5xx-dfp, CMSIS_6
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.ARM_GCC_TARBALL }}
+          key: arm-gnu-toolchain-${{ env.ARM_GCC_VERSION }}-x86_64-${{ env.ARM_GCC_SHA256 }}
+          fail-on-cache-miss: true
+      - name: Install toolchain
+        run: |
+          echo "$ARM_GCC_SHA256  $ARM_GCC_TARBALL" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/arm-gcc"
+          tar -xJf "$ARM_GCC_TARBALL" -C "$RUNNER_TEMP/arm-gcc" --strip-components=1 \
+            --exclude='*/share/doc' --exclude='*/share/info' --exclude='*/share/man'
+          echo "$RUNNER_TEMP/arm-gcc/bin" >> "$GITHUB_PATH"
+      - name: Build
+        env:
+          MODULE: ${{ matrix.module }}
+        run: |
+          arm-none-eabi-gcc --version | head -1
+          make build PROJECT_DIR="$MODULE" 2>&1 | tee build.log
+      - name: No compiler warnings
+        run: |
+          # Linker notes from newlib's syscall stubs are not compiler warnings
+          if grep -E '^[^ :]+\.(c|h|cpp|s|S):[0-9]+:[0-9]+: warning' build.log | sort -u > warnings.txt \
+             && [ -s warnings.txt ]; then
+            sed -E 's/^([^:]+):([0-9]+):([0-9]+): warning: (.*)$/::error file=\1,line=\2,col=\3::\4/' warnings.txt
+            exit 1
+          fi
+          echo "no compiler warnings"
+      - name: Collect outputs
+        id: out
+        env:
+          MODULE: ${{ matrix.module }}
+        run: |
+          mkdir -p out
+          cp "$MODULE"/main.elf "$MODULE"/main.bin "$MODULE"/main.hex "$MODULE"/main.map build.log out/
+          echo "$MODULE" > out/module.txt
+          make -s print-FLASH_ADDR PROJECT_DIR="$MODULE" > out/flash_addr.txt
+          arm-none-eabi-size "$MODULE"/main.elf | tee out/size.txt
+          echo "name=fw-${MODULE//\//-}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.out.outputs.name }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 14
+
+  host-tools:
+    name: Host tools (Python ${{ matrix.python }})
+    needs: lint
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.12"]     # 3.8: oldest supported (Ubuntu 22.04 WSL setups)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install pyserial==3.5
+      - name: bl_upload.py against a simulated bootloader
+        run: python -m unittest discover -s tools/tests -v
+
+  verify:
+    name: Verify + firmware bundle
+    needs: [build, host-tools]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fw-*
+          path: dist
+      - name: Verify every image
+        run: |
+          {
+            echo "### Firmware images"
+            echo
+            echo "| | Module | Load address | Size (B) | Of budget | Slot CRC-32 |"
+            echo "|---|---|---|---:|---:|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          for d in dist/fw-*/; do
+            python3 tools/ci/verify_build.py "$d" "$(cat "$d/module.txt")" "$(cat "$d/flash_addr.txt")" \
+              --manifest manifest.jsonl || status=1
+          done
+          exit $status
+      - name: Assemble bundle
+        run: |
+          mkdir -p firmware
+          for d in dist/fw-*/; do
+            m=$(cat "$d/module.txt")
+            mkdir -p "firmware/$m"
+            cp "$d"/main.elf "$d"/main.bin "$d"/main.hex "$d"/main.map "$d"/size.txt "firmware/$m/"
+          done
+          jq -s --arg sha "$GITHUB_SHA" --arg gcc "$ARM_GCC_VERSION" \
+            '{commit: $sha, toolchain: ("Arm GNU Toolchain " + $gcc), images: .}' \
+            manifest.jsonl > firmware/manifest.json
+          cat firmware/manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.sha }}
+          path: firmware/
+          if-no-files-found: error

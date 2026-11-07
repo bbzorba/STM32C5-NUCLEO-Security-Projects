@@ -209,10 +209,11 @@ and attach only the **USB-C user port** to WSL:
 ```powershell
 # Windows, PowerShell as administrator — once
 winget install usbipd
-usbipd list                               # find the BUSID of "USB Serial Device" CAFE:B0C5
-                                          # (hold B1 + RESET so the bootloader enumerates)
-usbipd bind --busid <BUSID>               # share it (once per device)
-usbipd attach --wsl --busid <BUSID> --auto-attach   # keep running: re-attaches after every reset
+usbipd policy add --effect Allow --operation AutoBind --hardware-id CAFE:B0C5   # share it, even while unplugged
+
+# Windows, normal PowerShell — every session, keep it running
+usbipd list                               # BUSID of CAFE:B0C5 (hold B1 + RESET so it enumerates)
+usbipd attach --wsl --busid <BUSID> --auto-attach --unplugged   # re-attaches after every reset
 ```
 
 ```sh
@@ -223,6 +224,30 @@ make bl-upload LINK=usb USBIPD=1
 ```
 
 Without usbipd, `bl_upload.py` re-runs itself with the Windows Python and uses the COM ports directly.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on GitHub-hosted runners for every push to
+`main`, every pull request, and on demand (*Actions → CI → Run workflow*). Nothing runs on a local PC.
+
+| Stage | What it checks |
+|---|---|
+| **Lint** | cppcheck on all module sources, ruff on `tools/` (`tools/ci/lint.sh`) |
+| **Build** | Every folder with a `module.mk`, one job each, Arm GNU Toolchain 14.3.rel1 — any compiler warning fails |
+| **Host tools** | `tools/bl_upload.py` against a simulated bootloader, Python 3.8 and 3.12 (`tools/tests/`) |
+| **Verify** | Load address = linker script = `FLASH_ADDR`, `.bin` = ELF, size fits the slot and the 512 KB chip, vector table (`tools/ci/verify_build.py`) |
+
+Artifacts on each run: `fw-<module>` (ELF, BIN, HEX, map, build log) and `firmware-<commit>`, all images
+plus a `manifest.json` (sizes, SHA-256, bootloader slot CRC-32). Flashing and bootloader uploads need the
+board and stay manual tests.
+
+Run the same checks locally:
+
+```sh
+tools/ci/lint.sh                                       # needs cppcheck + ruff
+python3 -m unittest discover -s tools/tests -v         # needs pyserial
+python3 tools/ci/verify_build.py Projects/App_Demo Projects/App_Demo 0x08010000
+```
 
 ## Debugging in VS Code
 

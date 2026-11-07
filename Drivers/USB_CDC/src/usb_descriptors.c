@@ -93,7 +93,7 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
         if (index >= sizeof(string_desc) / sizeof(string_desc[0]) || string_desc[index] == NULL)
             return NULL;
         const char *str = string_desc[index];
-        while (str[len] != '\0' && len < 32U) {
+        while (len < 32U && str[len] != '\0') {
             desc_str[1 + len] = (uint16_t)str[len];
             len++;
         }
