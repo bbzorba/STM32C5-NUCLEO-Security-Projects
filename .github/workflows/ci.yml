@@ -34,7 +34,7 @@ jobs:
     name: Lint (cppcheck, ruff)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install linters
         run: |
           sudo apt-get update -qq
@@ -49,7 +49,7 @@ jobs:
     outputs:
       list: ${{ steps.list.outputs.list }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: list
         # Every folder with a module.mk is a buildable PROJECT_DIR
         run: |
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.ARM_GCC_TARBALL }}
           key: arm-gnu-toolchain-${{ env.ARM_GCC_VERSION }}-x86_64-${{ env.ARM_GCC_SHA256 }}
@@ -82,10 +82,10 @@ jobs:
       matrix:
         module: ${{ fromJSON(needs.modules.outputs.list) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true          # TinyUSB, stm32c5xx-dfp, CMSIS_6
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: ${{ env.ARM_GCC_TARBALL }}
           key: arm-gnu-toolchain-${{ env.ARM_GCC_VERSION }}-x86_64-${{ env.ARM_GCC_SHA256 }}
@@ -123,7 +123,7 @@ jobs:
           make -s print-FLASH_ADDR PROJECT_DIR="$MODULE" > out/flash_addr.txt
           arm-none-eabi-size "$MODULE"/main.elf | tee out/size.txt
           echo "name=fw-${MODULE//\//-}" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.out.outputs.name }}
           path: out/
@@ -139,8 +139,8 @@ jobs:
       matrix:
         python: ["3.8", "3.12"]     # 3.8: oldest supported (Ubuntu 22.04 WSL setups)
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install pyserial==3.5
@@ -152,8 +152,8 @@ jobs:
     needs: [build, host-tools]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: fw-*
           path: dist
@@ -183,7 +183,7 @@ jobs:
             '{commit: $sha, toolchain: ("Arm GNU Toolchain " + $gcc), images: .}' \
             manifest.jsonl > firmware/manifest.json
           cat firmware/manifest.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: firmware-${{ github.sha }}
           path: firmware/
