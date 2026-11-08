@@ -243,6 +243,8 @@ OPENOCD_EXTRA?=-c "transport select dapdirect_swd" -c "set CPUTAPID 0x6ba02477"
 #                 Set it to your board's port — see `make com-list`, or the
 #                 "STMicroelectronics STLink Virtual COM Port" in Device Manager.
 PORT ?=
+# make is case-sensitive: also accept the lower-case spelling (port=COM4)
+PORT := $(or $(PORT),$(port))
 ifneq ($(OS)$(_WSL),)
 DEFAULT_PORT ?= COM13
 else
@@ -402,9 +404,11 @@ flash_stlink: build
 #       else DEFAULT_PORT (UART).
 # WSL : USBIPD=1 when the board's USB devices are attached to WSL with usbipd.
 BL_APP_DIR ?= $(if $(filter 0x08010000,$(FLASH_ADDR)),$(PROJECT_DIR),Projects/App_Demo)
-APP ?=
-LINK ?= auto
-USBIPD ?= 0
+# make is case-sensitive: link=uart would set another variable and be ignored, so
+# the lower-case spellings are accepted too (LINK= wins when both are given)
+APP    := $(or $(APP),$(app))
+LINK   := $(or $(LINK),$(link),auto)
+USBIPD := $(or $(USBIPD),$(usbipd),0)
 .PHONY: bl-upload
 bl-upload:
 ifeq ($(strip $(APP)),)

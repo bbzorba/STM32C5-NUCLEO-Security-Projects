@@ -65,6 +65,17 @@ make bl-upload LINK=usb           # USB1: USB-C user port
 make bl-upload LINK=auto          # default: USB if the bootloader's or the app's USB port exists, else UART
 ```
 
+- **Upper case.** make variables are case-sensitive; `link=uart` (and `port=`, `app=`, `usbipd=`) is
+  accepted too. Older Makefiles ignored the lower-case spelling, so `LINK` stayed `auto` and picked USB.
+- **No fallback between links.** A selected link that is not connected to this PC is an error:
+
+  ```text
+  LINK=uart, no ST-LINK:  ERROR: UART link selected, but this PC has no ST-LINK virtual COM port —
+                          is USB0 (the ST-LINK cable) connected to this PC? …
+  LINK=usb, no USB1:      ERROR: USB link selected, but the bootloader's USB port (CAFE:B0C5) did not
+                          appear within 10 s — is USB1 (the USB-C user port) connected to this PC? …
+  ```
+
 ### Upload over USB1 while the application runs (no USB0, no button)
 
 The application owns USB1 while it runs, so only the application itself can hand over to the
@@ -122,7 +133,7 @@ make bl-upload APP=/path/to/my_app.bin LINK=usb       # any .bin linked at 0x080
 ### Pick the port
 
 Order: `PORT` if set → auto-detected port (bootloader USB port or ST-LINK VCP) → `DEFAULT_PORT`
-(UART only).
+(UART only, and only if that port exists on this PC).
 
 ```sh
 make com-list                                 # list serial ports (Windows / WSL)
@@ -156,6 +167,7 @@ python3 tools/bl_upload.py <app.bin> [--link auto|uart|usb] [--port PORT]
 | Option | Meaning |
 |---|---|
 | `--link` | `uart`, `usb` or `auto` (default) |
+| `--enter` | Only put the board into the bootloader over USB1 (1200-baud touch), no binary — `make bl-enter` |
 | `--port` | Force a serial port |
 | `--fallback-port` | UART port used when no ST-LINK is detected (`make` passes `DEFAULT_PORT`) |
 | `--reset` | Reset the board over SWD first (STM32_Programmer_CLI, else `st-flash`, else asks you to press RESET) |
@@ -299,6 +311,9 @@ USB identity (VID/PID, strings): `Drivers/USB_CDC/inc/usb_cdc.h`.
 | `bootloader READY not seen` | Is `Projects/Bootloader` flashed? Hold B1 + RESET and retry. Right port (`make com-list`)? |
 | USB port `CAFE:B0C5` never appears | Cable in USB1 (user port, not ST-LINK)? Board powered? WSL: is `usbipd attach --auto-attach` running? |
 | `LINK=auto` uses UART although USB1 is connected | The running application has no USB port (only App_Demo has one) — use `LINK=usb` and press RESET |
+| `make bl-upload link=uart` uploads over USB | Makefile older than the lower-case support: write `LINK=uart` |
+| `UART link selected, but this PC has no ST-LINK …` | USB0 is not connected to this PC — connect it, or use `LINK=usb` |
+| `USB link selected, but … did not appear within 10 s` | USB1 is not connected to this PC (or WSL without usbipd attach) — connect it, or use `LINK=uart` |
 | Windows shows the bootloader's COM port only ~1–2 s | A `usbipd attach --auto-attach` (WSL) takes the device — stop it, or upload from WSL with `USBIPD=1` |
 | Windows plays connect / disconnect sounds | Normal: the USB device exists only while the bootloader runs |
 | "Unknown USB Device (Device Descriptor Request Failed)" | Old bootloader firmware — reflash `Projects/Bootloader` |

@@ -9,7 +9,7 @@ For how to *use* it, see [README.md](README.md).
 flowchart LR
     subgraph PC
         TOOL["make bl-upload<br/>tools/bl_upload.py"]
-        PROG["STM32_Programmer_CLI<br/>make flash / SWD reset"]
+        PROG["STM32_Programmer_CLI<br/>make flash / SWD reset<br/>make read-flash"]
     end
 
     subgraph BOARD["NUCLEO-C562RE"]
@@ -22,6 +22,7 @@ flowchart LR
             SWD["SWD port"]
             USBP["USB_DRD_FS<br/>PA11 DM · PA12 DP"]
             CORE["Bootloader @ 0x08000000<br/>Application @ 0x08010000"]
+            BKP["TAMP backup register 0<br/>app → bootloader request"]
         end
         B1["B1 · PC13"]
         LD1["LD1 · PA5"]
@@ -29,12 +30,13 @@ flowchart LR
 
     TOOL -- "USB0 (ST-LINK cable)" --> VCP
     PROG -- "USB0 (ST-LINK cable)" --> DBG
-    TOOL -- "USB1 (USB-C user port)<br/>CDC ACM CAFE:B0C5" --> USBP
+    TOOL -- "USB1 (USB-C user port)<br/>CDC ACM: bootloader CAFE:B0C5<br/>App_Demo CAFE:B0C6" --> USBP
     VCP -- "UART wires on the PCB" --> UART
     DBG -- "SWD wires on the PCB" --> SWD
     UART --- CORE
     USBP --- CORE
     SWD --- CORE
+    CORE --- BKP
     B1 --> CORE
     CORE --> LD1
 ```
@@ -50,9 +52,12 @@ So the "UART" link is USB on the PC side; only the stretch between the ST-LINK c
 STM32 is a real UART. The bootloader cannot tell which PC program sits behind it: it only sees bytes
 on USART2.
 
-**USB1 (USB-C user port)** goes straight to the STM32's USB peripheral. The bootloader runs a TinyUSB
-CDC ACM device there (`Drivers/USB_CDC`). It exists **only while the bootloader runs**, so the PC
-sees a plug-in after every reset and an unplug when the application starts.
+**USB1 (USB-C user port)** goes straight to the STM32's USB peripheral, which belongs to whichever
+program runs. The bootloader runs a TinyUSB CDC ACM device there (`Drivers/USB_CDC`, `CAFE:B0C5`);
+it detaches before jumping, so the PC sees an unplug. App_Demo then enumerates its own port
+(`CAFE:B0C6`). A **1200-baud touch** on that port makes the app write a request into the TAMP backup
+register and reset — the bootloader finds it and stays (section 7). This is how a board reachable
+only through USB1 is updated while an application runs.
 
 ## 2. Software layers
 
@@ -61,7 +66,9 @@ sees a plug-in after every reset and an unplug when the application starts.
 | Entry + boot decision | `src/main.c` | Banner, B1 check, update window loop, jump |
 | Bootloader core | `src/bootloader.c`, `inc/bootloader.h` | Wait for a request, receive + program the image, verify the slot, jump |
 | Drivers | `UART`, `USB_CDC` (TinyUSB), `FLASH`, `CRC`, `GPIO`, `NVIC` | Hardware access |
-| Host tool | `tools/bl_upload.py` | Finds the port, resets the board, runs the protocol |
+| App → bootloader request | `inc/bl_request.h`, `src/bl_request.c` | Linked into apps (`DEPS += Bootloader`): store request, reset |
+| Image name | `linker/image_id.c` | `IMGID:<module>` after the vector table of every image |
+| Host tools | `tools/bl_upload.py`, `tools/read_flash.py` | Upload: pick the link, touch / reset, run the protocol. `make read-flash`: name the images in flash over SWD |
 
 ## 3. Memory map
 
@@ -121,6 +128,11 @@ flowchart TD
 ¹ USB1 alone does not power the board with a USB-C ↔ USB-C cable; use USB-A ↔ USB-C or another supply.
 ² Only an application with its own USB port (App_Demo, `CAFE:B0C6`) can be restarted over USB1 —
 while it runs, the application, not the bootloader, owns the USB peripheral.
+
+**Link selection** (`tools/bl_upload.py`): `LINK=uart` uses the ST-LINK virtual COM port, `LINK=usb`
+the board's USB port. A selected link that is not connected to this PC is an error — there is no
+fallback from one link to the other. Only `LINK=auto` chooses: USB when the bootloader's or the
+app's USB port is present, else UART.
 
 ## 6. Update protocol (same bytes on both links)
 

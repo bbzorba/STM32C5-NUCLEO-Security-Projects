@@ -85,6 +85,7 @@ BL_USB_VID       = 0xCAFE          # Drivers/USB_CDC/inc/usb_cdc.h
 BL_USB_PID       = 0xB0C5          # USB_CDC_PID: the bootloader
 APP_USB_PID      = 0xB0C6          # USB_CDC_APP_PID: an application (1200-baud touch)
 TOUCH_BAUD       = 1200            # USB_CDC_TOUCH_BAUD
+USB_AFTER_RESET_S = 10.0           # bootloader USB port must appear this soon after an SWD reset
 # ─────────────────────────────────────────────────────────────────────────────
 
 IS_WINDOWS = os.name == "nt"
@@ -144,6 +145,13 @@ def touch_into_bootloader(port: str) -> None:
             ser.dtr = False            # port "closed" at 1200 baud → bootloader request
     except (serial.SerialException, OSError):
         pass                           # the device may vanish while the port closes
+
+
+def port_exists(port: str) -> bool:
+    """True when the port is present on this machine (COMx listed, or the /dev node exists)."""
+    if port.startswith("/dev/"):
+        return os.path.exists(port)
+    return any(p.device.upper() == port.upper() for p in serial.tools.list_ports.comports())
 
 
 def wait_for_port(find, timeout_s: float) -> str | None:
@@ -236,7 +244,7 @@ def rerun_with_windows_python() -> int:
     env["WSLENV"] = ":".join(filter(None, [env.get("WSLENV"), "PYTHONIOENCODING"]
                                   + (["CUBE_PROG"] if cube else [])))
 
-    print("WSL2: ST-LINK serial port is only visible to Windows — "
+    print("WSL2: the board's serial ports are only visible to Windows — "
           "re-running with the Windows Python.\n", flush=True)
     cmd = [py, winpath(os.path.abspath(__file__))] + out
     return subprocess.run(cmd, env=env).returncode
@@ -350,12 +358,15 @@ def main() -> int:
         ports = st_ports()
         if ports:
             port = ports[0]
-        elif args.fallback_port:
+        elif args.fallback_port and port_exists(args.fallback_port):
             port = args.fallback_port
-            print(f"No ST-LINK serial port detected — using the default port {port}")
+            print(f"No ST-LINK serial port detected — trying the default port {port}")
         else:
-            print("ERROR: no ST-LINK serial port found — is the board connected? "
-                  "Otherwise pass --port")
+            print("ERROR: UART link selected, but this PC has no ST-LINK virtual COM port — is "
+                  "USB0 (the ST-LINK cable) connected to this PC?"
+                  + (f" The default port {args.fallback_port} does not exist either."
+                     if args.fallback_port else "")
+                  + " To upload over USB1 use LINK=usb.")
             return 1
 
     # Same CRC as seal.py: CRC-32 over the image padded to the full slot
@@ -365,20 +376,27 @@ def main() -> int:
     # USB: the CDC port only exists while the bootloader runs — reset first,
     # then wait for it to (re-)enumerate
     if link == "usb" and not port:
+        wait_s = args.wait
         if not bl_usb_ports() and app_usb_ports():
             print("\n[0/4] Application is running ...")
             touch_into_bootloader(app_usb_ports()[0])
-        elif args.reset:
-            print("\n[0/4] Resetting board ...")
-            if not reset_board():
-                print("  Press RESET on the board now (hold B1 to stay in the bootloader) ...")
         elif not bl_usb_ports():
-            print("\nWaiting for the bootloader USB port — connect the USB-C user port "
-                  "and reset the board (hold B1 to stay in the bootloader) ...")
-        port = wait_for_port(bl_usb_ports, args.wait)
+            print("\nNo USB port of the board on this PC (bootloader CAFE:B0C5 / application "
+                  "CAFE:B0C6) — the running application may have none.")
+            if args.reset:
+                print("[0/4] Resetting board over SWD so the bootloader's USB port appears ...")
+                if reset_board():
+                    wait_s = min(wait_s, USB_AFTER_RESET_S)   # it enumerates within ~1 s
+                else:
+                    print("  Press RESET on the board now (hold B1 to stay in the bootloader) ...")
+            else:
+                print("Reset the board now (hold B1 to stay in the bootloader) ...")
+        port = wait_for_port(bl_usb_ports, wait_s)
         if not port:
-            raise RuntimeError("bootloader USB CDC port (CAFE:B0C5) did not appear — is the "
-                               "USB-C user connector plugged in? (WSL: usbipd attach --auto-attach)")
+            raise RuntimeError(f"USB link selected, but the bootloader's USB port (CAFE:B0C5) did "
+                               f"not appear within {wait_s:.0f} s — is USB1 (the USB-C user port) "
+                               f"connected to this PC? (WSL: is usbipd attach running?) "
+                               f"To upload over the ST-LINK use LINK=uart.")
         args.reset = False             # already done
 
     print(f"\n=== Bootloader upload: {bin_path.name} ===")

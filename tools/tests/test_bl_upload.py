@@ -131,6 +131,32 @@ class BlUploadTest(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("NACK", proc.stdout)
 
+    def run_tool(self, *args: str):
+        """bl_upload.py on a tiny image; --wsl-usbipd keeps it out of Windows on WSL."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / "app.bin"
+            app.write_bytes(b"\x00" * 64)
+            return subprocess.run([sys.executable, str(TOOL), str(app), "--wsl-usbipd", *args],
+                                  capture_output=True, text=True, timeout=60)
+
+    def test_uart_without_stlink_fails(self):
+        sys.path.insert(0, str(TOOL.parent))
+        import bl_upload
+        if bl_upload.st_ports():
+            self.skipTest("an ST-LINK is connected — the tool would really upload")
+        proc = self.run_tool("--link", "uart", "--fallback-port", "/dev/no-such-port")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("no ST-LINK virtual COM port", proc.stdout)
+
+    def test_usb_without_usb1_fails(self):
+        sys.path.insert(0, str(TOOL.parent))
+        import bl_upload
+        if bl_upload.bl_usb_ports() or bl_upload.app_usb_ports():
+            self.skipTest("the board's USB port is connected — the tool would really upload")
+        proc = self.run_tool("--link", "usb", "--wait", "1")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("did not appear within 1 s", proc.stdout)
+
     def test_rejects_oversized_image(self):
         with tempfile.TemporaryDirectory() as tmp:
             app = Path(tmp) / "big.bin"

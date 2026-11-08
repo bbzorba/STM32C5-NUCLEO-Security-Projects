@@ -195,7 +195,7 @@ Each module's `startup.c` uses `_estack` / `__etext` / `__bss_start__` etc. from
 | `DEBUG` | `0` | Use `1` for debugger-friendly codegen (`make debug` sets it) |
 | `PORT` / `BAUD` | auto / `115200` | Serial port for `make monitor` / `make bl-upload` |
 | `DEFAULT_PORT` | `COM5` / `/dev/ttyACM0` | UART port `make bl-upload` falls back to when no ST-LINK is detected |
-| `LINK` | `auto` | `make bl-upload` link: `usb` (USB-C user port), `uart` (ST-LINK VCP) or `auto` |
+| `LINK` | `auto` | `make bl-upload` link: `usb` (USB-C user port), `uart` (ST-LINK VCP) or `auto` (also `link=`) |
 | `USBIPD` | `0` | `1` = WSL with the board's USB devices attached through usbipd |
 
 ## Flashing
@@ -213,25 +213,32 @@ Full guide with every upload command: [Projects/Bootloader/README.md](Projects/B
 How it works (block diagram, boot decision, protocol): [Projects/Bootloader/ARCHITECTURE.md](Projects/Bootloader/ARCHITECTURE.md).
 
 `Projects/Bootloader` sits at `0x08000000` and boots the application in the active slot
-(`0x08010000`, CRC-32 tag in sector 30). After every reset it waits 5 s (LD1 on) for an update:
+(`0x08010000`, CRC-32 tag in sector 30). After every reset it waits 5 s (LD1 on) for an update —
+10 s once a PC has enumerated its USB port:
 
 | Entry | What happens |
 |---|---|
 | `u` on USART2 (ST-LINK VCP, PA2/PA3) | Update over UART |
 | `u` on USB CDC (USB-C user connector, PA11/PA12) | Update over USB — opening the COM port re-sends `[BL] READY` and adds 3 s |
 | B1 pressed in the window, or held during reset | Stay in the bootloader (LD1 blinks, `[BL] READY` every second) |
+| 1200-baud touch on the application's USB port | App_Demo resets into the bootloader, which stays |
 | Nothing | Verify tag + CRC + vector table, then jump to the application |
 
 ```sh
 make flash PROJECT_DIR=Projects/Bootloader     # once, over SWD
 make bl-upload                                 # build + upload Projects/App_Demo (LINK=auto)
-make bl-upload LINK=usb                        # through the USB-C user connector
-make bl-upload LINK=uart PORT=COM4             # through the ST-LINK virtual COM port
+make bl-upload LINK=usb                        # through the USB-C user connector (USB1)
+make bl-upload LINK=uart PORT=COM4             # through the ST-LINK virtual COM port (USB0)
 make bl-upload APP=path/to/app.bin             # a ready binary linked at 0x08010000
+make bl-enter                                  # only put the board into the bootloader over USB1
+make read-flash                                # name the bootloader + application in flash (USB0)
 ```
 
-The USB device is `C562 Bootloader CDC`, VID:PID `CAFE:B0C5` (TinyUSB test VID — development only).
-It only exists while the bootloader runs: the bootloader detaches USB before jumping to the application.
+`LINK`, `PORT`, `APP` and `USBIPD` may also be written in lower case (`link=uart`). A link that is not
+connected to this PC is an error — `LINK=uart` never falls back to USB, `LINK=usb` never to UART.
+
+The bootloader's USB device is `C562 Bootloader CDC` (`CAFE:B0C5`), App_Demo's is `C562 App CDC`
+(`CAFE:B0C6`) — TinyUSB test VID, development only. Each exists only while its program runs.
 Integrity is a CRC-32 only — there is no authentication (see `Projects/Secure_Boot`).
 
 ### WSL2 + usbipd
@@ -244,6 +251,7 @@ and attach only the **USB-C user port** to WSL:
 # Windows, PowerShell as administrator — once
 winget install usbipd
 usbipd policy add --effect Allow --operation AutoBind --hardware-id CAFE:B0C5   # share it, even while unplugged
+usbipd policy add --effect Allow --operation AutoBind --hardware-id CAFE:B0C6   # App_Demo's port
 
 # Windows, normal PowerShell — every session, keep it running
 usbipd list                               # BUSID of CAFE:B0C5 (hold B1 + RESET so it enumerates)
