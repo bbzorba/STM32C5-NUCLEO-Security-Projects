@@ -409,6 +409,12 @@ ifeq ($(strip $(APP)),)
 endif
 	$(PYTHON) tools/bl_upload.py $(or $(APP),$(call target_of,$(BL_APP_DIR)).bin) --link $(LINK) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) $(if $(filter 1,$(USBIPD)),--wsl-usbipd) --reset
 
+# Put the board into the bootloader over USB1 and leave it waiting (no upload):
+# 1200-baud touch on the running application's USB port (App_Demo, CAFE:B0C6)
+.PHONY: bl-enter
+bl-enter:
+	$(PYTHON) tools/bl_upload.py --enter --link usb $(if $(filter 1,$(USBIPD)),--wsl-usbipd)
+
 # Open a simple serial monitor with PowerShell (Windows or WSL)
 .PHONY: monitor
 monitor:
@@ -491,6 +497,7 @@ help:
 	@echo "      USBIPD=1      WSL2 with the board's USB devices attached through usbipd"
 	@echo "    e.g. make bl-upload LINK=usb"
 	@echo "         make bl-upload LINK=uart PORT=COM4 APP=build/Projects/Root_of_Trust/Root_of_Trust.bin"
+	@echo "  bl-enter          Put the board into the bootloader over USB1 (1200-baud touch), no upload"
 	@echo "  Details: Projects/Bootloader/README.md"
 	@echo
 	@echo "Active-slot apps (PROJECT_DIR = Projects/App_Demo | Root_of_Trust | Secure_FW_Update):"

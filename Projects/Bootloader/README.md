@@ -74,6 +74,7 @@ makes it reset into the bootloader, which then **stays** until the upload arrive
 does this by itself:
 
 ```sh
+make bl-enter                                                         # only enter the bootloader, it stays
 make bl-upload LINK=usb                                               # build + touch + upload
 python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link usb   # ready binary, any PC
 ```

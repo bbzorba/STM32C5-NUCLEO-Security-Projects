@@ -269,9 +269,33 @@ def expect_ack(ser, timeout_s: float, step: str) -> None:
         raise RuntimeError(f"{step}: unexpected byte 0x{resp[0]:02X}")
 
 
+def enter_bootloader(wait_s: float) -> int:
+    """--enter: touch the application's USB port, wait for the bootloader's."""
+    if bl_usb_ports():
+        print(f"Bootloader already running: {bl_usb_ports()[0]}")
+        return 0
+    apps = app_usb_ports()
+    if not apps:
+        print("ERROR: no application USB port (CAFE:B0C6) found — is USB1 connected and does the "
+              "running application support the 1200-baud touch (App_Demo)? Otherwise hold B1 "
+              "and press RESET.")
+        return 1
+    touch_into_bootloader(apps[0])
+    port = wait_for_port(bl_usb_ports, wait_s)
+    if not port:
+        print("ERROR: the bootloader's USB port (CAFE:B0C5) did not appear")
+        return 1
+    print(f"Bootloader is waiting on {port} (LD1 blinks) — it stays until an upload arrives "
+          "or the board is reset.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Upload an image via Projects/Bootloader")
-    ap.add_argument("binary", help="application .bin linked at 0x08010000")
+    ap.add_argument("binary", nargs="?", help="application .bin linked at 0x08010000")
+    ap.add_argument("--enter", action="store_true",
+                    help="only put the board into the bootloader (1200-baud touch on the "
+                         "application's USB port) and leave it waiting — no upload")
     ap.add_argument("--port", help="serial port, e.g. COM5 or /dev/ttyACM0 "
                                    "(default: auto-detect the bootloader USB port or the ST-LINK VCP)")
     ap.add_argument("--link", choices=("auto", "uart", "usb"), default="auto",
@@ -301,6 +325,11 @@ def main() -> int:
                 return rerun_with_windows_python()
 
     need_pyserial()
+
+    if args.enter:
+        return enter_bootloader(args.wait)
+    if not args.binary:
+        ap.error("the binary is required (or use --enter)")
 
     bin_path = Path(args.binary)
     if not bin_path.exists():
