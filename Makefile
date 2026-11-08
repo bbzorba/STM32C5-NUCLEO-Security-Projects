@@ -286,10 +286,13 @@ SRC_C   := $(wildcard $(PROJECT_DIR)/src/*.c)
 SRC_CPP := $(wildcard $(PROJECT_DIR)/src/*.cpp)
 SRC_C   += $(filter-out $(SRC_C),$(foreach d,$(DEPS),$($(d)_SRC_C)))
 SRC_C   += $(filter-out $(SRC_C),$(EXTRA_SRC_C))
+# Image identification record "IMGID:<module>", read by `make read-flash`
+SRC_C   += linker/image_id.c
 CFLAGS  += $(addprefix -I,$(foreach d,$(DEPS),$($(d)_INC)) $(EXTRA_INCS))
 
 OBJ_UNSORTED=$(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o) $(EXTERNAL_SRC_C:.c=.o) $(EXTERNAL_SRC_CPP:.cpp=.o)
 OBJ=$(addprefix $(OBJ_DIR)/,$(sort $(OBJ_UNSORTED)))
+$(OBJ_DIR)/linker/image_id.o: CFLAGS += -DIMAGE_NAME=$(MODULE)
 
 # Use C++ linker if there are any C++ sources (project or external driver), else C linker
 ifneq (,$(strip $(SRC_CPP) $(EXTERNAL_SRC_CPP)))
@@ -409,6 +412,12 @@ ifeq ($(strip $(APP)),)
 endif
 	$(PYTHON) tools/bl_upload.py $(or $(APP),$(call target_of,$(BL_APP_DIR)).bin) --link $(LINK) $(if $(PORT),--port $(PORT),--fallback-port $(DEFAULT_PORT)) $(if $(filter 1,$(USBIPD)),--wsl-usbipd) --reset
 
+# Name the bootloader and application programmed in flash: reads it over SWD
+# (USB0) without halting or resetting the MCU — tools/read_flash.py
+.PHONY: read-flash
+read-flash:
+	$(PYTHON) tools/read_flash.py
+
 # Put the board into the bootloader over USB1 and leave it waiting (no upload):
 # 1200-baud touch on the running application's USB port (App_Demo, CAFE:B0C6)
 .PHONY: bl-enter
@@ -513,6 +522,7 @@ endif
 	@echo "  monitor           Open serial monitor (Windows PowerShell, also from WSL)"
 	@echo "                    Auto-detects USB-serial bridge when PORT is empty"
 	@echo "                    Use MONITOR_SECONDS=N for timed CI verification"
+	@echo "  read-flash        Show which bootloader / application is in flash (SWD, no reset)"
 	@echo "  com-list          List serial ports (Windows PowerShell, also from WSL)"
 	@echo "  flashmonitor-auto Build, flash, and start monitor"
 	@echo "  gen-debug-config  Write board settings into .vscode/settings.json"

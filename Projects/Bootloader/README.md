@@ -188,6 +188,11 @@ The tool prints the link and port it chose, and then the board's own log:
 - `[BL] Update : OK` and a matching CRC tag can only come from the bootloader. `make flash` over SWD
   clears the tag instead, and the bootloader would then refuse to boot the image.
 
+### What is on the board?
+
+`make read-flash` (USB0) names the image at 0x08000000 and the one in the active slot, shows the
+slot's CRC tag status and which local build each one matches — without stopping the MCU.
+
 ## 6. Windows, Linux and WSL2
 
 | Host | What to do |

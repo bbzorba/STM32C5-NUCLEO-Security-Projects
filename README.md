@@ -118,6 +118,18 @@ place they are defined) and the output sections from `linker/sections.ld`. `make
 layout's start address (`FLASH_ADDR`), and CI checks that it matches what the linker used.
 `STACK_SIZE` (default `0x400`) sets the stack reserved by the linker; RSA uses `0x2000`.
 
+Every image carries the record `IMGID:<module>` right after its vector table (`linker/image_id.c`).
+`make read-flash` reads the flash over SWD — the MCU keeps running — and names what is programmed:
+
+```text
+0x08000000  Boot region : Bootloader
+                          boot code — starts the active slot
+                          same as build/Projects/Bootloader/Bootloader.bin
+0x08010000  Active slot : App_Demo
+                          CRC tag F440CDF7 OK — the bootloader starts it
+                          same as build/Projects/App_Demo/App_Demo.bin
+```
+
 ### Module wiring (`module.mk`)
 
 `make build` builds the folder selected by `PROJECT_DIR`. The Makefile reads only that folder's

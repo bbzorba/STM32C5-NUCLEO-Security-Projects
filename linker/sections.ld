@@ -19,6 +19,12 @@ SECTIONS
     KEEP(*(.isr_vector))
   } >FLASH
 
+  /* "IMGID:<module>" (linker/image_id.c), read by `make read-flash` */
+  .image_id :
+  {
+    KEEP(*(.image_id))
+  } >FLASH
+
   .text :
   {
     *(.text*)
