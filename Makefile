@@ -499,6 +499,7 @@ help:
 	@echo "  flash_openocd     Flash with openocd"
 	@echo "  flash_stlink      Flash with st-flash"
 	@echo "  debug             debug-build, then flash $(BUILD_OUT)/active.bin for VS Code debugging"
+	@echo "  debug-boot        Build Bootloader + app (DEBUG=1), program what changed — VS Code debugging of both"
 	@echo
 	@echo "Upload through Projects/Bootloader (flash it once first: make flash PROJECT_DIR=Projects/Bootloader):"
 	@echo "  bl-upload         Build + upload $(or $(APP),$(BL_APP_DIR)) to the active slot 0x08010000"
@@ -561,10 +562,31 @@ debug-build:
 
 # debug: standalone build + flash (without VS Code debugger)
 debug: debug-build
+	$(if $(filter app_slot,$(LAYOUT)),$(error $(PROJECT_DIR) runs in the active slot behind the bootloader — use "make debug-boot" / the VS Code configuration "Debug: Bootloader + application"))
 	"$(CUBE_PROG)" -c port=SWD reset=HWrst -w "$(BUILD_OUT)/active.bin" $(FLASH_ADDR) -v -hardRst
 	@echo ""
 	@echo "--- GCC build + flash complete: $(BUILD_OUT)/active.elf ---"
 	@echo "Press F5 in VS Code [select Cortex Debug: ST-LINK] to start debugging."
+
+# debug-boot: pre-launch task of the VS Code configuration "Debug: Bootloader +
+# application" (cortex-debug, OpenOCD over a pipe — tools/openocd-pipe.sh).
+# Builds Projects/Bootloader and BL_APP_DIR with DEBUG=1 (only what changed),
+# programs only what differs from the board — the bootloader over SWD, the
+# application sealed with its CRC tag (tools/debug_flash.py) — and copies the
+# ELFs to build/debug/bootloader.elf and build/debug/app.elf. app.gdb stops the
+# session once more at the application's main (the entry is the bootloader's).
+# The app's main.c is the only source file of that name in the session.
+DEBUG_BL  := $(BUILD_ROOT)/debug/Projects/Bootloader/Bootloader
+DEBUG_APP  = $(BUILD_ROOT)/debug/$(BL_APP_DIR)/$(notdir $(BL_APP_DIR))
+
+.PHONY: debug-boot
+debug-boot:
+	@$(MAKE) --no-print-directory build DEBUG=1 PROJECT_DIR=Projects/Bootloader
+	@$(MAKE) --no-print-directory build DEBUG=1 PROJECT_DIR=$(BL_APP_DIR)
+	$(PYTHON) tools/debug_flash.py $(DEBUG_BL).bin $(DEBUG_APP).bin
+	$(PYTHON) -c "import shutil; shutil.copy('$(DEBUG_BL).elf', '$(BUILD_OUT)/bootloader.elf'); shutil.copy('$(DEBUG_APP).elf', '$(BUILD_OUT)/app.elf')"
+	@echo "tbreak $(BL_APP_DIR)/src/main.c:main" > $(BUILD_OUT)/app.gdb
+	@echo "--- Debug images ready: Bootloader + $(BL_APP_DIR) (build/debug/bootloader.elf, app.elf) ---"
 
 # gen-debug-config: writes board-specific stm32.* keys into .vscode/settings.json
 # so that the generic launch.json (which uses ${config:stm32.*}) stays correct

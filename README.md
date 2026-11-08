@@ -293,16 +293,35 @@ python3 tools/ci/verify_build.py build/Projects/App_Demo/App_Demo.elf 0x08010000
 
 ## Debugging in VS Code
 
-### GCC + Cortex-Debug (OpenOCD / ST-Link)
+### Cortex-Debug + OpenOCD (ST-LINK, USB0)
 
-1. Ensure `.vscode/launch.json` targets Cortex-Debug with OpenOCD and ST-Link
-2. Press `F5` or open **Run and Debug**
-3. Set breakpoints and step through code normally
+Press `F5` in **Run and Debug** and pick a configuration (`.vscode/launch.json`):
 
-The **Debug: Active App (from Makefile)** configuration runs the `GCC: Build + Flash for Debug` task (`make debug`) first, which builds `PROJECT_DIR` with `DEBUG=1`, copies it to `build/debug/active.elf` and flashes it. Without VS Code:
+| Configuration | For | Pre-launch task |
+|---|---|---|
+| **Debug: Bootloader + application** | Bootloader and an active-slot app in one session — breakpoints in both | `make debug-boot` |
+| **Debug: Active App (from Makefile)** | A standalone `PROJECT_DIR` (driver demos, ECDSA, RSA, …) | `make debug` |
+
+- **Pre-launch:** builds with `DEBUG=1` (`-Og -g3`), only what changed, and programs only what differs
+  from the board. `debug-boot` writes the bootloader over SWD and seals the app (`tools/debug_flash.py`),
+  so the session starts like a real boot: the bootloader verifies the slot and jumps to the app.
+  The app is the selected `PROJECT_DIR` if it runs in the active slot, else `Projects/App_Demo`.
+- **Both images in one session:** `symbolFiles` loads `build/debug/bootloader.elf` and `app.elf`. The
+  session starts at the bootloader's `main` (the reset entry — the CPU always starts there), stops
+  once more at the application's `main` after the jump (`build/debug/app.gdb`), and breakpoints work
+  in both: line, function, step into / over / out, watchpoints, Pause, Restart.
+- **OpenOCD over a pipe:** GDB starts OpenOCD through `tools/openocd-pipe.sh` (`gdb_port pipe`, no TCP
+  port). From WSL it runs the Windows `openocd.exe` (`$OPENOCD`, PATH, else PlatformIO's), so the
+  ST-LINK stays on Windows. Target config: `stm32c562re.cfg`; log: `build/openocd.log`.
+- **Needs:** the Cortex-Debug extension installed where the workspace runs (in WSL for a WSL window),
+  `arm-none-eabi-gdb` on PATH, OpenOCD 0.12 or newer.
+
+Without VS Code:
 
 ```sh
-make debug PROJECT_DIR=Drivers/GPIO
+make debug-boot                              # build + program Bootloader + App_Demo for debugging
+make debug PROJECT_DIR=Drivers/GPIO          # build + flash a standalone module (DEBUG=1)
+arm-none-eabi-gdb build/debug/bootloader.elf -ex "target extended-remote | tools/openocd-pipe.sh"
 ```
 
 ## Key Register Addresses (STM32C5)

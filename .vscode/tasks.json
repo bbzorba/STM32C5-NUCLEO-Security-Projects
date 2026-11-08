@@ -5,27 +5,59 @@
       "label": "GCC: Build",
       "type": "shell",
       "command": "make",
-      "args": ["build"],
-      "group": { "kind": "build", "isDefault": true },
-      "presentation": { "reveal": "always", "panel": "shared" },
+      "args": [
+        "build"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "problemMatcher": []
     },
     {
       "label": "GCC: Debug Build",
       "type": "shell",
       "command": "make",
-      "args": ["debug-build"],
+      "args": [
+        "debug-build"
+      ],
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "shared" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "problemMatcher": []
     },
     {
       "label": "GCC: Build + Flash for Debug",
       "type": "shell",
       "command": "make",
-      "args": ["debug"],
+      "args": [
+        "debug"
+      ],
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "shared" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug: build + program Bootloader + application",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "debug-boot"
+      ],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
       "problemMatcher": []
     }
   ]

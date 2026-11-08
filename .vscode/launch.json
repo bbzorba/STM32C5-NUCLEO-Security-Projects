@@ -2,27 +2,41 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug: Bootloader + application",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "servertype": "external",
+      "gdbTarget": "| ${workspaceFolder}/tools/openocd-pipe.sh",
+      "gdbPath": "arm-none-eabi-gdb",
+      "loadFiles": [],
+      "device": "${config:stm32.device}",
+      "svdFile": "${workspaceFolder}/${config:stm32.svdFile}",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "Debug: build + program Bootloader + application",
+      "executable": "${workspaceFolder}/build/debug/bootloader.elf",
+      "symbolFiles": [
+        "${workspaceFolder}/build/debug/bootloader.elf",
+        "${workspaceFolder}/build/debug/app.elf"
+      ],
+      "postLaunchCommands": [
+        "source ${workspaceFolder}/build/debug/app.gdb"
+      ]
+    },
+    {
       "name": "Debug: Active App (from Makefile)",
       "type": "cortex-debug",
       "request": "launch",
-      "servertype": "openocd",
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "GCC: Build + Flash for Debug",
-      "executable": "${workspaceFolder}/build/debug/active.elf",
-      "device": "${config:stm32.device}",
-      "interface": "swd",
-      "noFileLoad": true,
-      "configFiles": [
-        "interface/stlink.cfg",
-        "${workspaceFolder}/${config:stm32.openocdCfg}"
-      ],
-      "openOCDPreConfigLaunchCommands": [
-        "set CPUTAPID ${config:stm32.cpuTapId}"
-      ],
+      "servertype": "external",
+      "gdbTarget": "| ${workspaceFolder}/tools/openocd-pipe.sh",
       "gdbPath": "arm-none-eabi-gdb",
+      "loadFiles": [],
+      "device": "${config:stm32.device}",
       "svdFile": "${workspaceFolder}/${config:stm32.svdFile}",
       "runToEntryPoint": "main",
-      "showDevDebugOutput": "raw"
+      "preLaunchTask": "GCC: Build + Flash for Debug",
+      "executable": "${workspaceFolder}/build/debug/active.elf"
     }
   ]
 }
