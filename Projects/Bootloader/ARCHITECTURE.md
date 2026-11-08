@@ -1,7 +1,6 @@
 # Bootloader — architecture
 
-How `Projects/Bootloader` is built and how it decides what to do after a reset.
-For how to *use* it, see [README.md](README.md).
+How `Projects/Bootloader` works. For how to use it, see [README.md](README.md).
 
 ## 1. Block diagram
 
@@ -9,18 +8,18 @@ For how to *use* it, see [README.md](README.md).
 flowchart LR
     subgraph PC
         TOOL["make bl-upload<br/>tools/bl_upload.py"]
-        PROG["STM32_Programmer_CLI<br/>make flash / SWD reset<br/>make read-flash"]
+        PROG["STM32_Programmer_CLI<br/>flash · SWD reset · read-flash"]
     end
 
     subgraph BOARD["NUCLEO-C562RE"]
-        subgraph STLINK["On-board ST-LINK V3 (one USB device, two functions)"]
-            VCP["Virtual COM port<br/>COMx · /dev/ttyACM*"]
+        subgraph STLINK["On-board ST-LINK"]
+            VCP["Virtual COM port"]
             DBG["SWD debugger"]
         end
         subgraph MCU["STM32C562RE"]
-            UART["USART2<br/>PA2 TX · PA3 RX<br/>115200 8N1"]
+            UART["USART2<br/>PA2 / PA3, 115200 8N1"]
             SWD["SWD port"]
-            USBP["USB_DRD_FS<br/>PA11 DM · PA12 DP"]
+            USBP["USB_DRD_FS<br/>PA11 / PA12"]
             CORE["Bootloader @ 0x08000000<br/>Application @ 0x08010000"]
             BKP["TAMP backup register 0<br/>app → bootloader request"]
         end
@@ -28,11 +27,11 @@ flowchart LR
         LD1["LD1 · PA5"]
     end
 
-    TOOL -- "USB0 (ST-LINK cable)" --> VCP
-    PROG -- "USB0 (ST-LINK cable)" --> DBG
-    TOOL -- "USB1 (USB-C user port)<br/>CDC ACM: bootloader CAFE:B0C5<br/>App_Demo CAFE:B0C6" --> USBP
-    VCP -- "UART wires on the PCB" --> UART
-    DBG -- "SWD wires on the PCB" --> SWD
+    TOOL -- "USB0" --> VCP
+    PROG -- "USB0" --> DBG
+    TOOL -- "USB1 (USB-C user port)<br/>bootloader CAFE:B0C5 · App_Demo CAFE:B0C6" --> USBP
+    VCP --> UART
+    DBG --> SWD
     UART --- CORE
     USBP --- CORE
     SWD --- CORE
@@ -41,132 +40,91 @@ flowchart LR
     CORE --> LD1
 ```
 
-**USB0 (ST-LINK cable)** carries two independent functions:
+- **USB0 (ST-LINK)** gives two functions: a virtual COM port wired to USART2 (the "UART" link), and
+  SWD (flash, reset).
+- **USB1** goes straight to the MCU's USB peripheral, which belongs to whichever program is running.
+  The bootloader runs a TinyUSB CDC device on it (`CAFE:B0C5`) and detaches it before jumping to the
+  application. App_Demo then presents its own port (`CAFE:B0C6`).
 
-| Function | PC side | What it reaches in the MCU | Used for |
-|---|---|---|---|
-| Virtual COM port | `COMx` / `/dev/ttyACM*` | USART2, through the ST-LINK chip | UART update link, console log |
-| SWD debugger | STM32CubeProgrammer, OpenOCD | Debug port: flash, RAM, reset | `make flash`, SWD reset before an upload |
+## 2. Software
 
-So the "UART" link is USB on the PC side; only the stretch between the ST-LINK chip and the
-STM32 is a real UART. The bootloader cannot tell which PC program sits behind it: it only sees bytes
-on USART2.
-
-**USB1 (USB-C user port)** goes straight to the STM32's USB peripheral, which belongs to whichever
-program runs. The bootloader runs a TinyUSB CDC ACM device there (`Drivers/USB_CDC`, `CAFE:B0C5`);
-it detaches before jumping, so the PC sees an unplug. App_Demo then enumerates its own port
-(`CAFE:B0C6`). A **1200-baud touch** on that port makes the app write a request into the TAMP backup
-register and reset — the bootloader finds it and stays (section 7). This is how a board reachable
-only through USB1 is updated while an application runs.
-
-## 2. Software layers
-
-| Layer | Files | Role |
+| Part | Files | Role |
 |---|---|---|
-| Entry + boot decision | `src/main.c` | Banner, B1 check, update window loop, jump |
-| Bootloader core | `src/bootloader.c`, `inc/bootloader.h` | Wait for a request, receive + program the image, verify the slot, jump |
-| Drivers | `UART`, `USB_CDC` (TinyUSB), `FLASH`, `CRC`, `GPIO`, `NVIC` | Hardware access |
-| App → bootloader request | `inc/bl_request.h`, `src/bl_request.c` | Linked into apps (`DEPS += Bootloader`): store request, reset |
-| Image name | `linker/image_id.c` | `IMGID:<module>` after the vector table of every image |
-| Host tools | `tools/bl_upload.py`, `tools/read_flash.py` | Upload: pick the link, touch / reset, run the protocol. `make read-flash`: name the images in flash over SWD |
+| Boot decision | `src/main.c` | B1 check, update window, jump |
+| Core | `src/bootloader.c`, `inc/bootloader.h` | Receive and program the image, verify the slot, jump |
+| App → bootloader request | `src/bl_request.c`, `inc/bl_request.h` | Linked into applications (`DEPS += Bootloader`) |
+| Drivers | UART, USB_CDC (TinyUSB), FLASH, CRC, GPIO, NVIC | Hardware access |
+| Host tools | `tools/bl_upload.py`, `tools/read_flash.py` | Upload; name the images in flash |
 
 ## 3. Memory map
 
 | Address | Sectors | Content |
 |---|---|---|
-| `0x08000000` | 0–7 (64 KB) | Bootloader — the chip always starts here after reset |
-| `0x08010000` | 8–29 (176 KB) | Active slot — the application, linked at this address |
+| `0x08000000` | 0–7 (64 KB) | Bootloader. The chip always starts here |
+| `0x08010000` | 8–29 (176 KB) | Active slot: the application |
 | `0x0803C000` | 30 | CRC-32 tag of the active slot (`0xFFFFFFFF` = not sealed) |
 
-The addresses are defined once for the linker in `linker/memory_map.ld`. The bootloader links with
-`LAYOUT := bootloader` (`linker/bootloader.ld`), its applications with `LAYOUT := app_slot`
-(`linker/app_slot.ld`). The same map is used by `Projects/Secure_Boot` and `tools/seal.py`. Apps for this slot:
-`Projects/App_Demo`, `Projects/Root_of_Trust`, `Projects/Secure_FW_Update`.
+The map is defined in `linker/memory_map.ld`. `Projects/Secure_Boot` and `tools/seal.py` use the same map.
 
 ## 4. Boot decision
 
 ```mermaid
 flowchart TD
-    RST(["Reset / power-on"]) --> INIT["Init USART2, USB CDC, FLASH, CRC, B1, LD1<br/>banner + READY on UART"]
-    INIT --> HELD{"B1 held during reset,<br/>or request from the app?<br/>(TAMP backup register)"}
+    RST(["Reset"]) --> INIT["Init USART2, USB, FLASH, CRC, B1, LD1"]
+    INIT --> HELD{"B1 held, or request<br/>from the application?"}
     HELD -- yes --> STAY
     HELD -- no --> WIN["Update window: 5 s, LD1 solid"]
 
     WIN --> EV{"First event"}
-    EV -- "PC enumerates USB1" --> MOUNT["window extended to ≥ 10 s"] --> EV
-    EV -- "PC opens the USB1 COM port" --> GRACE["READY on USB after 150 ms<br/>window extended to ≥ 3 s"] --> EV
-    EV -- "'u' on USART2 (USB0)" --> UPU["Update over UART"]
-    EV -- "'u' on USB CDC (USB1)" --> UPB["Update over USB"]
+    EV -- "PC enumerates USB1" --> MOUNT["window ≥ 10 s"] --> EV
+    EV -- "PC opens the USB port" --> GRACE["READY on USB<br/>window ≥ 3 s"] --> EV
+    EV -- "'u' on UART or USB" --> UP["Update on that link"]
     EV -- "B1 pressed" --> STAY
-    EV -- "window ends, nothing" --> CHECK
+    EV -- "window ends" --> CHECK
 
-    STAY["Stay in bootloader<br/>LD1 blinks, READY every 1 s on both links"] -- "'u' on either link" --> UPS["Update on that link"]
+    STAY["Stay: LD1 blinks,<br/>READY every 1 s"] -- "'u' on UART or USB" --> UP
+    UP --> CHECK
 
-    UPU --> CHECK
-    UPB --> CHECK
-    UPS --> CHECK
-
-    CHECK{"Active slot valid?<br/>tag set · CRC = tag ·<br/>MSP in SRAM · reset vector in slot"}
-    CHECK -- yes --> JUMP["Detach + reset USB, disable USART2,<br/>clear IRQs, VTOR = 0x08010000"] --> APP(["Application runs"])
-    CHECK -- "no (empty, corrupted,<br/>or failed update)" --> STAY
+    CHECK{"Slot valid?<br/>tag set · CRC = tag ·<br/>MSP and reset vector valid"}
+    CHECK -- yes --> JUMP["Detach USB, disable IRQs,<br/>VTOR = 0x08010000"] --> APP(["Application"])
+    CHECK -- no --> STAY
 ```
 
-- The first `u` decides the link. The whole update then runs on that link only; the console log
-  always goes to USART2, and also to USB while its COM port is open.
-- A failed update (timeout, size, flash or CRC error) answers NACK and leaves the slot **without a
-  tag**, so the check fails and the board stays in the bootloader instead of booting a broken image.
+The first `u` chooses the link, and the whole update runs on that link. A failed update leaves the
+slot without a tag, so the board stays in the bootloader instead of starting a broken image.
 
-## 5. Which cables give which path
-
-| Connected to the PC | SWD flash / reset | UART update | USB update | `LINK=auto` picks |
-|---|---|---|---|---|
-| USB0 + USB1 | yes | yes | yes | USB if the bootloader is already waiting, else UART |
-| USB0 only | yes | yes | no | UART |
-| USB1 only ¹ | no — 1200-baud touch ², else press RESET | no | yes | USB (if the app has a USB port) |
-| Neither (powered elsewhere) | no | no | no | — the app boots after 5 s |
-
-¹ USB1 alone does not power the board with a USB-C ↔ USB-C cable; use USB-A ↔ USB-C or another supply.
-² Only an application with its own USB port (App_Demo, `CAFE:B0C6`) can be restarted over USB1 —
-while it runs, the application, not the bootloader, owns the USB peripheral.
-
-**Link selection** (`tools/bl_upload.py`): `LINK=uart` uses the ST-LINK virtual COM port, `LINK=usb`
-the board's USB port. A selected link that is not connected to this PC is an error — there is no
-fallback from one link to the other. Only `LINK=auto` chooses: USB when the bootloader's or the
-app's USB port is present, else UART.
-
-## 6. Update protocol (same bytes on both links)
+## 5. Update protocol (same on both links)
 
 ```text
-host -> 'u'                              board -> ACK (0x79)
-host -> image size, u32 little-endian    board -> erases sectors 8-30, ACK
-host -> data chunk (<= 256 bytes)        board -> programs 16-byte flash words, reads back, ACK  (repeat)
-host -> CRC-32 of the image padded       board -> hardware CRC over 176 KB, compares,
-        with 0xFF to 176 KB                       writes the tag, ACK
+host -> 'u'                               board -> ACK (0x79)
+host -> image size, u32 little-endian     board -> erase sectors 8-30, ACK
+host -> data chunk (<= 256 bytes)         board -> program, read back, ACK   (repeat)
+host -> CRC-32 of the image padded        board -> hardware CRC over 176 KB, compare,
+        with 0xFF to 176 KB                        write the tag, ACK
 ```
 
-Any failure → NACK (`0x1F`). The CRC is `zlib.crc32`, the same value `tools/seal.py` writes.
+Any failure answers NACK (`0x1F`). The CRC is `zlib.crc32`, the same value that `tools/seal.py` writes.
 
-> **Integrity, not authenticity.** The CRC-32 catches a corrupted or incomplete image. It does not
-> prove who built it. For signed images see `Projects/Secure_Boot`.
+## 6. Entering the bootloader from an application
+
+A running application owns USB1, so it must hand over itself. This works like on Arduino and
+Raspberry Pi Pico boards:
+
+1. The PC opens the application's port at 1200 baud and closes it (the "1200-baud touch").
+2. The application writes `0xB007AB1E` to TAMP backup register 0 and resets.
+3. The bootloader finds the value, clears it, and stays.
+
+The backup register survives a reset; a power cycle clears it. SRAM is not used for this because the
+`SRAM1_RST` option byte can erase it on reset.
 
 ## 7. Design notes
 
-- **One main loop.** USART2 is polled. The USB IRQ only queues events; TinyUSB handles them in
-  `USB_CDC_Task()`, called from the same loop. Sector erase waits on the FLASH IRQ. All timeouts
-  use the DWT cycle counter.
-- **USART2 RX FIFO.** Servicing USB can delay a UART poll by ~170 µs, longer than one byte at
-  115200 baud (87 µs). The 8-byte RX FIFO absorbs that; without it UART uploads lost bytes while
-  USB1 was connected.
-- **Delayed READY on USB.** Windows serial libraries purge their receive buffer right after
-  asserting DTR, so READY is sent 150 ms after the port opens, then every second.
-- **Clean hand-over.** Before the jump the bootloader detaches and resets USB (the PC sees an
-  unplug), disables USART2, stops SysTick, and clears every NVIC enable/pending bit, so the
-  application starts as if from reset.
-- **Application → bootloader request.** USB1 belongs to whichever program runs, so a running
-  application must cooperate to be updated over USB — as on Arduino and Raspberry Pi Pico: on a
-  1200-baud touch App_Demo writes `0xB007AB1E` into TAMP backup register 0 and resets
-  (`bl_request.c`). Backup registers survive a system reset (SRAM may not: the `SRAM1_RST` option
-  erases it) and are cleared by a power cycle. The bootloader clears the request and stays.
-  Without a cooperating application the fallbacks are B1 + RESET, the SWD reset, or a watchdog.
-- **VID:PID `CAFE:B0C5`** (bootloader) / **`CAFE:B0C6`** (applications) use TinyUSB's test vendor ID, fine for development only
-  (`Drivers/USB_CDC/inc/usb_cdc.h`).
+- **One main loop.** USART2 is polled, and the USB IRQ only queues events for `USB_CDC_Task()`.
+  Timeouts use the DWT cycle counter.
+- **USART2 RX FIFO.** Handling USB can delay a UART poll longer than one byte takes at 115200 baud.
+  The 8-byte FIFO absorbs that.
+- **Delayed READY on USB.** Windows serial libraries clear the receive buffer right after opening the
+  port, so the bootloader sends READY 150 ms after the port opens.
+- **Clean hand-over.** Before jumping, the bootloader detaches USB, disables USART2 and SysTick, and
+  clears all NVIC bits, so the application starts as if from reset.
+- **`CAFE:B0C5` / `CAFE:B0C6`** use TinyUSB's test vendor ID, which is for development only.
