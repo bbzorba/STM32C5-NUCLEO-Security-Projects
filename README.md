@@ -314,7 +314,26 @@ Press `F5` in **Run and Debug** and pick a configuration (`.vscode/launch.json`)
   port). From WSL it runs the Windows `openocd.exe` (`$OPENOCD`, PATH, else PlatformIO's), so the
   ST-LINK stays on Windows. Target config: `stm32c562re.cfg`; log: `build/openocd.log`.
 - **Needs:** the Cortex-Debug extension installed where the workspace runs (in WSL for a WSL window),
-  `arm-none-eabi-gdb` on PATH, OpenOCD 0.12 or newer.
+  `arm-none-eabi-gdb` on PATH, OpenOCD 0.12 or newer. Paths with spaces are fine
+  (`gdbTarget` quotes the script path, the script quotes its paths for OpenOCD).
+
+Installing the debug tools in WSL without `sudo` (xPack builds, into your home directory; the build
+keeps using its own compiler, only `gdb` is put on PATH):
+
+```sh
+mkdir -p ~/.local/opt ~/.local/bin
+# GDB — xpack-arm-none-eabi-gcc-<ver>-linux-x64.tar.gz from
+#   https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases
+tar -xzf xpack-arm-none-eabi-gcc-*-linux-x64.tar.gz -C ~/.local/opt
+ln -sfn ~/.local/opt/xpack-arm-none-eabi-gcc-*/bin/arm-none-eabi-gdb ~/.local/bin/arm-none-eabi-gdb
+# OpenOCD — the Windows build (the ST-LINK stays on Windows): xpack-openocd-<ver>-win32-x64.zip from
+#   https://github.com/xpack-dev-tools/openocd-xpack/releases, unzipped e.g. to %LOCALAPPDATA%\xpack
+ln -sfn /mnt/c/Users/<you>/AppData/Local/xpack/xpack-openocd-*/bin/openocd.exe ~/.local/bin/openocd.exe
+```
+
+`~/.profile` adds `~/.local/bin` to PATH at login only: after creating it, close VS Code and run
+`wsl --shutdown` (PowerShell) once. Alternatives: `sudo apt install gdb-multiarch` + a symlink named
+`arm-none-eabi-gdb`; native Linux / usbipd: a Linux `openocd` on PATH.
 
 Without VS Code:
 

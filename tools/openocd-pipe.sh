@@ -33,7 +33,7 @@ search=()
 
 mkdir -p build
 args=("${search[@]}"
-      -c "log_output $(path "$PWD/build/openocd.log")"
+      -c "log_output {$(path "$PWD/build/openocd.log")}"   # {…}: Tcl quoting, the path may contain spaces
       -c "telnet_port disabled" -c "tcl_port disabled"
       -c "set CPUTAPID 0x6ba02477"
       -f interface/stlink-dap.cfg -c "transport select dapdirect_swd"
