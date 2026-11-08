@@ -81,16 +81,17 @@ The addresses are defined once for the linker in `linker/memory_map.ld`. The boo
 ```mermaid
 flowchart TD
     RST(["Reset / power-on"]) --> INIT["Init USART2, USB CDC, FLASH, CRC, B1, LD1<br/>banner + READY on UART"]
-    INIT --> HELD{"B1 held<br/>during reset?"}
+    INIT --> HELD{"B1 held during reset,<br/>or request from the app?<br/>(TAMP backup register)"}
     HELD -- yes --> STAY
     HELD -- no --> WIN["Update window: 5 s, LD1 solid"]
 
     WIN --> EV{"First event"}
+    EV -- "PC enumerates USB1" --> MOUNT["window extended to ≥ 10 s"] --> EV
     EV -- "PC opens the USB1 COM port" --> GRACE["READY on USB after 150 ms<br/>window extended to ≥ 3 s"] --> EV
     EV -- "'u' on USART2 (USB0)" --> UPU["Update over UART"]
     EV -- "'u' on USB CDC (USB1)" --> UPB["Update over USB"]
     EV -- "B1 pressed" --> STAY
-    EV -- "5 s pass, nothing" --> CHECK
+    EV -- "window ends, nothing" --> CHECK
 
     STAY["Stay in bootloader<br/>LD1 blinks, READY every 1 s on both links"] -- "'u' on either link" --> UPS["Update on that link"]
 
@@ -114,12 +115,12 @@ flowchart TD
 |---|---|---|---|---|
 | USB0 + USB1 | yes | yes | yes | USB if the bootloader is already waiting, else UART |
 | USB0 only | yes | yes | no | UART |
-| USB1 only ¹ | no — press RESET yourself | no | yes | use `LINK=usb` ² |
+| USB1 only ¹ | no — 1200-baud touch ², else press RESET | no | yes | USB (if the app has a USB port) |
 | Neither (powered elsewhere) | no | no | no | — the app boots after 5 s |
 
 ¹ USB1 alone does not power the board with a USB-C ↔ USB-C cable; use USB-A ↔ USB-C or another supply.
-² `auto` looks for the bootloader's USB port when the tool starts. While the application runs that
-port does not exist, so `auto` would choose UART and fail.
+² Only an application with its own USB port (App_Demo, `CAFE:B0C6`) can be restarted over USB1 —
+while it runs, the application, not the bootloader, owns the USB peripheral.
 
 ## 6. Update protocol (same bytes on both links)
 
@@ -149,5 +150,11 @@ Any failure → NACK (`0x1F`). The CRC is `zlib.crc32`, the same value `tools/se
 - **Clean hand-over.** Before the jump the bootloader detaches and resets USB (the PC sees an
   unplug), disables USART2, stops SysTick, and clears every NVIC enable/pending bit, so the
   application starts as if from reset.
-- **VID:PID `CAFE:B0C5`** is TinyUSB's test vendor ID, fine for development only
+- **Application → bootloader request.** USB1 belongs to whichever program runs, so a running
+  application must cooperate to be updated over USB — as on Arduino and Raspberry Pi Pico: on a
+  1200-baud touch App_Demo writes `0xB007AB1E` into TAMP backup register 0 and resets
+  (`bl_request.c`). Backup registers survive a system reset (SRAM may not: the `SRAM1_RST` option
+  erases it) and are cleared by a power cycle. The bootloader clears the request and stays.
+  Without a cooperating application the fallbacks are B1 + RESET, the SWD reset, or a watchdog.
+- **VID:PID `CAFE:B0C5`** (bootloader) / **`CAFE:B0C6`** (applications) use TinyUSB's test vendor ID, fine for development only
   (`Drivers/USB_CDC/inc/usb_cdc.h`).

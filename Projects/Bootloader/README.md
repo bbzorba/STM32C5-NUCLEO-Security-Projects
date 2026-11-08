@@ -1,7 +1,9 @@
 # Bootloader — UART + USB firmware update (NUCLEO-C562RE)
 
-`Projects/Bootloader` sits at the start of flash. After every reset it waits 5 s for a new
-application over **UART** or **USB**, checks it with a CRC-32 and starts it.
+`Projects/Bootloader` sits at the start of flash. After every reset it waits 5 s — 10 s once a PC
+has enumerated its USB port — for a new application over **UART** or **USB**, checks it with a
+CRC-32 and starts it. A running application can also be sent back into the bootloader over USB
+(1200-baud touch, section 4).
 
 - How it works inside (block diagram, memory map, boot decision, protocol): [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Integrity, not authenticity:** the CRC catches broken uploads, not untrusted ones. For signed
@@ -16,7 +18,7 @@ All commands are run from the **repository root**.
 | Cable | Board connector | Gives you |
 |---|---|---|
 | **USB0** | ST-LINK USB | SWD (`make flash`, automatic reset) **and** the UART link (ST-LINK virtual COM port) |
-| **USB1** | USB-C user port | The USB link (`C562 Bootloader CDC`, `CAFE:B0C5`) — present only while the bootloader runs |
+| **USB1** | USB-C user port | The USB link: `C562 Bootloader CDC` (`CAFE:B0C5`) while the bootloader runs, `C562 App CDC` (`CAFE:B0C6`) while App_Demo runs |
 
 - Either cable alone is enough for an update on its own link. No wiring is needed.
 - USB1 with a USB-C ↔ USB-C cable does **not** power the board. Use USB-A ↔ USB-C, or keep USB0 in.
@@ -32,22 +34,23 @@ make flash PROJECT_DIR=Projects/Bootloader   # put the bootloader on the board (
 make bl-upload                            # build Projects/App_Demo and upload it through the bootloader
 ```
 
-`make bl-upload` resets the board over SWD first, so the 5 s window opens by itself. Without USB0,
-press RESET yourself (section 4).
+`make bl-upload` restarts the board by itself: over USB1 with the 1200-baud touch when the
+application has a USB port (App_Demo), else over SWD (USB0). With neither, press RESET (section 4).
 
 ## 3. LED and button
 
 | LD1 (green) | Meaning |
 |---|---|
-| on (solid) | 5 s update window after reset |
+| on (solid) | Update window after reset: 5 s, 10 s once a PC has enumerated USB1 |
 | blinking | Staying in the bootloader — waiting for an update |
 | off | Application started (or the board is running something else) |
 
 | You do | Result |
 |---|---|
 | Hold **B1** while pressing RESET | Bootloader stays until an update arrives |
-| Press **B1** during the 5 s window | Auto-boot cancelled, bootloader stays |
-| Nothing | After 5 s the application is checked and started |
+| Press **B1** during the window | Auto-boot cancelled, bootloader stays |
+| 1200-baud touch on the application's USB port | Application restarts into the bootloader, which stays until an update arrives |
+| Nothing | After the window the application is checked and started |
 
 With no valid application the bootloader always stays. While it stays, it prints `[BL] READY` every
 second on both links, so the upload tool can be started at any time.
@@ -59,11 +62,49 @@ second on both links, so the upload tool can be started at any time.
 ```sh
 make bl-upload LINK=uart          # USB0: ST-LINK virtual COM port
 make bl-upload LINK=usb           # USB1: USB-C user port
-make bl-upload LINK=auto          # default: USB if the bootloader's USB port already exists, else UART
+make bl-upload LINK=auto          # default: USB if the bootloader's or the app's USB port exists, else UART
 ```
 
-`auto` decides when the tool starts. While the application runs, the USB port does not exist yet, so
-`auto` picks UART. Use `LINK=usb` to force USB.
+### Upload over USB1 while the application runs (no USB0, no button)
+
+The application owns USB1 while it runs, so only the application itself can hand over to the
+bootloader. App_Demo enumerates its own port, `C562 App CDC` (`CAFE:B0C6`). Opening that port at
+**1200 baud and closing it** (the "1200-baud touch", as on Arduino and Raspberry Pi Pico boards)
+makes it reset into the bootloader, which then **stays** until the upload arrives. The upload tool
+does this by itself:
+
+```sh
+make bl-upload LINK=usb                                               # build + touch + upload
+python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link usb   # ready binary, any PC
+```
+
+```text
+[0/4] Application is running ...
+  1200-baud touch on COM18 — the application restarts into the bootloader
+=== Bootloader upload: App_Demo.bin ===
+  Port        : COM17
+```
+
+The request is one TAMP backup register (`bl_request.h`): it survives the reset, the bootloader
+clears it, and a power cycle clears it too. A normal reset afterwards boots the application again.
+
+**Adding it to your own application** (Root_of_Trust and Secure_FW_Update do not have it yet — use
+SWD or B1 + RESET for them):
+
+```make
+DEPS := ... USB_CDC Bootloader          # module.mk; startup.c: [16 + 62] = USB_DRD_FS_IRQHandler
+```
+
+```c
+USB_CDC_SetIdentity(USB_CDC_APP_PID, "My App CDC");   /* CAFE:B0C6 — what the tool looks for */
+USB_CDC_Init();
+while (1) {
+    USB_CDC_Task();
+    if (USB_CDC_TakeTouchEvent())
+        BL_RequestBootloader();                         /* see Projects/App_Demo/src/main.c */
+    /* ... */
+}
+```
 
 ### Pick the image
 
@@ -158,7 +199,9 @@ The tool prints the link and port it chose, and then the board's own log:
 ### WSL2 + usbipd (USB link)
 
 Keep **USB0 (ST-LINK) on Windows**: `make flash`, the SWD reset and the UART link use it from there.
-Attach only the bootloader's USB port (`CAFE:B0C5`) to WSL.
+Attach only USB1 — the bootloader's (`CAFE:B0C5`) and App_Demo's (`CAFE:B0C6`) port — to WSL.
+While an `usbipd attach` runs, **Windows itself cannot use these ports** (they vanish from Windows
+~1 s after each reset). Stop it when you upload from Windows instead.
 
 **1. Windows — install usbipd (PowerShell as administrator, once)**
 
@@ -171,10 +214,11 @@ winget install --exact dorssel.usbipd-win
 
 ```powershell
 usbipd policy add --effect Allow --operation AutoBind --hardware-id CAFE:B0C5
+usbipd policy add --effect Allow --operation AutoBind --hardware-id CAFE:B0C6
 ```
 
-This works even while the device is not plugged in. (`usbipd bind --busid …` also works, but only
-during the 5 s the device exists.)
+This works even while the devices are not plugged in. (`usbipd bind --busid …` also works, but only
+while the device exists.)
 
 **3. Find the BUSID.** Hold B1 + RESET so the bootloader stays, then:
 
@@ -217,8 +261,8 @@ python3 tools/bl_upload.py build/Projects/App_Demo/App_Demo.bin --link usb --wsl
 | `lsusb` (WSL, package `usbutils`) | `cafe:b0c5` listed |
 | `dmesg \| tail` (WSL) | `cdc_acm … ttyACM0: USB ACM device` |
 
-If re-attaching takes longer than the window (5 s, or 3 s after the port opens), hold B1 while
-resetting so the bootloader keeps waiting.
+With App_Demo the touch makes the bootloader stay, so the re-attach has all the time it needs.
+For other applications hold B1 while resetting so the bootloader keeps waiting.
 
 ## 7. Other ways to load an application
 
@@ -233,6 +277,7 @@ resetting so the bootloader keeps waiting.
 | Macro | Default | Meaning |
 |---|---|---|
 | `BL_WAIT_MS` | `5000` | Update window after reset |
+| `BL_USB_MOUNT_GRACE_MS` | `10000` | Window left after a PC enumerates the USB port |
 | `BL_USB_OPEN_GRACE_MS` | `3000` | Time left after the PC opens the USB port |
 | `BL_READY_REPEAT_MS` | `1000` | `[BL] READY` period while staying |
 | `BL_BTN_PORT` / `BL_BTN_PIN` / `BL_BTN_ACTIVE` | PC13, high | B1 (active **high** on the NUCLEO-C562RE) |
@@ -247,7 +292,8 @@ USB identity (VID/PID, strings): `Drivers/USB_CDC/inc/usb_cdc.h`.
 |---|---|
 | `bootloader READY not seen` | Is `Projects/Bootloader` flashed? Hold B1 + RESET and retry. Right port (`make com-list`)? |
 | USB port `CAFE:B0C5` never appears | Cable in USB1 (user port, not ST-LINK)? Board powered? WSL: is `usbipd attach --auto-attach` running? |
-| `LINK=auto` uses UART although USB1 is connected | Expected while the application runs — use `LINK=usb` |
+| `LINK=auto` uses UART although USB1 is connected | The running application has no USB port (only App_Demo has one) — use `LINK=usb` and press RESET |
+| Windows shows the bootloader's COM port only ~1–2 s | A `usbipd attach --auto-attach` (WSL) takes the device — stop it, or upload from WSL with `USBIPD=1` |
 | Windows plays connect / disconnect sounds | Normal: the USB device exists only while the bootloader runs |
 | "Unknown USB Device (Device Descriptor Request Failed)" | Old bootloader firmware — reflash `Projects/Bootloader` |
 | UART upload: `NACK`, board says `Update : TIMEOUT` | Old bootloader firmware without the USART2 RX FIFO fix — reflash `Projects/Bootloader` |

@@ -23,7 +23,9 @@
 #define DWT_CTRL_CYCCNTENA  (1UL << 0)
 #define DWT_CYCCNT_REG      (*(volatile uint32_t *)0xE0001004U)
 
-static volatile uint8_t s_open_event;
+static volatile uint8_t  s_open_event;
+static volatile uint8_t  s_touch_event;
+static volatile uint32_t s_bitrate;
 
 /* ── Time base for TinyUSB (required with CFG_TUSB_OS = OPT_OS_NONE) ── */
 uint32_t tusb_time_millis_api(void)
@@ -58,6 +60,14 @@ void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
     (void)rts;
     if (dtr)
         s_open_event = 1U;   /* host program opened the COM port */
+    else if (s_bitrate == USB_CDC_TOUCH_BAUD)
+        s_touch_event = 1U;  /* ... and closed it again at 1200 baud */
+}
+
+void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *p_line_coding)
+{
+    (void)itf;
+    s_bitrate = p_line_coding->bit_rate;
 }
 
 /* ── Clocks ────────────────────────────────────────────────────────── */
@@ -129,6 +139,13 @@ uint8_t USB_CDC_TakeOpenEvent(void)
 {
     uint8_t ev = s_open_event;
     s_open_event = 0U;
+    return ev;
+}
+
+uint8_t USB_CDC_TakeTouchEvent(void)
+{
+    uint8_t ev = s_touch_event;
+    s_touch_event = 0U;
     return ev;
 }
 

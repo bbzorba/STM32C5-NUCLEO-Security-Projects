@@ -213,6 +213,7 @@ BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
     uint32_t deadline   = now + timeout_ms * cycles_per_ms;
     uint32_t blink_last = now;
     uint32_t ready_last = now;
+    uint8_t  mounted    = 0U;
     uint8_t  byte;
 
     BL_FlushRx(hbl);
@@ -239,6 +240,15 @@ BL_Trigger BL_WaitForUpdateRequest(BL_HandleTypeDef *hbl, uint32_t timeout_ms)
         if (USB_CDC_TakeOpenEvent()) {
             ready_last = now - (BL_READY_REPEAT_MS - BL_USB_READY_DELAY_MS) * cycles_per_ms;
             uint32_t grace = now + BL_USB_OPEN_GRACE_MS * cycles_per_ms;
+            if (!forever && (int32_t)(grace - deadline) > 0)
+                deadline = grace;
+        }
+
+        /* A PC enumerated the USB device: its COM port appears only now, so
+           give the user time to start the upload tool on that PC */
+        if (!mounted && USB_CDC_IsMounted()) {
+            mounted = 1U;
+            uint32_t grace = now + BL_USB_MOUNT_GRACE_MS * cycles_per_ms;
             if (!forever && (int32_t)(grace - deadline) > 0)
                 deadline = grace;
         }

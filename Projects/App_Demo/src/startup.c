@@ -2,8 +2,8 @@
  * startup.c for Projects/App_Demo
  *
  * Identical structure to the UART driver startup: the NVIC dispatch driver
- * (nvic.c) provides all concrete IRQ handler definitions, so the externs
- * below are satisfied by including NVIC_SRC_C in the Makefile App_Demo section.
+ * (nvic.c) provides the EXTI / DMA / USART IRQ handlers, usb_cdc.c the
+ * USB_DRD_FS one (IRQn 62).
  */
 #include <stdint.h>
 
@@ -36,6 +36,7 @@ extern void LPDMA1_Channel6_IRQHandler(void); extern void LPDMA1_Channel7_IRQHan
 extern void USART1_IRQHandler(void); extern void USART2_IRQHandler(void);
 extern void USART3_IRQHandler(void); extern void UART4_IRQHandler(void);
 extern void UART5_IRQHandler(void);
+extern void USB_DRD_FS_IRQHandler(void);
 
 #define VECTOR_TABLE_CONTENT                                                      \
     [0]  = _VT_STACK_TOP, [1] = Reset_Handler,                                   \
@@ -58,7 +59,8 @@ extern void UART5_IRQHandler(void);
     [16 + 29] = LPDMA1_Channel6_IRQHandler, [16 + 30] = LPDMA1_Channel7_IRQHandler, \
     [16 + 51] = USART1_IRQHandler, [16 + 52] = USART2_IRQHandler,                \
     [16 + 53] = USART3_IRQHandler, [16 + 54] = UART4_IRQHandler,                 \
-    [16 + 55] = UART5_IRQHandler
+    [16 + 55] = UART5_IRQHandler,                                                 \
+    [16 + 62] = USB_DRD_FS_IRQHandler
 
 extern uint32_t _estack;
 #define _VT_STACK_TOP  ((isr_handler_t)&_estack)

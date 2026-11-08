@@ -46,8 +46,11 @@
  *   - every reset opens a BL_WAIT_MS window: 'u' on USART2 or USB CDC starts
  *     an update on that link (replies go back on the same link),
  *     pressing B1 cancels the auto-boot and stays in the bootloader;
- *     opening the USB COM port re-sends READY and grants BL_USB_OPEN_GRACE_MS
+ *     a PC enumerating the USB device grants BL_USB_MOUNT_GRACE_MS, opening
+ *     the USB COM port re-sends READY and grants BL_USB_OPEN_GRACE_MS
  *   - B1 held during reset: stay in the bootloader until an update arrives
+ *   - request from the application (bl_request.h, TAMP backup register):
+ *     stay in the bootloader until an update arrives
  *   - no valid application: stay in the bootloader until an update arrives
  * LD1 is solid on during the window and blinks while the bootloader stays. */
 #define BL_WAIT_MS              5000U                     /* update window after reset          */
@@ -56,6 +59,7 @@
 #define BL_LED_BLINK_MS         250U                      /* LD1 half-period while staying      */
 #define BL_READY_REPEAT_MS      1000U                     /* re-send "[BL] READY" while staying */
 #define BL_USB_OPEN_GRACE_MS    3000U                     /* window left after the USB port opens */
+#define BL_USB_MOUNT_GRACE_MS   10000U                    /* window left after a PC enumerates USB */
 #define BL_USB_READY_DELAY_MS   150U                      /* first READY after the USB port opens */
 #define BL_USB_DRAIN_MS         50U                       /* let the host read the last USB bytes */
 #define BL_BTN_SETTLE_MS        10U                       /* let the B1 pull-down / RC filter settle */

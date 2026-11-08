@@ -18,13 +18,23 @@
 
 #include <stdint.h>
 
-/* USB identity (TinyUSB test VID — fine for development, not for products) */
+/* USB identity (TinyUSB test VID — fine for development, not for products).
+ * Default = Projects/Bootloader. Applications call USB_CDC_SetIdentity() with
+ * USB_CDC_APP_PID so the PC (and tools/bl_upload.py) can tell the two apart. */
 #define USB_CDC_VID             0xCAFEU
 #define USB_CDC_PID             0xB0C5U
 #define USB_CDC_MANUFACTURER    "STM32C5-NUCLEO-Security-Projects"
 #define USB_CDC_PRODUCT         "C562 Bootloader CDC"
+#define USB_CDC_APP_PID         0xB0C6U
+
+/* 1200-baud touch: a host opens the port at this baud rate and closes it —
+ * the usual "reboot into the bootloader" request (Arduino, Raspberry Pi Pico) */
+#define USB_CDC_TOUCH_BAUD      1200U
 
 #define USB_CDC_WRITE_TIMEOUT_MS  100U   /* give up when the host stops reading */
+
+/* Product ID + product string; call before USB_CDC_Init (default: bootloader) */
+void     USB_CDC_SetIdentity(uint16_t pid, const char *product);
 
 /* Clocks (HSIDIV3 + CRS), TinyUSB device stack, D+ pull-up and USB IRQ */
 void     USB_CDC_Init(void);
@@ -47,6 +57,10 @@ uint8_t  USB_CDC_IsOpen(void);
 
 /* 1 once per closed→open transition of the COM port (consumes the event) */
 uint8_t  USB_CDC_TakeOpenEvent(void);
+
+/* 1 once after a 1200-baud touch: port closed while set to USB_CDC_TOUCH_BAUD
+ * (consumes the event). Applications answer it with BL_RequestBootloader(). */
+uint8_t  USB_CDC_TakeTouchEvent(void);
 
 /* Non-blocking: 1 and *byte filled when a byte was received, else 0 */
 uint8_t  USB_CDC_ReadByte(uint8_t *byte);

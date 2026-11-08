@@ -8,7 +8,8 @@
 #include "usb_cdc.h"
 
 /* ── Device descriptor ─────────────────────────────────────────────── */
-static tusb_desc_device_t const desc_device = {
+/* Not const: USB_CDC_SetIdentity() changes idProduct before USB_CDC_Init() */
+static tusb_desc_device_t desc_device = {
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = 0x0200,
@@ -55,11 +56,18 @@ uint8_t const *tud_descriptor_configuration_cb(uint8_t index)
 /* ── String descriptors ────────────────────────────────────────────── */
 enum { STRID_LANGID = 0, STRID_MANUFACTURER, STRID_PRODUCT, STRID_SERIAL, STRID_CDC };
 
-static char const *const string_desc[] = {
+static char const *string_desc[] = {
     [STRID_MANUFACTURER] = USB_CDC_MANUFACTURER,
     [STRID_PRODUCT]      = USB_CDC_PRODUCT,
     [STRID_CDC]          = "Bootloader port",
 };
+
+void USB_CDC_SetIdentity(uint16_t pid, const char *product)
+{
+    desc_device.idProduct  = pid;
+    string_desc[STRID_PRODUCT] = product;
+    string_desc[STRID_CDC]     = product;
+}
 
 static uint16_t desc_str[32 + 1];
 

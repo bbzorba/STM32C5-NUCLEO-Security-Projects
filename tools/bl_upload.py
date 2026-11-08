@@ -6,7 +6,13 @@ Links (same protocol on both, picked with --link, default auto):
   uart  USART2 through the ST-LINK virtual COM port (ST-LINK USB cable)
   usb   USB CDC ACM of the bootloader itself, USB-C user connector
         (VID:PID CAFE:B0C5, "C562 Bootloader CDC")
-  auto  usb when the bootloader's USB port is present, else uart
+  auto  usb when the bootloader's or the application's USB port is present,
+        else uart
+
+USB while the application runs: an application with its own USB port
+(CAFE:B0C6, e.g. Projects/App_Demo) is sent a 1200-baud touch — open at
+1200 baud, close — and restarts into the bootloader, which then stays until
+the upload arrives. No SWD and no button needed.
 
 What it does:
   1. Opens the serial port and (optionally) resets the board.
@@ -35,7 +41,7 @@ Where it runs:
                 itself with the Windows Python (python.exe). With
                 --wsl-usbipd (make bl-upload USBIPD=1) it always stays in WSL.
 
-Reset (--reset), first available of:
+Reset (--reset, used when no application USB port can be touched), first of:
   STM32_Programmer_CLI ($CUBE_PROG, PATH, STM32CubeProgrammer / STM32CubeIDE
   install) → st-flash (stlink-tools) → ask you to press RESET.
   Without --reset: press RESET yourself, or hold B1 while resetting — the
@@ -76,7 +82,9 @@ ST_VID           = 0x0483          # STMicroelectronics USB vendor ID
 # NOT here: that is an STM32's own USB CDC port (another board / application).
 STLINK_PIDS      = {0x374B, 0x374E, 0x374F, 0x3752, 0x3753, 0x3754, 0x3755, 0x3757}
 BL_USB_VID       = 0xCAFE          # Drivers/USB_CDC/inc/usb_cdc.h
-BL_USB_PID       = 0xB0C5
+BL_USB_PID       = 0xB0C5          # USB_CDC_PID: the bootloader
+APP_USB_PID      = 0xB0C6          # USB_CDC_APP_PID: an application (1200-baud touch)
+TOUCH_BAUD       = 1200            # USB_CDC_TOUCH_BAUD
 # ─────────────────────────────────────────────────────────────────────────────
 
 IS_WINDOWS = os.name == "nt"
@@ -119,6 +127,23 @@ def bl_usb_ports() -> list[str]:
     """Serial ports of the bootloader's own USB CDC (USB-C user connector)."""
     return [p.device for p in serial.tools.list_ports.comports()
             if p.vid == BL_USB_VID and p.pid == BL_USB_PID]
+
+
+def app_usb_ports() -> list[str]:
+    """Serial ports of an application's USB CDC that accepts the 1200-baud touch."""
+    return [p.device for p in serial.tools.list_ports.comports()
+            if p.vid == BL_USB_VID and p.pid == APP_USB_PID]
+
+
+def touch_into_bootloader(port: str) -> None:
+    """1200-baud touch: the application resets into the bootloader, which stays."""
+    print(f"  1200-baud touch on {port} — the application restarts into the bootloader")
+    try:
+        with serial.Serial(port, TOUCH_BAUD) as ser:
+            time.sleep(0.1)
+            ser.dtr = False            # port "closed" at 1200 baud → bootloader request
+    except (serial.SerialException, OSError):
+        pass                           # the device may vanish while the port closes
 
 
 def wait_for_port(find, timeout_s: float) -> str | None:
@@ -269,7 +294,7 @@ def main() -> int:
             local = []
             if serial is not None:
                 if args.link in ("auto", "usb"):
-                    local += bl_usb_ports()
+                    local += bl_usb_ports() + app_usb_ports()
                 if args.link in ("auto", "uart"):
                     local += st_ports()
             if not local and not args.wsl_usbipd and not (args.link != "usb" and linux_fallback):
@@ -291,7 +316,7 @@ def main() -> int:
     # Pick the link + port
     link, port = args.link, args.port
     if link == "auto":
-        link = "usb" if (not port and bl_usb_ports()) else "uart"
+        link = "usb" if (not port and (bl_usb_ports() or app_usb_ports())) else "uart"
     if not port and link == "uart":
         ports = st_ports()
         if ports:
@@ -311,7 +336,10 @@ def main() -> int:
     # USB: the CDC port only exists while the bootloader runs — reset first,
     # then wait for it to (re-)enumerate
     if link == "usb" and not port:
-        if args.reset:
+        if not bl_usb_ports() and app_usb_ports():
+            print("\n[0/4] Application is running ...")
+            touch_into_bootloader(app_usb_ports()[0])
+        elif args.reset:
             print("\n[0/4] Resetting board ...")
             if not reset_board():
                 print("  Press RESET on the board now (hold B1 to stay in the bootloader) ...")
